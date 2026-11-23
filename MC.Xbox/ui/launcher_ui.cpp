@@ -740,7 +740,9 @@ static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, 
                 state.settingsReportingOn = turnOn;
                 if (turnOn) {
                     telemetry::FlushQueueAsync();
-                    state.settingsNote = Tr(L"Reporting is on. Anything waiting will be retried.");
+                    state.settingsNote = telemetry::GithubTokenPresent()
+                        ? Tr(L"Reporting is on. Crashes go to your private GitHub inbox.")
+                        : Tr(L"Reporting is on, but no GitHub token is set. Add one in Remote Files.");
                 } else {
                     telemetry::ClearQueue();
                     state.settingsNote = Tr(L"Reporting is off. Pending reports were deleted.");

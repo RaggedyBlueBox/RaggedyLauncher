@@ -265,6 +265,33 @@ HttpResult HttpGetWithHeaders(const wchar_t* url, const HttpHeaders& headers) {
     return result;
 }
 
+HttpResult HttpPostBearerString(
+    const wchar_t* url,
+    const std::string& body,
+    const wchar_t* mediaType,
+    const std::string& token) {
+    HttpResult result;
+    try {
+        using namespace winrt::Windows::Foundation;
+        using namespace winrt::Windows::Storage::Streams;
+        using namespace winrt::Windows::Web::Http;
+        using namespace winrt::Windows::Web::Http::Headers;
+
+        HttpClient client;
+        HttpRequestMessage request(HttpMethod::Post(), winrt::Windows::Foundation::Uri(url));
+        request.Headers().UserAgent().ParseAdd(L"RaggedyLauncher/1.0");
+        request.Headers().Authorization(HttpCredentialsHeaderValue(L"Bearer", winrt::to_hstring(token)));
+        request.Content(HttpStringContent(winrt::to_hstring(body), UnicodeEncoding::Utf8, mediaType));
+        HttpResponseMessage response = client.SendRequestAsync(request).get();
+        result.status = static_cast<int>(response.StatusCode());
+        result.body = winrt::to_string(response.Content().ReadAsStringAsync().get());
+    } catch (const winrt::hresult_error& ex) {
+        WriteLogF(L"HTTP bearer POST failed url=%s hr=0x%08X msg=%s",
+            url, static_cast<unsigned int>(ex.code()), ex.message().c_str());
+    }
+    return result;
+}
+
 HttpResult HttpPostWithHeaders(
     const wchar_t* url,
     const std::string& body,

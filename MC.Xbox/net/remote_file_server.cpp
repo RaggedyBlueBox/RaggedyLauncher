@@ -8,6 +8,7 @@
 #include "mod_source.h"
 #include "modpack_io.h"
 #include "profiles.h"
+#include "telemetry.h"
 #include "world_io.h"
 
 #include <algorithm>
@@ -724,6 +725,10 @@ input,select{min-height:42px;min-width:0;max-width:100%;padding:8px 12px;backgro
             ServeCurseForgeKeyPage(s, query);
         } else if (method == "POST" && path == "/set-curseforge-key") {
             HandleSetCurseForgeKey(s, body);
+        } else if (method == "GET" && path == "/set-github-token") {
+            ServeGithubTokenPage(s, query);
+        } else if (method == "POST" && path == "/set-github-token") {
+            HandleSetGithubToken(s, body);
         } else if (method == "POST" && path == "/clear-manual-downloads") {
             HandleClearManualDownloads(s, body);
         } else if (method == "POST" && path == "/upload-manual-download") {
@@ -1032,6 +1037,57 @@ async function uploadManual(input){
             return;
         }
         const std::string title = key.empty() ? TrU("Key cleared") : TrU("Key saved");
+        SendHttpResponse(s, 200, "OK", "text/html; charset=utf-8",
+            Layout(title, "<h1>" + title + "</h1><p><a href=\"" + UrlWithPin("/") + "\">Back to the dashboard</a></p>"));
+    }
+
+    std::string GithubTokenHtml() {
+        std::ostringstream out;
+        const std::wstring hint = telemetry::GithubTokenHint();
+        out << "<section class=\"panel\"><h3>Crash report inbox</h3>"
+            << "<p class=\"muted\">"
+            << MarkedSentence(L"Crash reports can be filed as private GitHub issues in {0}, visible only to the repo owner. Nothing is sent without crash-reporting consent and a saved token.",
+                              { L"RaggedyBlueBox/RaggedyLauncher-telemetry" }, "code")
+            << "</p><p class=\"muted\">"
+            << "Make a fine-grained personal access token with Issues read/write on that private repo only, then paste it here. The token stays on this console and is sent only to api.github.com over HTTPS."
+            << "</p>";
+        if (hint.empty()) {
+            out << "<p class=\"muted\">No token is set. Crash reporting stays off.</p>";
+        } else {
+            out << "<p class=\"muted\">" << HtmlEscape(TrFormat(L"A token is saved ({0}).", { hint })) << "</p>";
+        }
+        out << "<form id=\"gh-form\" method=\"post\" action=\"/set-github-token\">"
+            << "<input type=\"hidden\" name=\"pin\" value=\"" << pin_ << "\">"
+            << "<div class=\"field\"><label for=\"ghtoken\">GitHub token</label>"
+            << "<input id=\"ghtoken\" name=\"token\" type=\"password\" autocomplete=\"off\" spellcheck=\"false\" placeholder=\"paste token\"></div>"
+            << "</form><div class=\"toolbar\" style=\"margin-top:16px\"><button form=\"gh-form\">Save token</button>"
+            << "<form method=\"post\" action=\"/set-github-token\">"
+            << "<input type=\"hidden\" name=\"pin\" value=\"" << pin_ << "\">"
+            << "<input type=\"hidden\" name=\"token\" value=\"\">"
+            << "<button class=\"secondary\">Clear token</button></form></div></section>";
+        return out.str();
+    }
+
+    void ServeGithubTokenPage(SOCKET s, const std::string& query) {
+        if (!Authorized(query, "")) {
+            SendHttpResponse(s, 401, "Unauthorized", "text/html; charset=utf-8", Layout("Unauthorized", "<h1>Unauthorized</h1>"));
+            return;
+        }
+        SendHttpResponse(s, 200, "OK", "text/html; charset=utf-8", Layout("Crash report inbox", HomeHtml("section=settings&" + query)));
+    }
+
+    void HandleSetGithubToken(SOCKET s, const std::string& body) {
+        if (!Authorized("", body)) {
+            SendHttpResponse(s, 401, "Unauthorized", "text/html; charset=utf-8", Layout("Unauthorized", "<h1>Unauthorized</h1>"));
+            return;
+        }
+        const std::string token = FormFieldValue(body, "token");
+        if (!telemetry::SetGithubToken(a2w(token.c_str()))) {
+            SendHttpResponse(s, 500, "Internal Server Error", "text/html; charset=utf-8",
+                Layout("Token not saved", "<h1>Token not saved</h1><p>The token could not be written to storage.</p>"));
+            return;
+        }
+        const std::string title = token.empty() ? TrU("Token cleared") : TrU("Token saved");
         SendHttpResponse(s, 200, "OK", "text/html; charset=utf-8",
             Layout(title, "<h1>" + title + "</h1><p><a href=\"" + UrlWithPin("/") + "\">Back to the dashboard</a></p>"));
     }
@@ -1447,7 +1503,7 @@ pollPackImport();
         } else {
             out << "<section class=\"settings\"><div class=\"section-head\"><div><h2>Settings</h2>"
                 << "<p class=\"section-note\">Appearance, and the connection used for CurseForge downloads.</p></div></div>"
-                << AppearanceHtml() << CurseForgeKeyHtml() << "</section>";
+                << AppearanceHtml() << CurseForgeKeyHtml() << GithubTokenHtml() << "</section>";
         }
         out << "</main></div>";
         return out.str();

@@ -55,6 +55,13 @@ bool Configured();
 
 bool Enabled();
 
+// Private GitHub crash inbox (opt-in). Reports are filed as issues in the
+// owner's private telemetry repo using a token the user saves on the
+// console. Nothing is sent anywhere without consent and a saved token.
+bool GithubTokenPresent();
+std::wstring GithubTokenHint();
+bool SetGithubToken(const std::wstring& token);
+
 std::wstring EndpointUrl();
 
 std::wstring LauncherBuild();

@@ -1,16 +1,19 @@
 # Privacy
 
-What Bandit Launcher does with your data, where it goes, and how long it stays there.
+What Raggedy Launcher does with your data, where it goes, and how long it stays there.
 This covers the launcher itself. Minecraft, Mojang's services, Modrinth, GitHub and
 anything else the launcher talks to have their own policies and are not covered here.
 
-Accurate against `main` as of 14 September 2026.
+Accurate against `main` as of 23 November 2026.
 
 ## Who runs this
 
-Bandit Launcher is made by veroxsity / BanditVault, a solo project based in the United
-Kingdom. The telemetry server at `telemetry.banditvault.co.uk` is self-hosted on hardware
-BanditVault controls. Nothing is sold, shared with advertisers, or passed to a third party.
+Raggedy Launcher is made by RaggedyBlueBox, based on Bandit Launcher by veroxsity /
+BanditVault (see LICENSE). There is no Raggedy telemetry server. The only place launcher
+crash reports can go is a private GitHub repository owned by the same account,
+`RaggedyBlueBox/RaggedyLauncher-telemetry`, and only as issues you opt into with a token
+you save yourself. Nothing is sold, shared with advertisers, or passed to a third party
+beyond GitHub hosting those private issues under its own policy.
 
 ## Signing in
 
@@ -38,8 +41,9 @@ files and logs under your profile directory contain them. That is the Mojang cli
 behaviour rather than the launcher's, but it is why those values appear if you read your own
 logs.
 
-None of this leaves the console except to Microsoft and Mojang. No account data is sent to a
-BanditVault server at any point, including when telemetry is switched on.
+None of this leaves the console except to Microsoft and Mojang. No account data is ever
+filed to the crash inbox: reports carry only the random install ID, never your Microsoft
+account, Minecraft username, UUID, gamertag, or any token.
 
 Signing out removes the stored refresh token.
 
@@ -69,40 +73,20 @@ for sending. Rows already on the server keep the old ID, which no longer maps to
 
 ### What is sent
 
-Session beacons, to `/v1/session`, when a launch starts, when the first frame draws, when the
-game becomes playable, when the console suspends, and when the game exits:
+Crash reports, filed as private GitHub issues when a launch fails or the game crashes:
 
-- install ID
-- launch ID, a fresh random GUID for that launch
-- which of those events it is
-- launcher build number
-- Minecraft version, loader, loader version
-- mod set hash
-- minutes elapsed in the session
-
-Mod set, to `/v1/modset`, and only when the server replies that it has not seen that hash
-before:
-
-- install ID
-- the mod set hash
-- for each mod, the jar filename and, where known, its Modrinth project ID
-
-Crash reports, to `/v1/report`, when a launch fails:
-
-- install ID
+- install ID (a random GUID, not your account)
 - a crash fingerprint, which is a sixteen character hash
 - launcher build, Minecraft version, loader, loader version, mod set hash
 - which phase the crash happened in
 - maximum heap size and heap in use at the crash
-
-Stack traces, to `/v1/trace`, and only when the server replies that it holds no trace for that
-fingerprint yet:
-
-- install ID
-- the fingerprint
 - the Java exception class and its message
 - up to sixteen stack frames
 - for mixin failures, the target class, method, descriptor, owning mod and symbol
+
+Session beacons, mod set uploads, and the compatibility feed below speak a different
+protocol that needs a custom `endpoint.txt`; with no endpoint configured they stay
+dormant and nothing is queued for them. Only crash issues use the GitHub path.
 
 The crash screen shows you the exact payload before it is sent.
 
@@ -117,57 +101,34 @@ The crash screen shows you the exact payload before it is sent.
 
 ### If a send fails
 
-Anything that cannot be sent is written as JSON to `LocalState\telemetry\queue` and retried at
-the next launch. The queue is capped at twenty files so a crash loop cannot fill storage.
-Resetting the install ID clears it.
+GitHub issues are filed immediately; if the network is down at that moment the report is
+lost and a log line says so. The crash screen's send-once option can re-file the last
+crash later. (The `LocalState\telemetry\queue` retry store only applies to the dormant
+custom-endpoint protocol, is capped at twenty files, and is cleared by resetting the
+install ID.)
 
 ### Where it goes and how long it stays
 
-Everything goes to `https://telemetry.banditvault.co.uk`, self-hosted by BanditVault behind a
-Cloudflare tunnel. You can point it somewhere else with `endpoint.txt` in the telemetry folder
-or the `BANDIT_TELEMETRY_ENDPOINT` environment variable.
+Crash issues go to the private repository `RaggedyBlueBox/RaggedyLauncher-telemetry`,
+visible only to the repo owner, plus nothing else anywhere: no session events, no mod set
+uploads, no third-party analytics. You can still point the dormant custom protocol
+somewhere else with `endpoint.txt` in the telemetry folder or the
+`BANDIT_TELEMETRY_ENDPOINT` environment variable, but nothing in this build does that.
 
-A retention pass runs every six hours and thins the data out in stages.
+Issues stay in the private repo until the repo owner deletes them. Your GitHub token
+stays in `LocalState\telemetry\github-token.txt` on the console until you clear it in
+Remote Files; only its last four characters are ever shown back to you, and it is sent
+solely to `api.github.com` over HTTPS.
 
-- Per-launch session events are deleted after 7 days.
-- Rate limit counters, which are keyed on install ID, are deleted after 7 days.
-- Individual crash occurrences are deleted after 30 days. Before they go, they are folded into
-  a daily count of how many distinct installs hit that crash. The count survives, the link to
-  your install does not.
-- Per-install daily usage rows are deleted after 90 days, folded the same way into daily
-  totals that carry no install ID.
-
-Two things are kept indefinitely, on purpose.
-
-Crash fingerprints and their stored stack traces are kept until the bug is fixed and the row
-is cleared by hand. A fingerprint row holds the exception, the message, the frames, the mixin
-detail and a triage status. It does not hold an install ID, so it is not linked to you or to
-anyone else. Only one trace is stored per fingerprint, from whichever install reported it
-first.
-
-Your install ID itself is kept, alongside the date it was first and last seen and the launcher
-build it was on. Nothing else is attached to that row. If you reset your install ID the old row
-stays but is orphaned, because nothing new will ever reference it.
-
-If you want the rows for a particular install ID removed, email the address at the bottom with
-that ID. You can read your own ID in the launcher.
+To remove your data: delete the issue in the private repo, clear the token, reset the
+install ID, and delete `LocalState\telemetry` to clear consent, install ID and queue
+together.
 
 ## The compatibility feed
 
-Once a day the launcher makes a conditional GET to `telemetry.banditvault.co.uk/v1/compat` to
-download the list of mods known to crash on particular versions. This happens whether or not
-telemetry is enabled, because it is a download rather than a report.
-
-The request carries no install ID and nothing about you. Like any HTTP request it reveals your
-IP address to the server, the same way downloading the game reveals it to Mojang. The response
-is cached at `LocalState\telemetry\compat.json` and re-checked with an ETag, so on most days
-the answer is a 304 with no body.
-
-The ingest server does not log IP addresses. Its request logging is limited to method, path,
-status code and duration, and it is switched off entirely outside development. The one place an
-address is written to the container log is a failed login to the private admin portal, which is
-not something the launcher ever touches. Cloudflare sits in front of the tunnel and keeps its
-own edge logs under its own policy.
+The compatibility feed is dormant in this build: with no custom endpoint configured the
+launcher makes no daily request anywhere. A previously cached feed at
+`LocalState\telemetry\compat.json` is still honoured if one exists.
 
 ## Remote Files and the mouse relay
 
@@ -210,12 +171,14 @@ Do not expose either port to the internet.
 - Leave Remote Files and the mouse relay stopped.
 - Turn off Check for new versions in Settings to stop the launcher contacting GitHub on start.
 - Delete `LocalState\telemetry` to clear consent, install ID, queue and cached feed together.
-- Email the address below with your install ID to have its rows removed from the server.
+- Delete the corresponding issue in the private telemetry repo to remove a filed crash.
 
 ## Contact
 
-info@banditvault.co.uk, for privacy questions, deletion requests, or anything else about this
-document.
+There is no support mailbox. For privacy questions, manage the data yourself: delete the
+issue in the private telemetry repo, clear the token in Remote Files, reset the install ID
+in Settings, or delete `LocalState\telemetry` outright. Upstream license and attribution
+questions fall under [LICENSE](LICENSE).
 
 ## Changes
 

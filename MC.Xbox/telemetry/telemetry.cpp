@@ -95,7 +95,11 @@ void ClearCrashStreak() {
     DeleteFileW((dir + L"\\crash_streak.txt").c_str());
 }
 
-constexpr wchar_t kDefaultEndpoint[] = L"https://telemetry.banditvault.co.uk";
+constexpr wchar_t kDefaultEndpoint[] = L"";
+// Private crash inbox owned by the same account as the launcher. Issues
+// filed here are visible only to the repo owner.
+constexpr wchar_t kGithubIssuesUrl[] =
+    L"https://api.github.com/repos/RaggedyBlueBox/RaggedyLauncher-telemetry/issues";
 
 std::wstring Endpoint() {
     static const std::wstring endpoint = [] {
@@ -114,6 +118,116 @@ std::wstring Endpoint() {
         return std::wstring(kDefaultEndpoint);
     }();
     return endpoint;
+}
+
+std::string BuildReportBody(
+    const LaunchContext& context,
+    const char* phase,
+    const crashfp::JavaCrash& crash);
+std::string BuildTraceBody(const crashfp::JavaCrash& crash);
+
+static std::wstring GithubTokenPath() {
+    const std::wstring dir = TelemetryDir();
+    if (dir.empty()) return std::wstring();
+    return dir + L"\\github-token.txt";
+}
+
+static std::string GithubToken() {
+    std::wstring text;
+    const std::wstring path = GithubTokenPath();
+    if (!path.empty() && ReadTextFile(path, text)) {
+        return w2a(TrimWhitespace(StripNewlines(text)));
+    }
+    return std::string();
+}
+
+bool GithubTokenPresent() {
+    return !GithubToken().empty();
+}
+
+std::wstring GithubTokenHint() {
+    const std::string token = GithubToken();
+    if (token.empty()) return std::wstring();
+    const std::string tail = token.size() <= 4 ? token : token.substr(token.size() - 4);
+    return L"ends " + a2w(tail.c_str());
+}
+
+bool SetGithubToken(const std::wstring& token) {
+    const std::wstring path = GithubTokenPath();
+    if (path.empty() || !EnsureDirectoryTree(TelemetryDir())) {
+        WriteLog(L"github token could not be saved");
+        return false;
+    }
+    const std::wstring clean = TrimWhitespace(StripNewlines(token));
+    if (clean.empty()) {
+        const bool removed = DeleteFileW(path.c_str()) || GetLastError() == ERROR_FILE_NOT_FOUND;
+        if (!removed) {
+            WriteLogF(L"github token could not be cleared error=%lu", GetLastError());
+            return false;
+        }
+        WriteLog(L"github token cleared");
+        return true;
+    }
+    if (!WriteTextFile(path, clean + L"\n")) {
+        WriteLog(L"github token could not be saved");
+        return false;
+    }
+    WriteLog(L"github token saved");
+    return true;
+}
+
+static bool GithubReady() {
+    return ConsentGranted() && GithubTokenPresent();
+}
+
+static bool BanditProtocolReady() {
+    return !Endpoint().empty() && ConsentGranted() && !InstallId().empty();
+}
+
+static bool FileGithubIssue(const std::string& title, const std::string& body) {
+    const std::string token = GithubToken();
+    if (token.empty()) return false;
+    std::string payload = "{\"title\":\"" + JsonEscape(title) + "\",\"body\":\"" + JsonEscape(body) + "\"";
+    // The label is created with the inbox repo; a fresh repo answers 422.
+    payload += ",\"labels\":[\"crash-report\"]}";
+    HttpResult result = HttpPostBearerString(kGithubIssuesUrl, payload, L"application/json", token);
+    if (result.status == 422) {
+        WriteLog(L"github issue rejected with labels, retrying without");
+        payload = "{\"title\":\"" + JsonEscape(title) + "\",\"body\":\"" + JsonEscape(body) + "\"}";
+        result = HttpPostBearerString(kGithubIssuesUrl, payload, L"application/json", token);
+    }
+    if (!result.success()) {
+        WriteLogF(L"github issue filing failed http=%d", result.status);
+        return false;
+    }
+    WriteLogF(L"github issue filed http=%d", result.status);
+    return true;
+}
+
+static std::string GithubIssueBody(const LaunchContext& context, const char* phase, const crashfp::JavaCrash& crash) {
+    const std::string report = BuildReportBody(context, phase, crash);
+    const std::string trace = BuildTraceBody(crash);
+    std::string body = "Launcher build: " + w2a(context.launcherBuild) + "\n";
+    body += "Minecraft: " + w2a(context.mcVersion) + " " + w2a(context.loader);
+    if (!context.loaderVersion.empty()) body += " " + w2a(context.loaderVersion);
+    body += "\nPhase: " + std::string(phase) + "\n";
+    body += "Fingerprint: " + crash.fingerprint + "\n\n";
+    body += "```json report\n" + report + "\n```\n\n```json trace\n" + trace + "\n```";
+    // GitHub caps issue bodies at 65536 characters.
+    if (body.size() > 60000) {
+        body.resize(60000);
+        body += "\n```\n[truncated by launcher]";
+    }
+    return body;
+}
+
+static std::string GithubIssueTitle(const LaunchContext& context, const char* phase, const crashfp::JavaCrash& crash) {
+    std::string title = "Crash " + crash.fingerprint + " (" + std::string(phase) + ", " +
+        w2a(context.mcVersion) + " " + w2a(context.loader) + ")";
+    if (title.size() > 200) {
+        title.resize(200);
+    }
+    return title;
 }
 
 std::string NewGuidString() {
@@ -274,7 +388,7 @@ void SendModset() {
 }
 
 void SendAsync(const char* event, int minutes) {
-    if (!Enabled() || !g_launchActive.load()) return;
+    if (!BanditProtocolReady() || !g_launchActive.load()) return;
 
     const std::string body = BuildBeaconBody(event, minutes);
     const bool isLaunch = std::string(event) == "launch";
@@ -448,11 +562,11 @@ HardCrashSources g_hardCrash;
 }
 
 bool Enabled() {
-    return !Endpoint().empty() && ConsentGranted() && !InstallId().empty();
+    return BanditProtocolReady() || GithubReady();
 }
 
 bool Configured() {
-    return !Endpoint().empty();
+    return !Endpoint().empty() || GithubTokenPresent();
 }
 
 static std::wstring ConsentPath() {
@@ -625,7 +739,7 @@ void SendExit() {
 }
 
 void QueueSuspend() {
-    if (!Enabled() || !g_launchActive.load()) return;
+    if (!BanditProtocolReady() || !g_launchActive.load()) return;
     if (g_suspendQueued.exchange(true)) return;
 
     const bool queued = QueueBody("session", BuildBeaconBody("suspend", MinutesSoFar()));
@@ -664,13 +778,25 @@ void ReportSoftCrash(const std::wstring& runtimeRoot) {
     WriteLogF(L"telemetry soft crash %s phase=%s", a2w(crash.fingerprint.c_str()).c_str(),
         a2w(PhaseName()).c_str());
 
-    if (!Enabled()) return;
+    const bool banditReady = BanditProtocolReady();
+    const bool githubReady = GithubReady();
+    if (!banditReady && !githubReady) return;
 
     const std::wstring endpoint = Endpoint();
 
     const HRESULT hr = RoInitialize(RO_INIT_MULTITHREADED);
 
-    const std::string reportBody = BuildReportBody(CurrentContext(), PhaseName(), crash);
+    const LaunchContext context = CurrentContext();
+    const char* phase = PhaseName();
+    if (githubReady) {
+        FileGithubIssue(GithubIssueTitle(context, phase, crash), GithubIssueBody(context, phase, crash));
+    }
+    if (!banditReady) {
+        if (SUCCEEDED(hr)) RoUninitialize();
+        return;
+    }
+
+    const std::string reportBody = BuildReportBody(context, phase, crash);
     const HttpResult result = HttpPostStringTimed(
         (endpoint + L"/v1/report").c_str(), reportBody, L"application/json", kCrashTimeoutMs);
 
@@ -764,7 +890,15 @@ void ReportHardCrash(const std::wstring& runtimeRoot) {
         a2w(phase.c_str()).c_str(),
         a2w(parsed.source.c_str()).c_str());
 
-    if (!Enabled()) return;
+    const bool banditReady = BanditProtocolReady();
+    const bool githubReady = GithubReady();
+    if (!banditReady && !githubReady) return;
+
+    if (githubReady) {
+        FileGithubIssue(
+            GithubIssueTitle(context, phase.c_str(), crash), GithubIssueBody(context, phase.c_str(), crash));
+    }
+    if (!banditReady) return;
 
     const bool reportQueued = QueueBody("report", BuildReportBody(context, phase.c_str(), crash));
     const bool traceQueued = QueueBody("trace", BuildTraceBody(crash));
@@ -928,14 +1062,24 @@ void SendLastCrashOnce(const CrashRecord& record) {
     if (!record.found) return;
 
     const std::wstring endpoint = Endpoint();
-    if (endpoint.empty()) return;
+    const bool githubReady = GithubReady();
+    if (!githubReady && endpoint.empty()) return;
 
     const LaunchContext context = ContextFromRecord(record);
     const crashfp::JavaCrash crash = CrashFromRecord(record);
     const std::string phase = record.phase.empty() ? std::string("launcher") : w2a(record.phase);
 
-    std::thread([endpoint, context, crash, phase]() {
+    std::thread([endpoint, context, crash, phase, githubReady]() {
         const HRESULT hr = RoInitialize(RO_INIT_MULTITHREADED);
+
+        if (githubReady) {
+            FileGithubIssue(
+                GithubIssueTitle(context, phase.c_str(), crash), GithubIssueBody(context, phase.c_str(), crash));
+        }
+        if (endpoint.empty()) {
+            if (SUCCEEDED(hr)) RoUninitialize();
+            return;
+        }
 
         const std::string reportBody = BuildReportBody(context, phase.c_str(), crash);
         const HttpResult result = HttpPostStringTimed(
@@ -992,7 +1136,7 @@ void ClearQueue() {
 }
 
 void FlushQueueAsync() {
-    if (!Enabled()) return;
+    if (!BanditProtocolReady()) return;
 
     std::thread([]() {
         const HRESULT hr = RoInitialize(RO_INIT_MULTITHREADED);

@@ -41,6 +41,13 @@ HttpResult HttpPostWithHeaders(
     const wchar_t* mediaType,
     const HttpHeaders& headers);
 
+// POST with a Bearer token set through the typed Authorization API.
+HttpResult HttpPostBearerString(
+    const wchar_t* url,
+    const std::string& body,
+    const wchar_t* mediaType,
+    const std::string& token);
+
 // returns the response etag and an empty body for status 304
 HttpResult HttpGetConditionalTimed(
     const wchar_t* url,
