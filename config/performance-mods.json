@@ -1,0 +1,564 @@
+{
+  "version": 1,
+  "targets": [
+    {
+      "minecraftVersion": "26.3",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "26.3",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "26.3",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "26.2",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "26.2",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "26.2",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "26.1.2",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "26.1.2",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "26.1.2",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "26.1.1",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "26.1.1",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "26.1.1",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "26.1",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "26.1",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "26.1",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.11",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.11",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21.11",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.10",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.10",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21.10",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.9",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.9",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21.9",
+      "loader": "neoforge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21.8",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.8",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21.8",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.7",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.7",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21.7",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.6",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.6",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21.6",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.5",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.5",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21.5",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.4",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.4",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21.4",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.3",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.3",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21.3",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.2",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.2",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.1",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.1",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21.1",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21",
+      "loader": "forge",
+      "candidates": [],
+      "gap": "No Sodium-family renderer found for this version and loader; the game runs without one."
+    },
+    {
+      "minecraftVersion": "1.21",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "embeddium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.20.4",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.20.4",
+      "loader": "neoforge",
+      "candidates": [
+        {
+          "project": "embeddium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.20.1",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.20.1",
+      "loader": "forge",
+      "candidates": [
+        {
+          "project": "embeddium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.19.2",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.18.2",
+      "loader": "forge",
+      "candidates": [
+        {
+          "project": "embeddium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.16.5",
+      "loader": "fabric",
+      "candidates": [
+        {
+          "project": "sodium",
+          "proven": false,
+          "note": "metadata match only; Xbox compatibility not tested"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.12.2",
+      "loader": "cleanroom",
+      "candidates": [
+        {
+          "project": "nothirium",
+          "proven": false,
+          "note": "Chunk renderer similar to Sodium, not a Sodium port. Requires MixinBootstrap and RenderLib (resolved dynamically). Cleanroom and Xbox graphics-stack compatibility not tested."
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.12.2",
+      "loader": "vanilla",
+      "candidates": [],
+      "gap": "Vanilla has no mod loader; performance mods cannot be injected."
+    }
+  ]
+}

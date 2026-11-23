@@ -61,7 +61,7 @@ The default target is **1.21.11 + Fabric 0.19.5**, using Java 21. The catalog al
 
 | Minecraft version | Loaders in the catalog | Status |
 | --- | --- | --- |
-| `26.1`, `26.1.1`, `26.1.2`, `26.2` | Fabric, Forge, NeoForge | Experimental. Uses the Java 25 runtime. |
+| `26.1`, `26.1.1`, `26.1.2`, `26.2`, `26.3` | Fabric, Forge, NeoForge | Experimental. Uses the Java 25 runtime. |
 | `1.21` through `1.21.11` | Fabric and NeoForge. Forge on every listed version except `1.21.2`. | Experimental. Uses Java 21. |
 | `1.20.4` | Fabric, NeoForge | Fabric is testing. NeoForge is experimental and has no bundled controller provider. |
 | `1.20.1` | Fabric, Forge | Fabric is testing. Forge is experimental. |

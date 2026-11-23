@@ -38,6 +38,9 @@
 #include "app_globals.h"
 #include "loader.h"
 #include "runtime_manager.h"
+#include "controller_bundle.h"
+#include "performance_bundle.h"
+#include "renderer_policy.h"
 #include "minecraft_launch.h"
 #include "telemetry.h"
 #include "update_check.h"
@@ -783,11 +786,14 @@ public:
         const std::wstring packageRuntimeDir = packageDir + L"\\runtime";
         const std::wstring packagedLibrariesDir = packageRuntimeDir + L"\\libraries";
         const std::wstring userModsDir = ProfileModsDir(exeDir, activeProfile);
+        const LaunchTarget effectiveTarget = ResolveProfileTarget(exeDir, activeProfileInfo);
+        const std::wstring effectiveBundle =
+            ResolveEffectiveControllerBundle(activeProfileInfo.controllerBundle, effectiveTarget);
         const std::wstring bundledModsDir = PrepareEffectiveBundledModsDir(
             exeDir,
             versionInfo.targetId,
             versionInfo.bundledModsDir,
-            activeProfileInfo.controllerModEnabled);
+            effectiveBundle);
         const std::wstring clientJar = sharedGameDir + L"\\versions\\" + minecraftVersion + L"\\" + minecraftVersion + L".jar";
         const std::wstring argsPath = g_logDir + L"\\java_args.txt";
         const std::wstring javaLog = g_logDir + L"\\java_output.log";
@@ -808,20 +814,17 @@ public:
         WriteLogF(L"sharedGameDir: %s", sharedGameDir.c_str());
         WriteLogF(L"profileGameDir: %s", gameDir.c_str());
         WriteLogF(L"downloadedLibrariesDir: %s", (sharedGameDir + L"\\libraries").c_str());
-        WriteLogF(L"profile controller mod enabled=%d", activeProfileInfo.controllerModEnabled ? 1 : 0);
+        WriteLogF(L"profile controller bundle=%s effective=%s", activeProfileInfo.controllerBundle.c_str(), effectiveBundle.c_str());
         WriteLogF(L"bundledModsDir: %s", bundledModsDir.c_str());
         WriteLogF(L"userModsDir: %s", userModsDir.c_str());
-        if (!activeProfileInfo.controllerModEnabled) {
-            const int controllerRemoved = DeleteBanditControllerModsFromDir(userModsDir);
-            if (controllerRemoved > 0) {
-                WriteLogF(L"Removed %d Bandit controller mod(s) from active profile before launch", controllerRemoved);
-            }
-        } else {
-            const int controlifyRemoved = DeleteControlifyModsFromDir(userModsDir);
-            if (controlifyRemoved > 0) {
-                WriteLogF(L"Removed %d Controlify mod(s) from active profile before launch", controlifyRemoved);
+        {
+            const int bundleRemoved = SyncControllerBundleForLaunch(exeDir, activeProfile, activeProfileInfo.controllerBundle, effectiveTarget);
+            if (bundleRemoved > 0) {
+                WriteLogF(L"Removed %d stale bundle file(s) from active profile before launch", bundleRemoved);
             }
         }
+        LogRendererDecision(packageDir, exeDir, minecraftVersion);
+        LogPerformanceDecision(exeDir, activeProfile, effectiveTarget);
         const int blockedRemoved = PurgeBlockedModsFromDir(exeDir, userModsDir);
         if (blockedRemoved > 0) {
             WriteLogF(L"Removed %d blocked mod(s) from active profile before launch", blockedRemoved);

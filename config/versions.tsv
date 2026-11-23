@@ -1,4 +1,7 @@
 minecraftVersion	displayName	loader	loaderVersion	javaRuntime	supportLevel	controllerProvider	notes
+26.3	26.3 Fabric	fabric	0.20.1	current	experimental	none	Modern target; no bundled Bandit build, use Controlify or None where supported
+26.3	26.3 Forge	forge	66.1.9	current	experimental	none	Modern target; no bundled Bandit build, use Controlify or None where supported
+26.3	26.3 NeoForge	neoforge	26.3.0.115	current	experimental	none	Modern target; no bundled Bandit build, use Controlify or None where supported
 26.2	26.2 Fabric	fabric	0.19.5	current	experimental	fabric	Modern controller and compat target
 26.2	26.2 Forge	forge	65.1.3	current	experimental	forge	Modern shared controller target
 26.2	26.2 NeoForge	neoforge	26.2.0.82	current	experimental	neoforge	Modern shared controller target

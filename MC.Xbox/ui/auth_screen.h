@@ -6,6 +6,7 @@
 #include "launcher_mouse.h"
 #include "mods_ui_globals.h"
 #include "profiles.h"
+#include "controller_bundle.h"
 #include "themes.h"
 
 #include <d2d1_1.h>
@@ -751,6 +752,26 @@ private:
             d2dContext_->DrawEllipse(D2D1::Ellipse(D2D1::Point2F(x - 32.0f, mid), 11.0f, 11.0f), line_, 1.5f);
         }
 
+        {
+            const D2D1_RECT_F r = row(6, Tr(L"Controller bundle"), state.settingsControllerNote.c_str(), 300.0f);
+            DrawIcon(L"\uE7FC", D2D1::RectF(r.right - 56.0f, r.top, r.right - 22.0f, r.bottom), muted_);
+            DrawText(Tr(ControllerBundleLabelKey(state.settingsControllerBundle)), valueFormat_.Get(),
+                D2D1::RectF(r.right - 380.0f, r.top, r.right - 66.0f, r.bottom),
+                NormalizeControllerBundle(state.settingsControllerBundle) == L"none" ? muted_ : text_);
+        }
+        {
+            const D2D1_RECT_F r = row(7, Tr(L"Graphics renderer"), state.settingsRendererNote.c_str(), 300.0f);
+            DrawIcon(L"\uE9E9", D2D1::RectF(r.right - 56.0f, r.top, r.right - 22.0f, r.bottom), muted_);
+            DrawText(state.settingsRendererName.c_str(), valueFormat_.Get(),
+                D2D1::RectF(r.right - 380.0f, r.top, r.right - 66.0f, r.bottom), text_);
+        }
+        {
+            const D2D1_RECT_F r = row(8, Tr(L"Performance renderer"), state.settingsPerfNote.c_str(), 300.0f);
+            DrawIcon(L"\uE7F4", D2D1::RectF(r.right - 56.0f, r.top, r.right - 22.0f, r.bottom), muted_);
+            DrawText(state.settingsPerfMode == L"off" ? Tr(L"Off") : Tr(L"Auto"), valueFormat_.Get(),
+                D2D1::RectF(r.right - 380.0f, r.top, r.right - 66.0f, r.bottom),
+                state.settingsPerfMode == L"off" ? muted_ : text_);
+        }
         DrawFlow(
             state.settingsConfigured
                 ? Tr(L"Reports use a random id and include launcher and Minecraft versions, loader details, launch stage, memory totals and a mod list hash. Mod jar names and project ids can be sent when a crash needs them. A crash trace can include exception text and Java class names. The launcher does not add your account, gamertag, worlds or access token. Common user and app storage paths are scrubbed. The id stays the same until it is reset.")
@@ -1052,8 +1073,9 @@ private:
         if (!state.modsProfileBuiltin) {
             const D2D1_RECT_F controllerBtn = slot(1);
             RegisterHit(launchhit::kProfileController, controllerBtn);
-            DrawButton(controllerBtn, L"\uE7FC", state.modsProfileControllerModEnabled ? Tr(L"Bandit On") : Tr(L"Bandit Off"),
-                state.modsProfileFocus == 5, ButtonKind::Neutral, state.modsProfileControllerModEnabled ? accent_ : muted_);
+            DrawButton(controllerBtn, L"\uE7FC", Tr(ControllerBundleLabelKey(state.modsProfileControllerBundle)),
+                state.modsProfileFocus == 5, ButtonKind::Neutral,
+                NormalizeControllerBundle(state.modsProfileControllerBundle) == L"none" ? muted_ : accent_);
 
             const D2D1_RECT_F exportBtn = slot(2);
             RegisterHit(launchhit::kProfileExport, exportBtn);

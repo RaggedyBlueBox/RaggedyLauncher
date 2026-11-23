@@ -90,6 +90,9 @@ AuthUiState ModsPage(int tab) {
         Target(L"1.21.1", L"fabric", L"0.19.5"),
         Target(L"1.20.1", L"forge", L"47.4.0"),
         Target(L"26.2", L"fabric", L"0.19.5"),
+        Target(L"26.3", L"fabric", L"0.20.1"),
+        Target(L"26.3", L"forge", L"66.1.9"),
+        Target(L"26.3", L"neoforge", L"26.3.0.115"),
     };
     state.modsBrowseTargetId = state.modsTargets.front().targetId;
     state.modsCards = CardsFor(tab);
@@ -385,7 +388,7 @@ std::vector<Scene> Scenes() {
         state.modsProfileName = L"Survival";
         state.modsProfileTargetText = L"1.21.11 Fabric 0.19.5";
         state.modsProfileFocus = 1;
-        state.modsProfileControllerModEnabled = false;
+        state.modsProfileControllerBundle = L"bandit";
         state.status = L"Backup saved";
         return state;
     } });

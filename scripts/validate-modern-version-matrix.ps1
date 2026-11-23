@@ -23,9 +23,11 @@ try {
     }
     Require-Entry "runtime\version_catalog.tsv"
     Require-Entry "runtime\recommended-mods.json"
+    Require-Entry "runtime\performance-mods.json"
     foreach ($inputFile in @(
         @{ Source = $CatalogPath; Relative = 'runtime/version_catalog.tsv' },
-        @{ Source = (Join-Path $root 'config/recommended-mods.json'); Relative = 'runtime/recommended-mods.json' }
+        @{ Source = (Join-Path $root 'config/recommended-mods.json'); Relative = 'runtime/recommended-mods.json' },
+        @{ Source = (Join-Path $root 'config/performance-mods.json'); Relative = 'runtime/performance-mods.json' }
     )) {
         if ($zip) {
             $stream = $zip.GetEntry($inputFile.Relative).Open()

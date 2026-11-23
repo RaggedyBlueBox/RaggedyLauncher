@@ -3,6 +3,8 @@
 #include "mod_source.h"
 
 #include "mods_browser.h"
+#include "performance_bundle.h"
+#include "renderer_policy.h"
 #include "mods_ui_globals.h"
 #include "auth_screen.h"
 #include "launcher_mouse.h"
@@ -600,8 +602,64 @@ static void ShowChangelogScreen(
     WriteLog(L"Changelog closed");
 }
 
-static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, AuthUiState& state) {
-    constexpr int kSettingsRows = 6;
+static void RefreshSettingsControllerNote(AuthUiState& state, const std::wstring& runtimeRoot) {
+    const std::wstring activeId = GetActiveProfileId(runtimeRoot);
+    const Profile activeProfile = GetProfileById(runtimeRoot, activeId);
+    state.settingsControllerBundle = activeProfile.controllerBundle;
+    if (activeProfile.builtin || activeId == kVanillaProfileId) {
+        state.settingsControllerNote = Tr(L"Vanilla is read-only. Create a profile to change it.");
+        return;
+    }
+    const LaunchTarget target = ResolveProfileTarget(runtimeRoot, activeProfile);
+    const std::wstring effective = ResolveEffectiveControllerBundle(activeProfile.controllerBundle, target);
+    state.settingsControllerNote = TrFormat(L"{0}: {1} in game",
+        { activeProfile.name, Tr(ControllerBundleLabelKey(effective)) });
+}
+
+static void RefreshSettingsRendererNote(AuthUiState& state, const std::wstring& runtimeRoot) {
+    const RendererBackend requested = RequestedRenderer(runtimeRoot);
+    state.settingsRendererName = RendererBackendName(requested);
+    if (requested == RendererBackend::VulkanExperimental) {
+        const VulkanProbeResult probe = ProbeVulkanBridge(GetExecutableDir(), runtimeRoot);
+        state.settingsRendererNote = probe.usable
+            ? Tr(L"Experimental Vulkan bridge enabled.")
+            : Tr(L"Vulkan unavailable; running OpenGL.");
+    } else {
+        state.settingsRendererNote = Tr(L"OpenGL via the packaged Mesa/D3D12 path.");
+    }
+}
+
+static void RefreshSettingsPerfNote(AuthUiState& state, const std::wstring& runtimeRoot) {
+    const std::wstring activeId = GetActiveProfileId(runtimeRoot);
+    const Profile activeProfile = GetProfileById(runtimeRoot, activeId);
+    state.settingsPerfMode = activeProfile.perfRenderer;
+    if (activeProfile.builtin || activeId == kVanillaProfileId) {
+        state.settingsPerfNote = Tr(L"Vanilla is read-only. Create a profile to change it.");
+        return;
+    }
+    const LaunchTarget target = ResolveProfileTarget(runtimeRoot, activeProfile);
+    const PerfSelection selection = SelectPerformanceCandidate(runtimeRoot, target);
+    if (activeProfile.perfRenderer == L"off") {
+        state.settingsPerfNote = Tr(L"Off. Managed files were removed.");
+        return;
+    }
+    if (!selection.hasCandidate) {
+        state.settingsPerfNote = selection.gap.empty()
+            ? Tr(L"No candidate for this target.")
+            : selection.gap;
+        return;
+    }
+    const bool installed = ManagedFilesPresent(
+        runtimeRoot, activeId, PerfOwnerToken(selection.candidate.project));
+    state.settingsPerfNote = TrFormat(L"{0}{1}{2}",
+        { selection.candidate.project,
+            selection.candidate.proven ? std::wstring(L"") : std::wstring(Tr(L" (untested)")),
+            installed ? std::wstring(Tr(L" installed")) : std::wstring(Tr(L" not installed")) });
+}
+
+static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, AuthUiState& state,
+    const std::wstring& runtimeRoot) {
+    constexpr int kSettingsRows = 9;
     WriteLog(L"Settings page opened");
 
     state.showMainMenu = false;
@@ -622,6 +680,9 @@ static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, 
     }
     themes::Reload();
     state.settingsThemeName = themes::CurrentName();
+    RefreshSettingsControllerNote(state, runtimeRoot);
+    RefreshSettingsRendererNote(state, runtimeRoot);
+    RefreshSettingsPerfNote(state, runtimeRoot);
 
     bool upWas = false;
     bool downWas = false;
@@ -749,6 +810,57 @@ static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, 
             state.settingsThemeName = themes::CurrentName();
             state.settingsNote = saved ? TrFormat(L"Theme set to {0}.", { state.settingsThemeName })
                                        : Tr(L"The theme was changed but could not be saved.");
+        } else if (pressed == 7) {
+            const RendererBackend requested = RequestedRenderer(runtimeRoot);
+            std::wstring note;
+            if (requested == RendererBackend::VulkanExperimental) {
+                SetRequestedRenderer(runtimeRoot, GetExecutableDir(), RendererBackend::OpenGL, note);
+            } else {
+                SetRequestedRenderer(runtimeRoot, GetExecutableDir(), RendererBackend::VulkanExperimental, note);
+            }
+            state.settingsNote = note;
+            RefreshSettingsRendererNote(state, runtimeRoot);
+        } else if (pressed == 8) {
+            const std::wstring activeId = GetActiveProfileId(runtimeRoot);
+            const Profile activeProfile = GetProfileById(runtimeRoot, activeId);
+            if (activeProfile.builtin || activeId == kVanillaProfileId) {
+                state.settingsNote = Tr(L"Vanilla is read-only. Create a profile to change performance mods.");
+            } else if (PerformanceJobPending(activeId)) {
+                state.settingsNote = Tr(L"Still applying the performance renderer...");
+            } else {
+                const std::wstring next = activeProfile.perfRenderer == L"off" ? L"auto" : L"off";
+                StartPerformanceJob(runtimeRoot, activeId, next);
+                state.settingsNote = Tr(L"Applying performance renderer...");
+            }
+        } else if (pressed == 6) {
+            const std::wstring activeId = GetActiveProfileId(runtimeRoot);
+            const Profile activeProfile = GetProfileById(runtimeRoot, activeId);
+            if (activeProfile.builtin || activeId == kVanillaProfileId) {
+                state.settingsNote = Tr(L"Vanilla is read-only. Create a profile to choose a controller bundle.");
+            } else if (ControllerBundleJobPending(activeId)) {
+                state.settingsNote = Tr(L"Still applying the controller bundle...");
+            } else {
+                const std::wstring next = NextControllerBundle(activeProfile.controllerBundle);
+                StartControllerBundleJob(runtimeRoot, activeId, next);
+                state.settingsNote = TrFormat(L"Applying controller bundle {0}...",
+                    { Tr(ControllerBundleLabelKey(next)) });
+            }
+        }
+
+        {
+            const std::wstring activeId = GetActiveProfileId(runtimeRoot);
+            std::wstring jobStatus, jobChosen;
+            bool jobError = false;
+            if (PollControllerBundleJob(activeId, jobStatus, jobError, jobChosen)) {
+                RefreshSettingsControllerNote(state, runtimeRoot);
+                state.settingsNote = jobStatus;
+            }
+            std::wstring perfStatus;
+            bool perfError = false;
+            if (PollPerformanceJob(activeId, perfStatus, perfError)) {
+                RefreshSettingsPerfNote(state, runtimeRoot);
+                state.settingsNote = perfStatus;
+            }
         }
 
         upWas = upDown;
@@ -873,7 +985,7 @@ MainMenuAction ShowMainMenu(ICoreWindow* window, const LaunchAuthConfig& authCon
                 ShowRemoteFilesPage(window, renderer, state, runtimeRoot);
             } else if (selected == 3) {
                 WriteLog(L"Main menu: Settings selected");
-                ShowSettingsPage(window, renderer, state);
+                ShowSettingsPage(window, renderer, state, runtimeRoot);
             } else if (selected == 4) {
                 WriteLog(L"Main menu: What's new selected");
                 ShowChangelogScreen(window, renderer, state, nullptr);

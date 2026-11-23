@@ -37,7 +37,7 @@ Current defaults:
 - Java release: `21`
 - JNA: `5.17.0`
 
-The default target is `1.21.11 + Fabric 0.19.5`. The catalog includes every stable Minecraft version from 1.21 through 26.2 for Fabric and NeoForge. Forge is included for each of those versions except 1.21.2, where no Forge loader was published. These modern targets remain experimental until they have been tested on Xbox hardware.
+The default target is `1.21.11 + Fabric 0.19.5`. The catalog includes every stable Minecraft version from 1.21 through 26.3 for Fabric and NeoForge. Forge is included for each of those versions except 1.21.2, where no Forge loader was published. These modern targets remain experimental until they have been tested on Xbox hardware.
 
 Build every configured target and retain staged package contents with:
 
@@ -70,7 +70,7 @@ For adding another playable Fabric target, add it to `config\versions.tsv`, make
 
 For adding another playable NeoForge target, the launcher needs matching NeoForge install metadata in the generated manifest and launch provider logic in `MC.Xbox\launch\loaders\neoforge.cpp` (dispatched through `launch\loaders\loader.cpp`). NeoForge generates patched client artifacts on first launch from downloaded official inputs. Do not commit or redistribute generated NeoForge client jars.
 
-Forge has an experimental launch provider in `launch\loaders\forge.cpp`. Modern Forge targets from 1.21 through 26.2 use the shared modern controller source and thin version adapters under `controller_mod\neoforge\`. Forge 1.21.2 is not cataloged because no matching loader was published.
+Forge has an experimental launch provider in `launch\loaders\forge.cpp`. Modern Forge targets from 1.21 through 26.3 use the shared modern controller source and thin version adapters under `controller_mod\neoforge\`. Forge 1.21.2 is not cataloged because no matching loader was published.
 
 Forge build inputs that belong in the repo:
 
@@ -82,9 +82,9 @@ config\forge-install-profile.json
 
 For adding another playable Forge target, add it to `config\versions.tsv`, extend `launch\loaders\forge.cpp`, and let `build.ps1` generate the manifest plus any `controller_mod` output under `runtime\version-mods\<target-id>\`.
 
-### Minecraft 26.2
+### Minecraft 26.2 and 26.3
 
-`26.2` is a calendar versioned target. It is cataloged as experimental. Loader versions are recorded in `config/versions.tsv`. Its Java and mapping requirements differ from earlier targets.
+`26.2` and `26.3` are calendar versioned targets. Both are cataloged as experimental. Loader versions are recorded in `config/versions.tsv`. Fabric loader is `0.20.1` on `26.3`. Neither `26.3` target ships a bundled Bandit controller build, so those rows use controller provider `none` and rely on Controlify or user mods where supported. Its Java and mapping requirements differ from earlier targets.
 
 **It needs JDK 25.** Mojang declares Java 25 for `26.2` and its client classes are class file version 69, which JDK 21 refuses to read. `Resolve-JavaHomeForMinecraft` in `scripts\common.ps1` picks the higher of the version's declared Java major and the `JavaRelease` default, so a JDK 25 has to be installed to compile against this target or to remap for it. The catalog row records `javaRuntime=current`.
 

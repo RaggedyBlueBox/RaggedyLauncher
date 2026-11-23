@@ -185,6 +185,21 @@ static bool IsControlifyJarName(const std::wstring& fileName) {
         lower.rfind(L"midnight-controls", 0) == 0;
 }
 
+bool IsBanditControllerJarFileName(const std::wstring& fileName) {
+    return IsBanditControllerJarName(fileName);
+}
+
+bool IsControlifyJarFileName(const std::wstring& fileName) {
+    return IsControlifyJarName(fileName);
+}
+
+bool IsLegacy4JJarFileName(const std::wstring& fileName) {
+    const std::wstring lower = ToLowerW(fileName);
+    return lower.size() > 4 &&
+        lower.compare(lower.size() - 4, 4, L".jar") == 0 &&
+        lower.rfind(L"legacy4j", 0) == 0;
+}
+
 int DeleteBanditControllerModsFromDir(const std::wstring& modsDir) {
     int removed = 0;
     WIN32_FIND_DATAW fd;
@@ -243,8 +258,8 @@ std::wstring PrepareEffectiveBundledModsDir(
     const std::wstring& runtimeRoot,
     const std::wstring& targetId,
     const std::wstring& bundledModsDir,
-    bool controllerModEnabled) {
-    if (controllerModEnabled || bundledModsDir.empty() || !DirectoryExists(bundledModsDir)) {
+    const std::wstring& controllerBundle) {
+    if (ControllerBundleUsesBandit(controllerBundle) || bundledModsDir.empty() || !DirectoryExists(bundledModsDir)) {
         return bundledModsDir;
     }
 

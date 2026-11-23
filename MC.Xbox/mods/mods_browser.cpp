@@ -4,6 +4,8 @@
 #include "modpack_io.h"
 #include "auth_screen.h"
 #include "compat_feed.h"
+#include "controller_bundle.h"
+#include "performance_bundle.h"
 #include "curseforge.h"
 #include "runtime_manager.h"
 #include "http_client.h"
@@ -810,7 +812,8 @@ static bool InstallModrinthProjectRecursive(
     const std::string& loaderVersion,
     const std::wstring& rootProjectId,
     bool installingDependency,
-    const std::wstring& pinnedVersion = L"") {
+    const std::wstring& pinnedVersion = L"",
+    const std::wstring& userBackupDir = L"") {
     using namespace winrt::Windows::Data::Json;
     if (projectIdOrSlug.empty()) {
         error = Tr(L"Missing Modrinth project id");
@@ -944,7 +947,7 @@ static bool InstallModrinthProjectRecursive(
                 ToLowerW(projectIdOrSlug) != L"p7dr8msh" &&
                 FabricModDependsOn(tempPath, L"fabric")) {
                 WriteLogF(L"Mod %s requires Fabric API; ensuring Fabric API dependency", filename.c_str());
-                if (!InstallModrinthProjectRecursive(L"P7dR8mSH", runtimeRoot, userModsDir, visited, installed, nullptr, error, gameVersion, loaderId, loaderVersion, rootProjectId, true)) {
+                if (!InstallModrinthProjectRecursive(L"P7dR8mSH", runtimeRoot, userModsDir, visited, installed, nullptr, error, gameVersion, loaderId, loaderVersion, rootProjectId, true, L"", userBackupDir)) {
                     DeleteFileW(tempPath.c_str());
                     return false;
                 }
@@ -961,13 +964,29 @@ static bool InstallModrinthProjectRecursive(
                     const std::wstring depVersion = JsonStringOrEmpty(dep, L"version_id");
                     const std::wstring depProject = JsonStringOrEmpty(dep, L"project_id").empty() ? depVersion : JsonStringOrEmpty(dep, L"project_id");
                     if (!depProject.empty() &&
-                        !InstallModrinthProjectRecursive(depProject, runtimeRoot, userModsDir, visited, installed, nullptr, error, gameVersion, loaderId, loaderVersion, rootProjectId, true, depVersion)) {
+                        !InstallModrinthProjectRecursive(depProject, runtimeRoot, userModsDir, visited, installed, nullptr, error, gameVersion, loaderId, loaderVersion, rootProjectId, true, depVersion, userBackupDir)) {
                         DeleteFileW(tempPath.c_str());
                         return false;
                     }
                 }
             }
 
+            if (!userBackupDir.empty() &&
+                GetFileAttributesW(destination.c_str()) != INVALID_FILE_ATTRIBUTES &&
+                !BundleFileHasOwners(userModsDir, installedFileName)) {
+                // A user-owned jar is in the way. Stash it so the bundle can
+                // install without destroying it; removal restores it later.
+                EnsureDirectoryTree(userBackupDir);
+                const std::wstring stash = userBackupDir + L"\\" + installedFileName;
+                DeleteFileW(stash.c_str());
+                if (!MoveFileExW(destination.c_str(), stash.c_str(), MOVEFILE_REPLACE_EXISTING)) {
+                    DeleteFileW(tempPath.c_str());
+                    error = TrFormat(L"Could not preserve existing file: {0}", { filename });
+                    WriteLogF(L"Bundle backup failed for %s err=%u", destination.c_str(), GetLastError());
+                    return false;
+                }
+                WriteLogF(L"Bundle stashed user file %s", destination.c_str());
+            }
             if (!MoveFileExW(tempPath.c_str(), destination.c_str(), MOVEFILE_REPLACE_EXISTING)) {
                 DeleteFileW(tempPath.c_str());
                 error = TrFormat(L"Could not install mod: {0}", { filename });
@@ -1156,6 +1175,241 @@ static bool InstallModProject(
     const std::wstring id = !card.projectId.empty() ? card.projectId : card.slug;
     return InstallCurseForgeProjectRecursive(id, runtimeRoot, userModsDir, visited, installed,
         &card, error, gameVersion, loaderName, loaderVersion, modsource::QualifyProjectId(ModSource::CurseForge, id), false);
+}
+
+// ---- Launcher-managed controller bundles ----
+// Bundles download from Modrinth with the same validation as manual installs
+// (game version + loader match, SHA-1 verification, blocked-mod checks) and
+// additionally stash any colliding user-owned jars before replacing them.
+
+static std::wstring ControllerBundleRootSlug(const std::wstring& bundle) {
+    if (NormalizeControllerBundle(bundle) == L"legacy4j") return L"legacy4j";
+    return L"controlify";
+}
+
+static bool InstallControllerBundleMods(const std::wstring& runtimeRoot, const std::wstring& profileId,
+    const std::wstring& bundle, std::wstring& error, std::vector<std::wstring>& installedOut) {
+    const Profile profile = GetProfileById(runtimeRoot, profileId);
+    if (profile.builtin || profileId == kVanillaProfileId) {
+        error = Tr(L"Vanilla is read-only. Pick or make a profile first.");
+        return false;
+    }
+    const LaunchTarget target = ResolveProfileTarget(runtimeRoot, profile);
+    const std::wstring loader = ToLowerW(target.loader);
+    if (loader != L"fabric" && loader != L"forge" && loader != L"neoforge") {
+        error = Tr(L"Controller bundles need a Fabric, Forge or NeoForge profile.");
+        return false;
+    }
+    std::wstring reason;
+    if (!ControllerBundleSupportedForTarget(bundle, target, reason)) {
+        error = reason.empty() ? Tr(L"This controller bundle is unavailable for the profile target.") : reason;
+        return false;
+    }
+    return InstallManagedModrinthProject(runtimeRoot, profileId, ControllerBundleRootSlug(bundle),
+        L"bundle:" + NormalizeControllerBundle(bundle), target, installedOut, error);
+}
+
+bool InstallManagedModrinthProject(const std::wstring& runtimeRoot, const std::wstring& profileId,
+    const std::wstring& rootSlug, const std::wstring& ownerToken, const LaunchTarget& target,
+    std::vector<std::wstring>& installedOut, std::wstring& error) {
+    const std::wstring userModsDir = ProfileModsDir(runtimeRoot, profileId);
+    const std::string gameVersion = w2a(target.minecraftVersion);
+    const std::string loaderId = ModrinthLoaderId(target.loader);
+    const std::string loaderVersion = w2a(target.loaderVersion);
+    const std::wstring backupDir = ManagedBackupDir(userModsDir, ownerToken);
+    DeleteDirectoryTree(backupDir);
+
+    std::set<std::wstring> before;
+    for (const std::wstring& name : ListProfileMods(runtimeRoot, profileId)) before.insert(ToLowerW(name));
+
+    std::set<std::wstring> visited;
+    std::vector<std::wstring> installed;
+    WriteLogF(L"Installing managed project %s target=%s into profile %s",
+        rootSlug.c_str(), target.targetId.c_str(), profileId.c_str());
+    if (!InstallModrinthProjectRecursive(rootSlug, runtimeRoot, userModsDir, visited, installed,
+            nullptr, error, gameVersion, loaderId, loaderVersion, ownerToken, false, L"", backupDir)) {
+        // Roll back partial work: restore stashed user files, delete files the
+        // bundle created, and leave the previous selection usable.
+        for (const std::wstring& name : installed) {
+            const std::wstring stash = backupDir + L"\\" + name;
+            if (GetFileAttributesW(stash.c_str()) != INVALID_FILE_ATTRIBUTES) {
+                MoveFileExW(stash.c_str(), (userModsDir + L"\\" + name).c_str(), MOVEFILE_REPLACE_EXISTING);
+            } else if (before.count(ToLowerW(name)) == 0) {
+                DeleteFileW((userModsDir + L"\\" + name).c_str());
+                DeleteFileW((userModsDir + L"\\.bandit\\mod-installs\\" + SafeFileName(name) + L".meta").c_str());
+            }
+        }
+        DeleteDirectoryTree(backupDir);
+        if (error.empty()) error = Tr(L"Managed mod install failed.");
+        return false;
+    }
+    for (const std::wstring& name : installed) {
+        const std::wstring stash = backupDir + L"\\" + name;
+        if (GetFileAttributesW(stash.c_str()) != INVALID_FILE_ATTRIBUTES) {
+            NoteManagedUserBackup(userModsDir, name, ownerToken);
+        }
+    }
+    TagManagedFiles(userModsDir, installed, ownerToken);
+    installedOut = installed;
+    return true;
+}
+
+bool ApplyControllerBundle(const std::wstring& runtimeRoot, const std::wstring& profileId,
+    const std::wstring& bundle, std::wstring& chosenOut, std::wstring& status, bool& isError) {
+    isError = false;
+    chosenOut.clear();
+    const Profile profile = GetProfileById(runtimeRoot, profileId);
+    if (profile.builtin || profileId == kVanillaProfileId) {
+        status = Tr(L"Vanilla is read-only. Create a profile to choose a controller bundle.");
+        isError = true;
+        return false;
+    }
+    const std::wstring want = NormalizeControllerBundle(bundle);
+    if (!IsKnownControllerBundle(bundle)) {
+        status = Tr(L"Unknown controller bundle.");
+        isError = true;
+        return false;
+    }
+    const LaunchTarget target = ResolveProfileTarget(runtimeRoot, profile);
+    if (want != L"auto") {
+        std::wstring reason;
+        if (!ControllerBundleSupportedForTarget(want, target, reason)) {
+            status = reason.empty() ? Tr(L"This controller bundle is unavailable for the profile target.") : reason;
+            isError = true;
+            return false;
+        }
+    }
+
+    std::vector<std::wstring> candidates;
+    if (want == L"auto") {
+        candidates = { L"legacy4j", L"bandit", L"controlify", L"none" };
+    } else {
+        candidates = { want };
+    }
+    std::wstring chosen;
+    std::wstring lastError;
+    int installedCount = 0;
+    for (const std::wstring& candidate : candidates) {
+        std::wstring reason;
+        if (!ControllerBundleSupportedForTarget(candidate, target, reason)) {
+            lastError = reason;
+            continue;
+        }
+        if (candidate == L"legacy4j" || candidate == L"controlify") {
+            std::vector<std::wstring> installed;
+            if (!InstallControllerBundleMods(runtimeRoot, profileId, candidate, lastError, installed)) {
+                WriteLogF(L"Controller bundle %s install failed: %s", candidate.c_str(), lastError.c_str());
+                continue;
+            }
+            installedCount = static_cast<int>(installed.size());
+        }
+        chosen = candidate;
+        break;
+    }
+    if (chosen.empty()) {
+        status = lastError.empty() ? Tr(L"No usable controller bundle for this target.") : lastError;
+        isError = true;
+        return false;
+    }
+    if (!SetProfileControllerBundle(runtimeRoot, profileId, want)) {
+        status = Tr(L"Could not save controller setting");
+        isError = true;
+        return false;
+    }
+    // Drop managed files of the bundles that are no longer effective. Shared
+    // dependencies survive through ownership refcounts; user jars are untouched.
+    static const wchar_t* kManaged[] = { L"legacy4j", L"controlify" };
+    int removed = 0;
+    for (const wchar_t* owned : kManaged) {
+        if (chosen != owned) removed += RemoveBundleOwnedFiles(runtimeRoot, profileId, owned);
+    }
+    const std::wstring effective = ResolveEffectiveControllerBundle(want, target);
+    const std::vector<std::wstring> conflicts = FindBundleConflicts(runtimeRoot, profileId, effective);
+    if (want == L"auto") {
+        if (chosen == L"legacy4j") {
+            status = installedCount == 0
+                ? Tr(L"Controller bundle: Auto using Legacy4J (already installed).")
+                : TrFormat(L"Controller bundle: Auto using Legacy4J ({0} file(s) installed).", { std::to_wstring(installedCount) });
+        } else if (chosen == L"bandit") {
+            status = Tr(L"Controller bundle: Auto using Bandit (Legacy4J has no build for this version).");
+        } else if (chosen == L"controlify") {
+            status = Tr(L"Controller bundle: Auto using Controlify (Legacy4J and Bandit are unavailable here).");
+        } else {
+            status = Tr(L"Controller bundle: Auto found no usable controller here; nothing was installed.");
+        }
+    } else if (chosen == L"legacy4j" || chosen == L"controlify") {
+        status = installedCount == 0
+            ? TrFormat(L"Controller bundle: {0} ready.", { Tr(ControllerBundleLabelKey(chosen)) })
+            : TrFormat(L"Controller bundle: {0} installed ({1} file(s)).", { Tr(ControllerBundleLabelKey(chosen)), std::to_wstring(installedCount) });
+    } else if (chosen == L"bandit") {
+        status = removed > 0
+            ? Tr(L"Bandit controller mod will be forced on launch")
+            : Tr(L"Bandit controller mod enabled");
+    } else {
+        status = removed > 0
+            ? Tr(L"Controller bundle cleared; your own mods were left in place")
+            : Tr(L"No launcher controller bundle; your own mods were left in place");
+    }
+    if (!conflicts.empty()) {
+        status += L" " + TrFormat(L"Unmanaged {0} may conflict; remove it yourself to avoid double input.",
+            { conflicts.front() });
+    }
+    chosenOut = chosen;
+    return true;
+}
+
+namespace {
+struct BundleJobState {
+    std::mutex mutex;
+    bool running = false;
+    bool ready = false;
+    bool ok = false;
+    bool error = false;
+    std::wstring profileId;
+    std::wstring status;
+    std::wstring chosen;
+};
+BundleJobState g_bundleJob;
+}  // namespace
+
+void StartControllerBundleJob(
+    const std::wstring& runtimeRoot, const std::wstring& profileId, const std::wstring& bundle) {
+    std::lock_guard<std::mutex> lk(g_bundleJob.mutex);
+    if (g_bundleJob.running) return;
+    g_bundleJob.running = true;
+    g_bundleJob.ready = false;
+    g_bundleJob.profileId = profileId;
+    const std::wstring rootCopy = runtimeRoot;
+    const std::wstring profileCopy = profileId;
+    const std::wstring bundleCopy = bundle;
+    std::thread([rootCopy, profileCopy, bundleCopy]() {
+        std::wstring chosen, status;
+        bool isError = false;
+        const bool ok = ApplyControllerBundle(rootCopy, profileCopy, bundleCopy, chosen, status, isError);
+        std::lock_guard<std::mutex> inner(g_bundleJob.mutex);
+        g_bundleJob.ok = ok;
+        g_bundleJob.error = isError;
+        g_bundleJob.status = status;
+        g_bundleJob.chosen = chosen;
+        g_bundleJob.ready = true;
+        g_bundleJob.running = false;
+    }).detach();
+}
+
+bool PollControllerBundleJob(const std::wstring& profileId, std::wstring& status, bool& isError, std::wstring& chosen) {
+    std::lock_guard<std::mutex> lk(g_bundleJob.mutex);
+    if (g_bundleJob.running || !g_bundleJob.ready) return false;
+    if (g_bundleJob.profileId != profileId) return false;
+    g_bundleJob.ready = false;
+    status = g_bundleJob.status;
+    isError = g_bundleJob.error;
+    chosen = g_bundleJob.chosen;
+    return true;
+}
+
+bool ControllerBundleJobPending(const std::wstring& profileId) {
+    std::lock_guard<std::mutex> lk(g_bundleJob.mutex);
+    return (g_bundleJob.running || g_bundleJob.ready) && g_bundleJob.profileId == profileId;
 }
 
 
@@ -2483,6 +2737,19 @@ void ShowModsPage(
                 loadedQuery = state.modsSearchQuery;
             }
         }
+        {
+            const std::wstring active = GetActiveProfileId(runtimeRoot);
+            std::wstring perfStatus;
+            bool perfError = false;
+            if (PollPerformanceJob(active, perfStatus, perfError)) {
+                state.status = perfStatus;
+                state.isError = perfError;
+                if (state.selectedModsTab == modstab::kProfiles) {
+                    LoadModsTab(state, runtimeRoot);
+                    loadedQuery = state.modsSearchQuery;
+                }
+            }
+        }
 
         bool clickActivate = false;
         float wheelDelta = 0.0f;
@@ -2697,26 +2964,11 @@ void ShowModsPage(
                         state.isError = true;
                     }
                 } else if (state.modsProfileFocus == 5 && !state.modsProfileBuiltin) {
-                    state.modsProfileControllerModEnabled = !state.modsProfileControllerModEnabled;
-                    if (!SetProfileControllerModEnabled(runtimeRoot, state.modsProfileId, state.modsProfileControllerModEnabled)) {
-                        state.modsProfileControllerModEnabled = !state.modsProfileControllerModEnabled;
-                        state.status = Tr(L"Could not save controller setting");
-                        state.isError = true;
-                        continue;
-                    }
-                    if (state.modsProfileControllerModEnabled) {
-                        const int removed = DeleteControlifyModsFromDir(ProfileModsDir(runtimeRoot, state.modsProfileId));
-                        state.modsProfileMods = ListProfileMods(runtimeRoot, state.modsProfileId);
-                        state.status = removed > 0
-                            ? Tr(L"Bandit controller mod enabled and Controlify removed")
-                            : Tr(L"Bandit controller mod will be forced on launch");
-                    } else {
-                        const int removed = DeleteBanditControllerModsFromDir(ProfileModsDir(runtimeRoot, state.modsProfileId));
-                        state.modsProfileMods = ListProfileMods(runtimeRoot, state.modsProfileId);
-                        state.status = removed > 0
-                            ? Tr(L"Bandit controller mod disabled and removed")
-                            : Tr(L"Bandit controller mod disabled");
-                    }
+                    if (ControllerBundleJobPending(state.modsProfileId)) continue;
+                    const std::wstring next = NextControllerBundle(
+                        GetProfileById(runtimeRoot, state.modsProfileId).controllerBundle);
+                    StartControllerBundleJob(runtimeRoot, state.modsProfileId, next);
+                    state.status = TrFormat(L"Applying controller bundle {0}...", { Tr(ControllerBundleLabelKey(next)) });
                     state.isError = false;
                 } else if (state.modsProfileFocus == 0) {
                     if (!SetActiveProfileId(runtimeRoot, state.modsProfileId)) { state.status = Tr(L"Could not save active profile"); state.isError = true; continue; }
@@ -2741,6 +2993,17 @@ void ShowModsPage(
             rightWasDown = rightDown; selectWasDown = selectDown; enterWasDown = enterDown;
             backWasDown = backDown; pageUpWasDown = pageUpDown; pageDownWasDown = pageDownDown; xWasDown = xDown; yWasDown = yDown;
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
+            if (!state.modsProfileId.empty()) {
+                std::wstring jobStatus, jobChosen;
+                bool jobError = false;
+                if (PollControllerBundleJob(state.modsProfileId, jobStatus, jobError, jobChosen)) {
+                    state.modsProfileControllerBundle =
+                        GetProfileById(runtimeRoot, state.modsProfileId).controllerBundle;
+                    state.modsProfileMods = ListProfileMods(runtimeRoot, state.modsProfileId);
+                    state.status = jobStatus;
+                    state.isError = jobError;
+                }
+            }
             continue;
         }
 
@@ -2996,6 +3259,9 @@ void ShowModsPage(
                         LoadModsTab(state, runtimeRoot);
                         ensureSelectionVisible();
                         state.status = Tr(L"New profile ready. Browse mods to fill it.");
+                        if (MaybeProvisionPerformanceForNewProfile(runtimeRoot, pid)) {
+                            state.status = Tr(L"New profile ready. Installing its proven performance renderer...");
+                        }
                     } else if (selected.projectId == L"__profile__") {
                         SetModsTargetFromProfile(state, runtimeRoot, selected.filePath);
                         state.modsProfileOpen = true;
@@ -3003,7 +3269,7 @@ void ShowModsPage(
                         state.modsProfileName = selected.title;
                         state.modsProfileTargetText = ProfileDisplayTarget(runtimeRoot, selected.filePath);
                         state.modsProfileBuiltin = (selected.filePath == kVanillaProfileId);
-                        state.modsProfileControllerModEnabled = GetProfileById(runtimeRoot, selected.filePath).controllerModEnabled;
+                        state.modsProfileControllerBundle = GetProfileById(runtimeRoot, selected.filePath).controllerBundle;
                         state.modsProfileMods = ListProfileMods(runtimeRoot, selected.filePath);
                         state.modsProfileScroll = 0;
                         state.modsProfileFocus = 0;

@@ -151,7 +151,7 @@ NeoForge generates patched client artifacts on first launch from downloaded offi
 
 Forge patched client jars are generated locally during build or first launch prep from official inputs. Do not commit or redistribute generated Forge client jars.
 
-Modern Forge controller targets from 1.21 through 26.2 reuse the NeoForge shared source with a Forge entrypoint. Minecraft 1.21.2 has no Forge row because no matching loader was published. Older catalog rows may still exist before their controller providers are implemented.
+Modern Forge controller targets from 1.21 through 26.3 reuse the NeoForge shared source with a Forge entrypoint. Minecraft 1.21.2 has no Forge row because no matching loader was published. Older catalog rows may still exist before their controller providers are implemented.
 
 ### Cleanroom
 
