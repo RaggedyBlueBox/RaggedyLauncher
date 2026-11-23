@@ -15,8 +15,8 @@ $controllerCoreJava = Join-Path $root "controller_mod\core\src\main\java"
 $buildRoot = Join-Path (Get-ConfigPath "BuildDir") "controller_mod\forge\$ForgeVersion"
 $classesDir = Join-Path $buildRoot "classes"
 $compileOnlyDir = Join-Path $buildRoot "compile-only"
-$modId = "banditvault_forge_controller"
-$jarName = "banditvault-forge-controller-1.0.0.jar"
+$modId = "raggedy_forge_controller"
+$jarName = "raggedy-forge-controller-1.0.0.jar"
 $jarPath = Join-Path $buildRoot $jarName
 $gameDir = Get-ConfigPath "GameDir"
 $profilePath = Join-Path $root "config\forge-install-profile.json"
@@ -180,20 +180,20 @@ $jarListing = & $jar tf $jarPath
 if ($jarListing | Where-Object { $_ -like "net/minecraftforge/*" }) {
     throw "Packaged Forge controller mod still contains Forge API classes."
 }
-if ($jarListing -notcontains "banditvault/forgecontroller/ForgeControllerMod.class") {
+if ($jarListing -notcontains "raggedy/forgecontroller/ForgeControllerMod.class") {
     throw "Packaged Forge controller mod is missing @Mod entrypoint class."
 }
 if ($jarListing -notcontains "META-INF/mods.toml") {
     throw "Packaged Forge controller mod is missing mods.toml."
 }
-if ($jarListing -notcontains "banditvault-forge-controller.mixins.json") {
+if ($jarListing -notcontains "raggedy-forge-controller.mixins.json") {
     throw "Packaged Forge controller mod is missing mixin config."
 }
 if ($jarListing -notcontains "pack.mcmeta") {
     throw "Packaged Forge controller mod is missing pack.mcmeta."
 }
 $manifestText = Get-Content $manifestPath -Raw
-if ($manifestText -notmatch "MixinConfigs:\s*banditvault-forge-controller\.mixins\.json") {
+if ($manifestText -notmatch "MixinConfigs:\s*raggedy-forge-controller\.mixins\.json") {
     throw "Forge controller manifest is missing MixinConfigs entry."
 }
 

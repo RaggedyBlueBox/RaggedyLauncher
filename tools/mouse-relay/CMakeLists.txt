@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(BanditMouseRelay LANGUAGES CXX)
+project(RaggedyMouseRelay LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,7 +10,7 @@ if(ANDROID)
   find_package(SDL3 REQUIRED CONFIG)
 
   add_library(main SHARED src/main.cpp)
-  target_compile_definitions(main PRIVATE BANDIT_MOUSE_RELAY_TOUCH=1)
+  target_compile_definitions(main PRIVATE RAGGEDY_MOUSE_RELAY_TOUCH=1)
   target_link_libraries(main PRIVATE SDL3::SDL3 android log)
 elseif(IOS)
   include(FetchContent)
@@ -29,14 +29,14 @@ elseif(IOS)
   )
   FetchContent_MakeAvailable(SDL3)
 
-  add_executable(BanditMouseRelay MACOSX_BUNDLE src/main.cpp)
-  target_compile_definitions(BanditMouseRelay PRIVATE BANDIT_MOUSE_RELAY_TOUCH=1)
-  target_link_libraries(BanditMouseRelay PRIVATE SDL3::SDL3-static)
+  add_executable(RaggedyMouseRelay MACOSX_BUNDLE src/main.cpp)
+  target_compile_definitions(RaggedyMouseRelay PRIVATE RAGGEDY_MOUSE_RELAY_TOUCH=1)
+  target_link_libraries(RaggedyMouseRelay PRIVATE SDL3::SDL3-static)
 
-  set_target_properties(BanditMouseRelay PROPERTIES
+  set_target_properties(RaggedyMouseRelay PROPERTIES
     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/ios/Info.plist"
-    MACOSX_BUNDLE_BUNDLE_NAME "Bandit Relay"
-    MACOSX_BUNDLE_GUI_IDENTIFIER "dev.bandit.mouserelay"
+    MACOSX_BUNDLE_BUNDLE_NAME "Raggedy Relay"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "dev.raggedy.mouserelay"
     MACOSX_BUNDLE_BUNDLE_VERSION "0.1.0"
     MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1.0"
     XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
@@ -60,12 +60,12 @@ else()
   )
   FetchContent_MakeAvailable(SDL3)
 
-  add_executable(BanditMouseRelay WIN32 src/main.cpp)
-  target_link_libraries(BanditMouseRelay PRIVATE SDL3::SDL3)
+  add_executable(RaggedyMouseRelay WIN32 src/main.cpp)
+  target_link_libraries(RaggedyMouseRelay PRIVATE SDL3::SDL3)
 
   if(WIN32)
-    target_sources(BanditMouseRelay PRIVATE src/app.rc)
-    target_link_libraries(BanditMouseRelay PRIVATE ws2_32 winmm)
+    target_sources(RaggedyMouseRelay PRIVATE src/app.rc)
+    target_link_libraries(RaggedyMouseRelay PRIVATE ws2_32 winmm)
   endif()
 endif()
 

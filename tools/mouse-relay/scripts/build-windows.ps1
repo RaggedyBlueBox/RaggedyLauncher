@@ -17,13 +17,13 @@ if ($LASTEXITCODE -ne 0) { throw "Mouse relay CMake configure failed ($LASTEXITC
 cmake --build $buildPath --config $Config --parallel
 if ($LASTEXITCODE -ne 0) { throw "Mouse relay CMake build failed ($LASTEXITCODE)" }
 
-$exe = Get-ChildItem -Path $buildPath -Recurse -Filter "BanditMouseRelay.exe" |
+$exe = Get-ChildItem -Path $buildPath -Recurse -Filter "RaggedyMouseRelay.exe" |
     Where-Object { $_.FullName -match "\\$Config\\" -or $_.DirectoryName -eq $buildPath } |
     Select-Object -First 1
 
 if (-not $exe) {
-    throw "BanditMouseRelay.exe was not produced under $buildPath"
+    throw "RaggedyMouseRelay.exe was not produced under $buildPath"
 }
 
-Write-Host "Bandit Mouse Relay built: $($exe.FullName)"
+Write-Host "Raggedy Mouse Relay built: $($exe.FullName)"
 

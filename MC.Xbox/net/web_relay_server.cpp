@@ -29,8 +29,8 @@ const char* const kWebRelayPage = R"PAGE(<!doctype html>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Bandit Mouse">
-<title>Bandit Web Mouse Support</title>
+<meta name="apple-mobile-web-app-title" content="Raggedy Mouse">
+<title>Raggedy Web Mouse Support</title>
 <style>
 :root{--line:#243444;--muted:#9eb0bf;--text:#edf4f8;--accent:#70c486;--accent2:#69b7cc;}
 *{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
@@ -66,7 +66,7 @@ header{padding:8px 16px;}
 </head>
 <body>
 <header>
-  <div class="brand"><span class="logo"></span>Bandit Web Mouse Support</div>
+  <div class="brand"><span class="logo"></span>Raggedy Web Mouse Support</div>
   <div class="hdr-right"><span id="statetext">tap pad to start</span><span class="dot" id="dot"></span></div>
 </header>
 <div class="stage">

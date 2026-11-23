@@ -1,14 +1,14 @@
 # Changelog
 
-Notable changes to Bandit Launcher. Nightly packages are numbered by build revision rather than by release, so entries here are dated.
+Notable changes to Raggedy Launcher. Nightly packages are numbered by build revision rather than by release, so entries here are dated.
 
 ## 2026-11-23
 
 ### Added
 
-**Controller bundles.** Settings has a new Controller bundle option with five choices: Auto (the default), Legacy4J, Bandit, Controlify and None. Auto prefers Legacy4J and falls back per version and loader when the publisher has no compatible build. Legacy4J and Controlify download with their required dependencies and are tracked so switching bundles never deletes your own mods. None leaves your own controller setup alone. The profile screen shows the same choice. Existing profiles keep their behavior: Bandit on becomes Bandit, Bandit off becomes None.
+**Controller bundles.** Settings has a new Controller bundle option with five choices: Auto (the default), Legacy4J, Raggedy, Controlify and None. Auto prefers Legacy4J and falls back per version and loader when the publisher has no compatible build. Legacy4J and Controlify download with their required dependencies and are tracked so switching bundles never deletes your own mods. None leaves your own controller setup alone. The profile screen shows the same choice. Existing profiles keep their behavior: Bandit on becomes Raggedy, Bandit off becomes None.
 
-**Minecraft 26.3.** The version catalog lists 26.3 for Fabric (0.20.1), Forge (66.1.9) and NeoForge (26.3.0.115) as experimental targets, and 26.3 appears in every target picker. Those rows ship no bundled Bandit controller, so use Controlify or your own mods where supported; Legacy4J has no 26.3 build.
+**Minecraft 26.3.** The version catalog lists 26.3 for Fabric (0.20.1), Forge (66.1.9) and NeoForge (26.3.0.115) as experimental targets, and 26.3 appears in every target picker. Those rows ship no bundled Raggedy controller, so use Controlify or your own mods where supported; Legacy4J has no 26.3 build.
 
 **Graphics renderer setting.** Settings has a new Graphics renderer row. OpenGL through the packaged Mesa/D3D12 path stays the default. Vulkan is an experimental opt-in that is only stored when a bridge probe passes; until the Vulkan bridge is validated on Xbox the request is refused and the game keeps running on OpenGL. Launches log the requested and actual renderer.
 

@@ -1,4 +1,4 @@
-# Translating Bandit Launcher
+# Translating Raggedy Launcher
 
 The launcher can run in other languages. Each language is one text file, so adding one does not need any programming.
 

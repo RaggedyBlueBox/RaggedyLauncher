@@ -527,15 +527,15 @@ void NeoForgeAddJvmOptions(const LoaderJvmContext& ctx, std::vector<std::string>
         WriteLogF(L"NeoForge securejarhandler UWP patch missing: %s", secureJarHandlerPatch.c_str());
     }
     if (!ctx.neoForgeMinecraftSrgJar.empty()) {
-        vmOptions.push_back("-Dbanditvault.neoforge.minecraftSrgJar=" + w2a(fwd(ctx.neoForgeMinecraftSrgJar)));
+        vmOptions.push_back("-Draggedy.neoforge.minecraftSrgJar=" + w2a(fwd(ctx.neoForgeMinecraftSrgJar)));
         WriteLogF(L"NeoForge Minecraft SRG fallback jar: %s", ctx.neoForgeMinecraftSrgJar.c_str());
     }
-    vmOptions.push_back("-Dbanditvault.launcherOverrideDir=" + w2a(fwd(ctx.launcherOverrideDir)));
+    vmOptions.push_back("-Draggedy.launcherOverrideDir=" + w2a(fwd(ctx.launcherOverrideDir)));
     if (VerboseLoggingEnabled()) {
         vmOptions.push_back("-Dforge.logging.console.level=debug");
         vmOptions.push_back("-Dforge.logging.markers=REGISTRIES");
         vmOptions.push_back("-Dneoforge.logging.console.level=debug");
-        vmOptions.push_back("-Dbanditvault.securejarhandler.debug=true");
+        vmOptions.push_back("-Draggedy.securejarhandler.debug=true");
     } else {
         vmOptions.push_back("-Dforge.logging.console.level=info");
         vmOptions.push_back("-Dneoforge.logging.console.level=info");

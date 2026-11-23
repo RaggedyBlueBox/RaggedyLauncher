@@ -20,7 +20,7 @@ $forgeSource = Join-Path $PSScriptRoot "src\modern\java"
 $compileSource = Join-Path $PSScriptRoot "src\compile\java"
 $neoCompileSource = Join-Path $root "controller_mod\neoforge\src\compile\java"
 $resources = Join-Path $PSScriptRoot "src\modern\resources"
-$jarName = "banditvault-forge-controller-1.0.0.jar"
+$jarName = "raggedy-forge-controller-1.0.0.jar"
 $jarPath = Join-Path $buildRoot $jarName
 $forgeCoordinate = if ($ForgeVersion.StartsWith("$MinecraftVersion-")) { $ForgeVersion } else { "$MinecraftVersion-$ForgeVersion" }
 
@@ -134,11 +134,11 @@ function Invoke-Javac([string]$Name, [string[]]$Sources, [string]$Destination, [
 Invoke-Javac "compile-only" @($compileOnlySources.FullName) $compileOnlyDir $classpath
 Invoke-Javac "main" @($mainSources.FullName) $classesDir (@($compileOnlyDir) + $classpath)
 
-& (Join-Path $javaHome "bin\java.exe") -ea -cp $classesDir banditvault.controllercore.GridNavigation
+& (Join-Path $javaHome "bin\java.exe") -ea -cp $classesDir raggedy.controllercore.GridNavigation
 if ($LASTEXITCODE -ne 0) {
     throw "Forge controller navigation self-check failed"
 }
-& (Join-Path $javaHome "bin\java.exe") -ea -cp $classesDir banditvault.controllercore.ControllerBindings
+& (Join-Path $javaHome "bin\java.exe") -ea -cp $classesDir raggedy.controllercore.ControllerBindings
 if ($LASTEXITCODE -ne 0) {
     throw "Forge controller binding self-check failed"
 }
@@ -168,10 +168,10 @@ try {
 
 $listing = & $jar tf $jarPath
 foreach ($required in @(
-    "banditvault/forgecontroller/ForgeControllerMod.class",
-    "banditvault/neoforgecontroller/NeoForgeControllerCompat.class",
+    "raggedy/forgecontroller/ForgeControllerMod.class",
+    "raggedy/neoforgecontroller/NeoForgeControllerCompat.class",
     "META-INF/mods.toml",
-    "banditvault-forge-controller.mixins.json",
+    "raggedy-forge-controller.mixins.json",
     "pack.mcmeta"
 )) {
     if ($listing -notcontains $required) { throw "Forge controller jar is missing $required" }

@@ -43,7 +43,7 @@ if ($supportedVersions -notcontains $MinecraftVersion) {
 
 $buildRoot = Join-Path (Get-ConfigPath "BuildDir") "fabric_controller_mod\$MinecraftVersion-$LoaderVersion"
 $classesDir = Join-Path $buildRoot "classes"
-$jarName = "banditvault-fabric-controller-1.0.0.jar"
+$jarName = "raggedy-fabric-controller-1.0.0.jar"
 $jarPath = Join-Path $buildRoot $jarName
 $gameDir = Get-ConfigPath "GameDir"
 
@@ -82,7 +82,7 @@ function Resolve-VariantSources([string]$Version) {
         Get-ChildItem $layerDir -Recurse -Filter "*.java" | ForEach-Object { $resolved[$_.Name] = $_.FullName }
     }
     if ($Version -in @("1.21.9", "1.21.10")) {
-        $resolved["BanditControllerRecipeBookAccessor.java"] = Join-Path $variantRootDir "1.20.1\banditvault\fabriccontroller\mixin\BanditControllerRecipeBookAccessor.java"
+        $resolved["RaggedyControllerRecipeBookAccessor.java"] = Join-Path $variantRootDir "1.20.1\raggedy\fabriccontroller\mixin\RaggedyControllerRecipeBookAccessor.java"
     }
     return @($resolved.Values)
 }
@@ -94,19 +94,19 @@ $parityReference = "26.2"
 # the only allowed differences, each one a class the target's own Minecraft version cannot support
 $referenceOnlySources = @{
     "1.20.1" = @{
-        "BanditControllerOptionsSubScreenAccessor.java" = "class_4667 has no field_51824 before 1.21.1, and the 1.20.x controls screen mixin adds its button without one"
-        "BanditControllerRecipeBookScreenAccessor.java" = "class_10260 does not exist before 1.21.2"
+        "RaggedyControllerOptionsSubScreenAccessor.java" = "class_4667 has no field_51824 before 1.21.1, and the 1.20.x controls screen mixin adds its button without one"
+        "RaggedyControllerRecipeBookScreenAccessor.java" = "class_10260 does not exist before 1.21.2"
     }
     "1.20.4" = @{
-        "BanditControllerOptionsSubScreenAccessor.java" = "class_4667 has no field_51824 before 1.21.1, and the 1.20.x controls screen mixin adds its button without one"
-        "BanditControllerRecipeBookScreenAccessor.java" = "class_10260 does not exist before 1.21.2"
+        "RaggedyControllerOptionsSubScreenAccessor.java" = "class_4667 has no field_51824 before 1.21.1, and the 1.20.x controls screen mixin adds its button without one"
+        "RaggedyControllerRecipeBookScreenAccessor.java" = "class_10260 does not exist before 1.21.2"
     }
     "1.21" = @{
-        "BanditControllerOptionsSubScreenAccessor.java" = "class_4667 has no field_51824 before 1.21.1, and the controls screen mixin adds its button without one"
-        "BanditControllerRecipeBookScreenAccessor.java" = "class_10260 does not exist before 1.21.2"
+        "RaggedyControllerOptionsSubScreenAccessor.java" = "class_4667 has no field_51824 before 1.21.1, and the controls screen mixin adds its button without one"
+        "RaggedyControllerRecipeBookScreenAccessor.java" = "class_10260 does not exist before 1.21.2"
     }
     "1.21.1" = @{
-        "BanditControllerRecipeBookScreenAccessor.java" = "class_10260 does not exist before 1.21.2"
+        "RaggedyControllerRecipeBookScreenAccessor.java" = "class_10260 does not exist before 1.21.2"
     }
     "1.21.2" = @{}
     "1.21.3" = @{}
@@ -210,7 +210,7 @@ if (Test-BuildStampCurrent -StampPath $stampPath -Stamp $stamp -RequiredOutputs 
         Replace("__FABRIC_LOADER_VERSION__", $LoaderVersion) |
         Set-Content $fmj -NoNewline
 
-    $mixinsPath = Join-Path $classesDir "banditvault-fabric-controller.mixins.json"
+    $mixinsPath = Join-Path $classesDir "raggedy-fabric-controller.mixins.json"
     (Get-Content $mixinsPath -Raw).Replace("__COMPAT_LEVEL__", $compatLevel) | Set-Content $mixinsPath -NoNewline
     Push-Location $classesDir
     & $jar cf $jarPath .
@@ -223,7 +223,7 @@ if (Test-BuildStampCurrent -StampPath $stampPath -Stamp $stamp -RequiredOutputs 
     Set-BuildStamp -StampPath $stampPath -Stamp $stamp
 }
 
-& $java -ea -cp $jarPath banditvault.controllercore.ControllerBindings
+& $java -ea -cp $jarPath raggedy.controllercore.ControllerBindings
 if ($LASTEXITCODE -ne 0) { throw "Fabric controller binding self-check failed" }
 
 if ($OutputDir) {

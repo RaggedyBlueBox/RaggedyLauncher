@@ -103,8 +103,10 @@ constexpr wchar_t kGithubIssuesUrl[] =
 
 std::wstring Endpoint() {
     static const std::wstring endpoint = [] {
-        const std::wstring fromEnv = GetEnvVarString(L"BANDIT_TELEMETRY_ENDPOINT");
+        const std::wstring fromEnv = GetEnvVarString(L"RAGGEDY_TELEMETRY_ENDPOINT");
         if (!fromEnv.empty()) return TrimWhitespace(fromEnv);
+        const std::wstring legacyEnv = GetEnvVarString(L"BANDIT_TELEMETRY_ENDPOINT");
+        if (!legacyEnv.empty()) return TrimWhitespace(legacyEnv);
 
         const std::wstring dir = TelemetryDir();
         if (!dir.empty()) {
@@ -147,7 +149,7 @@ static bool GithubReady() {
     return ConsentGranted() && GithubTokenPresent();
 }
 
-static bool BanditProtocolReady() {
+static bool RaggedyProtocolReady() {
     return !Endpoint().empty() && ConsentGranted() && !InstallId().empty();
 }
 
@@ -297,7 +299,7 @@ bool PostSession(const std::string& body, HttpResult& result) {
 
 std::string ProjectIdFor(const std::wstring& modsDir, const std::wstring& file) {
     std::wstring body;
-    const std::wstring path = GetParentDir(modsDir) + L"\\.bandit\\mod-installs\\" + file + L".meta";
+    const std::wstring path = GetParentDir(modsDir) + L"\\.raggedy\\mod-installs\\" + file + L".meta";
     if (!ReadTextFile(path, body)) return std::string();
 
     const std::wstring needle = L"projectId\t";
@@ -355,7 +357,7 @@ void SendModset() {
 }
 
 void SendAsync(const char* event, int minutes) {
-    if (!BanditProtocolReady() || !g_launchActive.load()) return;
+    if (!RaggedyProtocolReady() || !g_launchActive.load()) return;
 
     const std::string body = BuildBeaconBody(event, minutes);
     const bool isLaunch = std::string(event) == "launch";
@@ -529,7 +531,7 @@ HardCrashSources g_hardCrash;
 }
 
 bool Enabled() {
-    return BanditProtocolReady() || GithubReady();
+    return RaggedyProtocolReady() || GithubReady();
 }
 
 bool Configured() {
@@ -741,7 +743,7 @@ void SendExit() {
 }
 
 void QueueSuspend() {
-    if (!BanditProtocolReady() || !g_launchActive.load()) return;
+    if (!RaggedyProtocolReady() || !g_launchActive.load()) return;
     if (g_suspendQueued.exchange(true)) return;
 
     const bool queued = QueueBody("session", BuildBeaconBody("suspend", MinutesSoFar()));
@@ -780,9 +782,9 @@ void ReportSoftCrash(const std::wstring& runtimeRoot) {
     WriteLogF(L"telemetry soft crash %s phase=%s", a2w(crash.fingerprint.c_str()).c_str(),
         a2w(PhaseName()).c_str());
 
-    const bool banditReady = BanditProtocolReady();
+    const bool raggedyReady = RaggedyProtocolReady();
     const bool githubReady = GithubReady();
-    if (!banditReady && !githubReady) return;
+    if (!raggedyReady && !githubReady) return;
 
     const std::wstring endpoint = Endpoint();
 
@@ -793,7 +795,7 @@ void ReportSoftCrash(const std::wstring& runtimeRoot) {
     if (githubReady) {
         FileGithubIssue(GithubIssueTitle(context, phase, crash), GithubIssueBody(context, phase, crash));
     }
-    if (!banditReady) {
+    if (!raggedyReady) {
         if (SUCCEEDED(hr)) RoUninitialize();
         return;
     }
@@ -892,15 +894,15 @@ void ReportHardCrash(const std::wstring& runtimeRoot) {
         a2w(phase.c_str()).c_str(),
         a2w(parsed.source.c_str()).c_str());
 
-    const bool banditReady = BanditProtocolReady();
+    const bool raggedyReady = RaggedyProtocolReady();
     const bool githubReady = GithubReady();
-    if (!banditReady && !githubReady) return;
+    if (!raggedyReady && !githubReady) return;
 
     if (githubReady) {
         FileGithubIssue(
             GithubIssueTitle(context, phase.c_str(), crash), GithubIssueBody(context, phase.c_str(), crash));
     }
-    if (!banditReady) return;
+    if (!raggedyReady) return;
 
     const bool reportQueued = QueueBody("report", BuildReportBody(context, phase.c_str(), crash));
     const bool traceQueued = QueueBody("trace", BuildTraceBody(crash));
@@ -1138,7 +1140,7 @@ void ClearQueue() {
 }
 
 void FlushQueueAsync() {
-    if (!BanditProtocolReady()) return;
+    if (!RaggedyProtocolReady()) return;
 
     std::thread([]() {
         const HRESULT hr = RoInitialize(RO_INIT_MULTITHREADED);

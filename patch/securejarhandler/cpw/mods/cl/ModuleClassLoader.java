@@ -363,18 +363,18 @@ public class ModuleClassLoader extends ClassLoader {
 
     private static void logBackingClassRead(final String source, final String className, final String moduleName, final Path path) {
         if (shouldLogBackingClass(className)) {
-            System.err.println("[banditvault] ModuleClassLoader UWP backing " + source + " bytes " + className + " -> " + moduleName + " from " + path);
+            System.err.println("[raggedy] ModuleClassLoader UWP backing " + source + " bytes " + className + " -> " + moduleName + " from " + path);
         }
     }
 
     private static void logBackingClassMiss(final String className, final String moduleName, final String reason) {
         if (shouldLogBackingClass(className) && "minecraft".equals(moduleName)) {
-            System.err.println("[banditvault] ModuleClassLoader UWP backing miss " + className + ": " + reason + " for " + moduleName);
+            System.err.println("[raggedy] ModuleClassLoader UWP backing miss " + className + ": " + reason + " for " + moduleName);
         }
     }
 
     private static boolean shouldLogBackingClass(final String className) {
-        if (!Boolean.getBoolean("banditvault.securejarhandler.debug")) {
+        if (!Boolean.getBoolean("raggedy.securejarhandler.debug")) {
             return false;
         }
         return className.equals("net.minecraft.client.main.Main")
@@ -396,11 +396,11 @@ public class ModuleClassLoader extends ClassLoader {
         if (isMinecraftClass(className)) {
             return true;
         }
-        if (Boolean.getBoolean("banditvault.securejarhandler.resourceFallbackAll")) {
+        if (Boolean.getBoolean("raggedy.securejarhandler.resourceFallbackAll")) {
             return true;
         }
 
-        final var prefixes = System.getProperty("banditvault.securejarhandler.resourceFallbackPrefixes", "");
+        final var prefixes = System.getProperty("raggedy.securejarhandler.resourceFallbackPrefixes", "");
         if (prefixes.isBlank()) {
             return false;
         }
@@ -424,7 +424,7 @@ public class ModuleClassLoader extends ClassLoader {
         var modroot = ref == null ? null : this.resolvedRoots.get(ref.descriptor().name());
         if (modroot == null) {
             if (shouldLogBackingClass(name)) {
-                System.err.println("[banditvault] ModuleClassLoader UWP defining descriptor-hidden class "
+                System.err.println("[raggedy] ModuleClassLoader UWP defining descriptor-hidden class "
                         + name + " from " + (ref == null ? "direct-srg" : ref.descriptor().name()));
             }
             var cls = defineClass(name, bytes, 0, bytes.length);
@@ -480,7 +480,7 @@ public class ModuleClassLoader extends ClassLoader {
         if (source.isEmpty() || target.isEmpty()) {
             final var missKey = key + ":" + source.isPresent() + ":" + target.isPresent();
             if (UWP_REPORTED_READ_EDGE_MISSES.add(missKey)) {
-                System.err.println("[banditvault] ModuleClassLoader UWP could not add module read edge "
+                System.err.println("[raggedy] ModuleClassLoader UWP could not add module read edge "
                         + sourceModuleName + " -> " + targetModuleName
                         + " while defining " + className
                         + " sourceLoaded=" + source.isPresent()
@@ -495,13 +495,13 @@ public class ModuleClassLoader extends ClassLoader {
         try {
             MODULES_ADD_READS.invokeExact(source.get(), target.get());
             UWP_ADDED_READ_EDGES.add(key);
-            System.err.println("[banditvault] ModuleClassLoader UWP added module read edge "
+            System.err.println("[raggedy] ModuleClassLoader UWP added module read edge "
                     + sourceModuleName + " -> " + targetModuleName
                     + " while defining " + className);
         } catch (Throwable t) {
             final var missKey = key + ":error:" + t.getClass().getName() + ":" + String.valueOf(t.getMessage());
             if (UWP_REPORTED_READ_EDGE_MISSES.add(missKey)) {
-                System.err.println("[banditvault] ModuleClassLoader UWP failed to add module read edge "
+                System.err.println("[raggedy] ModuleClassLoader UWP failed to add module read edge "
                         + sourceModuleName + " -> " + targetModuleName
                         + " while defining " + className
                         + ": " + t.getClass().getName() + ": " + String.valueOf(t.getMessage()));
@@ -598,7 +598,7 @@ public class ModuleClassLoader extends ClassLoader {
                     continue;
                 }
 
-                System.err.println("[banditvault] ModuleClassLoader UWP package fallback " + name + " -> " + root.getKey());
+                System.err.println("[raggedy] ModuleClassLoader UWP package fallback " + name + " -> " + root.getKey());
                 var c = findClass(root.getKey(), name);
                 if (c != null) {
                     return c;
@@ -626,7 +626,7 @@ public class ModuleClassLoader extends ClassLoader {
             var cls = contextLoader.loadClass(name);
             rememberModule(cls.getModule());
             if (shouldLogBackingClass(name)) {
-                System.err.println("[banditvault] ModuleClassLoader UWP delegated Minecraft class "
+                System.err.println("[raggedy] ModuleClassLoader UWP delegated Minecraft class "
                         + name + " from " + getName() + " to context " + contextLoader.getName());
             }
             return cls;
@@ -644,7 +644,7 @@ public class ModuleClassLoader extends ClassLoader {
                     continue;
                 }
                 if (shouldLogBackingClass(name)) {
-                    System.err.println("[banditvault] ModuleClassLoader UWP descriptor-hidden package fallback "
+                    System.err.println("[raggedy] ModuleClassLoader UWP descriptor-hidden package fallback "
                             + name + " -> " + ref.descriptor().name());
                 }
                 return defineClassBytes(ref, name, bytes);
@@ -653,7 +653,7 @@ public class ModuleClassLoader extends ClassLoader {
         }
         if (!isTransformerLoader()) {
             if (shouldLogBackingClass(name)) {
-                System.err.println("[banditvault] ModuleClassLoader UWP skipped direct SRG fallback "
+                System.err.println("[raggedy] ModuleClassLoader UWP skipped direct SRG fallback "
                         + name + " in " + getName());
             }
             return null;
@@ -661,7 +661,7 @@ public class ModuleClassLoader extends ClassLoader {
         var bytes = readMinecraftSrgClassBytes(resourceName);
         if (bytes.length != 0) {
             if (shouldLogBackingClass(name)) {
-                System.err.println("[banditvault] ModuleClassLoader UWP direct SRG fallback "
+                System.err.println("[raggedy] ModuleClassLoader UWP direct SRG fallback "
                         + name + " in " + getName() + " from " + getMinecraftSrgJarPath());
             }
             return defineClassBytes(null, name, bytes);
@@ -686,7 +686,7 @@ public class ModuleClassLoader extends ClassLoader {
         if (cached != null) {
             return cached;
         }
-        var value = System.getProperty("banditvault.neoforge.minecraftSrgJar", "");
+        var value = System.getProperty("raggedy.neoforge.minecraftSrgJar", "");
         if (value == null || value.isBlank()) {
             return null;
         }

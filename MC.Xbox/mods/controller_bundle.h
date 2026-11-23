@@ -7,13 +7,13 @@
 
 // Launcher-managed controller bundles. Files installed for the "legacy4j" and
 // "controlify" bundles live in the profile mods directory alongside user mods.
-// Ownership is tracked per file in the existing .bandit/mod-installs meta
+// Ownership is tracked per file in the existing .raggedy/mod-installs meta
 // sidecars ("bundleOwners" comma set, "bundleSha1", "bundleUserBackup") so
 // switching bundles only ever removes exact launcher-installed versions and
 // never deletes user-owned jars. Shared dependencies (Fabric API, YACL, ...)
 // survive as long as another bundle or mod still references them.
 
-// UI cycle order: Auto -> Legacy4J -> Bandit -> Controlify -> None.
+// UI cycle order: Auto -> Legacy4J -> Raggedy -> Controlify -> None.
 std::wstring NextControllerBundle(const std::wstring& bundle);
 const wchar_t* ControllerBundleLabelKey(const std::wstring& bundle);
 
@@ -34,7 +34,7 @@ void NoteBundleUserBackup(
 std::vector<std::wstring> FindBundleConflicts(
     const std::wstring& runtimeRoot, const std::wstring& profileId, const std::wstring& effectiveBundle);
 // Pre-launch sync: drops stale managed files of the non-effective bundles and
-// launcher-copied Bandit jars when the effective bundle is not Bandit. Never
+// launcher-copied Raggedy jars when the effective bundle is not Raggedy. Never
 // deletes unmanaged user jars; those are reported through FindBundleConflicts.
 int SyncControllerBundleForLaunch(
     const std::wstring& runtimeRoot, const std::wstring& profileId,

@@ -146,7 +146,7 @@ public class JarContentsImpl implements JarContents {
     }
 
     private Optional<URI> findLauncherOverrideFile(String name) {
-        var overrideDir = System.getProperty("banditvault.launcherOverrideDir", "");
+        var overrideDir = System.getProperty("raggedy.launcherOverrideDir", "");
         if (overrideDir.isBlank() || name.isBlank() || name.contains("..") || name.startsWith("/") || name.startsWith("\\") || name.endsWith(".class")) {
             return Optional.empty();
         }
@@ -156,8 +156,8 @@ public class JarContentsImpl implements JarContents {
             var candidate = base.resolve(name.replace('/', base.getFileSystem().getSeparator().charAt(0))).normalize();
             if (candidate.startsWith(base) && Files.isRegularFile(candidate)) {
                 var reportKey = name + " -> " + candidate;
-                if (Boolean.getBoolean("banditvault.securejarhandler.debug") && REPORTED_LAUNCHER_OVERRIDES.add(reportKey)) {
-                    System.err.println("[banditvault] JarContentsImpl launcher override resource "
+                if (Boolean.getBoolean("raggedy.securejarhandler.debug") && REPORTED_LAUNCHER_OVERRIDES.add(reportKey)) {
+                    System.err.println("[raggedy] JarContentsImpl launcher override resource "
                             + name + " -> " + candidate);
                 }
                 return Optional.of(candidate.toUri());
@@ -204,7 +204,7 @@ public class JarContentsImpl implements JarContents {
             });
         } catch (IOException e) {
             unionFailure = e;
-            System.err.println("[banditvault] Union package scan failed " + e.getMessage());
+            System.err.println("[raggedy] Union package scan failed " + e.getMessage());
         }
         boolean recovered = addPackagesFromBackingJars(packages, ignoredRootPackages);
         if (unionFailure != null && !recovered) throw new UncheckedIOException(unionFailure);
@@ -213,17 +213,17 @@ public class JarContentsImpl implements JarContents {
     }
 
     private void logPackageScan(Path root, Set<String> packages) {
-        if (!Boolean.getBoolean("banditvault.securejarhandler.debug")) {
+        if (!Boolean.getBoolean("raggedy.securejarhandler.debug")) {
             return;
         }
 
-        System.err.println("[banditvault] JarContentsImpl UWP package scan primary=" + getPrimaryPath()
+        System.err.println("[raggedy] JarContentsImpl UWP package scan primary=" + getPrimaryPath()
                 + " root=" + root
                 + " packages=" + packages.size()
                 + " net.minecraft.core=" + packages.contains("net.minecraft.core")
                 + " net.minecraft.core.registries=" + packages.contains("net.minecraft.core.registries"));
         for (Path path : getBackingPaths()) {
-            System.err.println("[banditvault] JarContentsImpl backing path=" + path);
+            System.err.println("[raggedy] JarContentsImpl backing path=" + path);
         }
     }
 
@@ -388,9 +388,9 @@ public class JarContentsImpl implements JarContents {
                     try (var jar = new JarFile(basePath.toFile(), true, JarFile.OPEN_READ, JarFile.baseVersion())) {
                         var entry = findJarEntry(jar, name, basePath);
                         if (entry != null && !entry.isDirectory() && allowed(entry.getName(), basePath)) {
-                            if (Boolean.getBoolean("banditvault.securejarhandler.debug")
+                            if (Boolean.getBoolean("raggedy.securejarhandler.debug")
                                     && (name.endsWith("mods.toml") || name.startsWith("META-INF/services/"))) {
-                                System.err.println("[banditvault] JarContentsImpl UWP backing resource "
+                                System.err.println("[raggedy] JarContentsImpl UWP backing resource "
                                         + name + " -> " + basePath);
                             }
                             return Optional.of(backingFileUri(basePath, entry.getName()));
@@ -431,7 +431,7 @@ public class JarContentsImpl implements JarContents {
             }
             return true;
         } catch (IOException | RuntimeException ex) {
-            System.err.println("[banditvault] Backing package scan failed " + jarPath + " " + ex);
+            System.err.println("[raggedy] Backing package scan failed " + jarPath + " " + ex);
             return false;
         }
     }
@@ -448,7 +448,7 @@ public class JarContentsImpl implements JarContents {
             }
             return true;
         } catch (IOException | RuntimeException ex) {
-            System.err.println("[banditvault] Backing package scan failed " + jarPath + " " + ex);
+            System.err.println("[raggedy] Backing package scan failed " + jarPath + " " + ex);
             return false;
         }
     }
@@ -467,7 +467,7 @@ public class JarContentsImpl implements JarContents {
                     });
             return true;
         } catch (IOException | UncheckedIOException ex) {
-            System.err.println("[banditvault] Backing package scan failed " + directory + " " + ex);
+            System.err.println("[raggedy] Backing package scan failed " + directory + " " + ex);
             return false;
         }
     }

@@ -55,10 +55,10 @@ const char* kHsErr =
     "#\n"
     "# JRE version: OpenJDK Runtime Environment (21.0.11+10)\n"
     "# Problematic frame:\n"
-    "# C  [glfw.dll+0x1a2b3]  BanditShimPresentedFrames+0x23\n"
+    "# C  [glfw.dll+0x1a2b3]  RaggedyShimPresentedFrames+0x23\n"
     "#\n"
     "Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)\n"
-    "C  [glfw.dll+0x1a2b3]  BanditShimPresentedFrames+0x23\n"
+    "C  [glfw.dll+0x1a2b3]  RaggedyShimPresentedFrames+0x23\n"
     "C  [MC.Xbox.exe+0x99ff]\n"
     "C  0x00000274a416659f\n"
     "j  net.minecraft.class_310.<init>()V+12\n"
@@ -228,7 +228,7 @@ void TestPhase() {
     CheckEq(crashparse::DetectPhase("JNI_CreateJavaVM ok"), "jvm_init", "phase at jvm init");
     CheckEq(crashparse::DetectPhase("Invoking net.x.Main.main via embedded JVM"), "mod_load",
         "phase once main is invoked");
-    CheckEq(crashparse::DetectPhase("Invoking x.main via embedded JVM\nbanditvault:playable"),
+    CheckEq(crashparse::DetectPhase("Invoking x.main via embedded JVM\nraggedy:playable"),
         "ingame", "phase once playable");
 }
 

@@ -14,7 +14,7 @@
 namespace themes {
 namespace {
 
-constexpr wchar_t kDefaultId[] = L"bandit";
+constexpr wchar_t kDefaultId[] = L"raggedy";
 constexpr wchar_t kCustomPrefix[] = L"custom:";
 constexpr UINT32 kDarkInk = 0x121315;
 constexpr UINT32 kLightInk = 0xF7F5F0;
@@ -47,7 +47,7 @@ Theme BuiltIn(const wchar_t* id, const wchar_t* name, Palette palette) {
 std::vector<Theme> BuiltIns() {
     return {
         // the tan of the crate behind the raccoon on the app icon, lifted so it reads on a dark screen
-        BuiltIn(kDefaultId, TR_NOOP(L"Bandit"),
+        BuiltIn(kDefaultId, TR_NOOP(L"Raggedy"),
             { 0x0D0E10, 0x1B1D21, 0x2C2F35, 0xF4F2ED, 0xA5A29C, 0xE3A96B, 0x7CC48D, 0xEC7462, 0x121315 }),
         BuiltIn(L"midnight", TR_NOOP(L"Midnight"),
             { 0x0B0E14, 0x161B26, 0x252C3B, 0xEEF2F8, 0x9AA5B8, 0x78AEFF, 0x72C79A, 0xF07A6E, 0x0E1118 }),

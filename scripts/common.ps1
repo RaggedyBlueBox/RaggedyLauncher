@@ -340,7 +340,7 @@ function Test-BuildStampCurrent {
         [string[]]$RequiredOutputs = @()
     )
 
-    if ($env:BANDIT_FORCE_REBUILD) { return $false }
+    if ($env:RAGGEDY_FORCE_REBUILD) { return $false }
     if (-not (Test-Path -LiteralPath $StampPath -PathType Leaf)) { return $false }
     foreach ($o in $RequiredOutputs) {
         if (-not (Test-Path -LiteralPath $o -PathType Leaf)) { return $false }

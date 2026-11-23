@@ -390,13 +390,13 @@ MOUSE_SUPPORT_API void MouseSupport_Init(void) {
     QueryPerformanceCounter(&start);
     g_qpcStart = start.QuadPart;
 
-    const double freshnessMs = ReadEnvDouble("BANDIT_MOUSE_FRESHNESS_MS", kDefaultFreshnessMs, 0.0, 1000.0);
+    const double freshnessMs = ReadEnvDouble("RAGGEDY_MOUSE_FRESHNESS_MS", kDefaultFreshnessMs, 0.0, 1000.0);
     g_freshnessMicros = (long long)(freshnessMs * 1000.0);
-    g_clampMax = ReadEnvDouble("BANDIT_MOUSE_CLAMP", 0.0, 0.0, 100000.0);
-    g_smoothTauMs = ReadEnvDouble("BANDIT_MOUSE_SMOOTH_TAU_MS", kDefaultSmoothTauMs, 0.0, 100.0);
-    g_stallMs = ReadEnvDouble("BANDIT_MOUSE_STALL_MS", 200.0, 50.0, 5000.0);
+    g_clampMax = ReadEnvDouble("RAGGEDY_MOUSE_CLAMP", 0.0, 0.0, 100000.0);
+    g_smoothTauMs = ReadEnvDouble("RAGGEDY_MOUSE_SMOOTH_TAU_MS", kDefaultSmoothTauMs, 0.0, 100.0);
+    g_stallMs = ReadEnvDouble("RAGGEDY_MOUSE_STALL_MS", 200.0, 50.0, 5000.0);
     char diagBuf[16] = {};
-    const DWORD dn = GetEnvironmentVariableA("BANDIT_MOUSE_DIAG", diagBuf, sizeof(diagBuf));
+    const DWORD dn = GetEnvironmentVariableA("RAGGEDY_MOUSE_DIAG", diagBuf, sizeof(diagBuf));
     g_diag = (dn > 0 && diagBuf[0] != '0');
 
     AcquireSRWLockExclusive(&g_lock);

@@ -73,7 +73,7 @@ $sources = Get-ChildItem $srcJava -Recurse -Filter "*.java" | Select-Object -Exp
 # unobfuscated targets opt out of the intermediary-keyed gating below
 $variantVersion = if ($MinecraftVersion -like "26.*") { "26.2" } else { $MinecraftVersion }
 $variantDir = Join-Path $PSScriptRoot "src\variants\$variantVersion"
-$variantMixinsJson = Join-Path $variantDir "resources\banditvault-xbox-compat.mixins.json"
+$variantMixinsJson = Join-Path $variantDir "resources\raggedy-xbox-compat.mixins.json"
 $hasVariant = Test-Path $variantDir
 
 if ($hasVariant) {
@@ -212,7 +212,7 @@ if (Test-BuildStampCurrent -StampPath $stampPath -Stamp $stamp -RequiredOutputs 
         Set-Content $fmj -NoNewline
 
     if ($disabledMixins.Count -gt 0 -or $usesLegacyMixinCompat) {
-        $mixinsPath = Join-Path $classesDir "banditvault-xbox-compat.mixins.json"
+        $mixinsPath = Join-Path $classesDir "raggedy-xbox-compat.mixins.json"
         $mixins = Get-Content -Raw -Path $mixinsPath | ConvertFrom-Json
         if ($usesLegacyMixinCompat) {
             $mixins.compatibilityLevel = "JAVA_8"

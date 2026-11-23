@@ -892,7 +892,7 @@ MainMenuAction ShowMainMenu(ICoreWindow* window, const LaunchAuthConfig& authCon
     }
 
     AuthUiState state;
-    state.title = L"Bandit Launcher";
+    state.title = L"Raggedy Launcher";
     state.showDeviceCode = false;
     state.showMainMenu = true;
     state.status = TrFormat(L"Signed in as {0}", { a2w(authConfig.username.c_str()) });

@@ -302,7 +302,7 @@ bool CreateCrashReportZip(const std::wstring& runtimeRoot, const std::wstring& r
     }
 
     std::string summary =
-        "Bandit Launcher crash report\n"
+        "Raggedy Launcher crash report\n"
         "reason=" + w2a(reason) + "\n"
         "runtimeRoot=" + w2a(runtimeRoot) + "\n"
         "created=" + w2a(CrashTimestampForFileName()) + "\n";
@@ -334,7 +334,7 @@ bool CreateCrashReportZip(const std::wstring& runtimeRoot, const std::wstring& r
     AddCrashZipMatchingFiles(entries, previousLogs, L"*.log", "logs_previous");
     AddCrashZipMatchingFiles(entries, reportsDir, L"*.txt", "crash-reports");
 
-    const std::wstring zipPath = reportsDir + L"\\BanditLauncher-crash-" + CrashTimestampForFileName() + L".zip";
+    const std::wstring zipPath = reportsDir + L"\\RaggedyLauncher-crash-" + CrashTimestampForFileName() + L".zip";
     const bool ok = WriteStoredZip(zipPath, entries);
     if (ok) {
         WriteTextFile(runtimeRoot + L"\\last_crash_report.txt", zipPath + L"\n");

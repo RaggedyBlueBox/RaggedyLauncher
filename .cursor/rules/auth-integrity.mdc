@@ -3,7 +3,7 @@ description: Preserve authentication and Minecraft entitlement enforcement
 alwaysApply: true
 ---
 
-Bandit Launcher requires legitimate Microsoft/Xbox authentication and Minecraft entitlement verification.
+Raggedy Launcher requires legitimate Microsoft/Xbox authentication and Minecraft entitlement verification.
 
 Do not remove, bypass, weaken, stub, fake, or make optional any authentication, token, account, ownership, or entitlement checks.
 

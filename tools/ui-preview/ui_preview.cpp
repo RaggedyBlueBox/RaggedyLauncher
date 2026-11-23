@@ -75,7 +75,7 @@ LaunchTarget Target(const wchar_t* mc, const wchar_t* loader, const wchar_t* loa
 AuthUiState Screen() {
     AuthUiState state;
     state.showDeviceCode = false;
-    state.title = L"Bandit Launcher";
+    state.title = L"Raggedy Launcher";
     return state;
 }
 
@@ -388,7 +388,7 @@ std::vector<Scene> Scenes() {
         state.modsProfileName = L"Survival";
         state.modsProfileTargetText = L"1.21.11 Fabric 0.19.5";
         state.modsProfileFocus = 1;
-        state.modsProfileControllerBundle = L"bandit";
+        state.modsProfileControllerBundle = L"raggedy";
         state.status = L"Backup saved";
         return state;
     } });
@@ -411,7 +411,7 @@ std::vector<Scene> Scenes() {
     scenes.push_back({ L"unsupported-console", [] {
         AuthUiState state = Screen();
         state.status = L"Xbox One is not supported";
-        state.detail = L"Bandit Launcher needs an Xbox Series X or Xbox Series S.";
+        state.detail = L"Raggedy Launcher needs an Xbox Series X or Xbox Series S.";
         state.progress = 1.0f;
         state.isError = true;
         return state;
@@ -485,7 +485,7 @@ int RenderAll(const std::wstring& outDir) {
 
     int failures = 0;
     for (const Scene& scene : Scenes()) {
-        themes::SetTheme(L"bandit");
+        themes::SetTheme(L"raggedy");
         renderer.Render(scene.build());
         const std::wstring path = outDir + L"\\" + scene.name + L".png";
         if (renderer.SaveFramePng(path)) {

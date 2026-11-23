@@ -17,7 +17,7 @@ $ProjectConfig = [ordered]@{
     MixinVersion             = "0.17.4+mixin.0.8.7"
     JnaVersion               = "5.17.0"
     JavaRelease              = 21
-    CompatModId              = "banditvault-xbox-compat"
+    CompatModId              = "raggedy-xbox-compat"
     CompatModVersion         = "1.0.0"
     StagingDir               = "staging"
     CacheDir                 = "staging/cache"
@@ -35,5 +35,5 @@ $ProjectConfig = [ordered]@{
     CertificateFileName      = "MC_DevMode.pfx"
     # throwaway password for a local dev-mode self-signed cert, the pfx itself is gitignored
     CertificatePassword      = if ($env:APPX_CERT_PASSWORD) { $env:APPX_CERT_PASSWORD } else { "devmode" }
-    DefaultCertificateSubject = "CN=BanditVault"
+    DefaultCertificateSubject = "CN=RaggedyBlueBox"
 }

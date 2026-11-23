@@ -26,12 +26,12 @@ struct Profile {
     std::wstring targetId;
     bool builtin = false;
     bool controllerModEnabled = true;
-    // Controller bundle selection: L"auto" (default), L"legacy4j", L"bandit",
+    // Controller bundle selection: L"auto" (default), L"legacy4j", L"raggedy",
     // L"controlify" or L"none". "auto" resolves per target to Legacy4J when its
     // build exists for the profile's version, otherwise falls back to the best
-    // available bundle for that version (Bandit, then Controlify, then None).
+    // available bundle for that version (Raggedy, then Controlify, then None).
     // controllerModEnabled is kept for migration only: profiles written before
-    // bundles existed map true->bandit and false->none.
+    // bundles existed map true->raggedy and false->none.
     std::wstring controllerBundle = L"auto";
     // Performance renderer mode: L"auto" (default) installs the proven matrix
     // candidate for the profile target; L"off" removes managed files and
@@ -43,14 +43,14 @@ struct Profile {
 std::wstring DefaultControllerBundle();
 bool IsKnownControllerBundle(const std::wstring& bundle);
 std::wstring NormalizeControllerBundle(const std::wstring& bundle);
-bool ControllerBundleUsesBandit(const std::wstring& bundle);
+bool ControllerBundleUsesRaggedy(const std::wstring& bundle);
 // Static per-target availability: whether the bundle can work on this target
 // at all (publisher build exists, bundled controller shipped, loader supported).
 // reason receives a short human-readable explanation when it returns false.
 bool ControllerBundleSupportedForTarget(
     const std::wstring& bundle, const LaunchTarget& target, std::wstring& reason);
 // Effective bundle for launch: resolves "auto" to the first available bundle
-// for the target in Legacy4J, Bandit, Controlify, None order. Any other value
+// for the target in Legacy4J, Raggedy, Controlify, None order. Any other value
 // normalizes to itself when supported, otherwise falls back to "none".
 std::wstring ResolveEffectiveControllerBundle(
     const std::wstring& bundle, const LaunchTarget& target);

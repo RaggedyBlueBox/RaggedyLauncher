@@ -1,6 +1,6 @@
-# Bandit Mouse Relay
+# Raggedy Mouse Relay
 
-Bandit Mouse Relay relays local mouse input to the Xbox UWP GLFW shim over UDP:
+Raggedy Mouse Relay relays local mouse input to the Xbox UWP GLFW shim over UDP:
 
 - App to Xbox: UDP `7331`.
 - Xbox status to app: UDP `7332`.
@@ -27,7 +27,7 @@ Portable zip:
 Output:
 
 ```text
-dist/mouse-relay/BanditMouseRelay-nightly-win-x64.zip
+dist/mouse-relay/RaggedyMouseRelay-nightly-win-x64.zip
 ```
 
 ## Android Build
@@ -55,7 +55,7 @@ tools/mouse-relay/android/app/build/outputs/apk/debug/app-debug.apk
 iOS builds need Xcode, so they run on the `ios` job in
 `.github/workflows/mouse-relay-nightly.yml` (macOS runner) rather than locally on
 Windows. Push to a branch the workflow watches, or trigger it by hand, then grab
-the `BanditMouseRelay-nightly-ios` artifact.
+the `RaggedyMouseRelay-nightly-ios` artifact.
 
 The job produces an **unsigned** IPA. Signing happens on the PC with Sideloadly
 or AltStore using your Apple ID, so no Mac is needed at any point.
@@ -63,7 +63,7 @@ or AltStore using your Apple ID, so no Mac is needed at any point.
 Output:
 
 ```text
-dist/mouse-relay/BanditMouseRelay-nightly-ios.ipa
+dist/mouse-relay/RaggedyMouseRelay-nightly-ios.ipa
 ```
 
 On a Mac the same build is:

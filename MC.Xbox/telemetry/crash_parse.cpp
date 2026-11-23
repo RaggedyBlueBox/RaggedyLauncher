@@ -320,7 +320,7 @@ bool DetectHeapExhaustion(const std::string& gcLog, int& pinnedMb, int& capMb) {
 }
 
 std::string DetectPhase(const std::string& mcLaunchLog) {
-    if (mcLaunchLog.find("banditvault:playable") != std::string::npos) return "ingame";
+    if (mcLaunchLog.find("raggedy:playable") != std::string::npos) return "ingame";
     if (mcLaunchLog.find(".main via embedded JVM") != std::string::npos) return "mod_load";
     if (mcLaunchLog.find("JNI_CreateJavaVM") != std::string::npos) return "jvm_init";
     return "launcher";

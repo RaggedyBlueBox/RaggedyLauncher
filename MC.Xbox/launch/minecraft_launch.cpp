@@ -81,7 +81,7 @@ static unsigned long long ShimPresentedFrames() {
     if (!reader) {
         HMODULE shim = GetModuleHandleW(L"glfw.dll");
         if (shim) {
-            reader = reinterpret_cast<ReaderFn>(GetProcAddress(shim, "BanditShimPresentedFrames"));
+            reader = reinterpret_cast<ReaderFn>(GetProcAddress(shim, "RaggedyShimPresentedFrames"));
         }
     }
     return reader ? reader() : 0ull;
@@ -97,7 +97,7 @@ static const ULONGLONG kLogTailerFastWindowMs = 120000;
 static const DWORD kLogTailerFastPollMs = 250;
 static const DWORD kLogTailerIdlePollMs = 2000;
 
-static constexpr char kPlayableMarker[] = "banditvault:playable";
+static constexpr char kPlayableMarker[] = "raggedy:playable";
 
 struct LogTailerConfig {
     std::wstring path;
@@ -651,7 +651,7 @@ static bool CheckAndClearReturnToLauncherSignal(JNIEnv* env, const wchar_t* stag
 
     const std::wstring exceptionText = JavaObjectToWideString(env, throwable);
     const bool isReturnSignal =
-        exceptionText.find(L"BanditVaultReturnToLauncher") != std::wstring::npos ||
+        exceptionText.find(L"RaggedyReturnToLauncher") != std::wstring::npos ||
         exceptionText.find(L"ReturnToLauncherSignal") != std::wstring::npos;
 
     if (isReturnSignal) {
@@ -880,7 +880,7 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
         replaceAll(L"${classpath_separator}", L";");
         replaceAll(L"${version_name}", launchVersion);
         replaceAll(L"${natives_directory}", fwd(nativesDir));
-        replaceAll(L"${launcher_name}", L"BanditLauncher");
+        replaceAll(L"${launcher_name}", L"RaggedyLauncher");
         replaceAll(L"${launcher_version}", L"1");
         return arg;
     };
@@ -1063,7 +1063,7 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
     vmOptionStorage.push_back("-Djava.security.properties=" + w2a(fwd(jreDir + L"\\conf\\security\\xbox.properties")));
     vmOptionStorage.push_back("-Djava.security.egd=file:/dev/urandom");
     vmOptionStorage.push_back("-Djava.awt.headless=true");
-    vmOptionStorage.push_back("-Dbanditvault.awt.skipDesktopProperties=true");
+    vmOptionStorage.push_back("-Draggedy.awt.skipDesktopProperties=true");
     vmOptionStorage.push_back("-Dswing.defaultlaf=javax.swing.plaf.metal.MetalLookAndFeel");
     vmOptionStorage.push_back("-Dfml.readTimeout=300");
     vmOptionStorage.push_back("-Dfml.loginTimeout=300");
@@ -1129,7 +1129,7 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
         // resolved here because the template has no way to know where LocalState landed
         const std::wstring gcLogPath = fwd(launcherLogDir) + L"/gc.log";
         const std::wstring tpl =
-            L"# Bandit Launcher JVM options\n"
+            L"# Raggedy Launcher JVM options\n"
             L"# One option per line. Lines starting with # are ignored.\n"
             L"#\n"
             L"# These are appended after the launcher's own options, so anything set here\n"
@@ -1361,7 +1361,7 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
 
     std::atomic<bool> javaMainRunning{ true };
     // getAllStackTraces is a safepoint, every dump stalls the render thread
-    const bool alwaysDumpThreads = !GetEnvVarString(L"BANDIT_JAVA_THREAD_DUMPS").empty();
+    const bool alwaysDumpThreads = !GetEnvVarString(L"RAGGEDY_JAVA_THREAD_DUMPS").empty();
     std::thread javaMainWatchdog([
         &javaMainRunning,
         vm,

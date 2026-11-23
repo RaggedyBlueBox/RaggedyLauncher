@@ -62,9 +62,9 @@ bool SeedLocalRuntime(
     const std::wstring& localDir,
     const RuntimeSeedProgressCallback& progress = RuntimeSeedProgressCallback());
 bool CopyDirectoryContentsAlways(const std::wstring& src, const std::wstring& dst);
-int DeleteBanditControllerModsFromDir(const std::wstring& modsDir);
+int DeleteRaggedyControllerModsFromDir(const std::wstring& modsDir);
 int DeleteControlifyModsFromDir(const std::wstring& modsDir);
-bool IsBanditControllerJarFileName(const std::wstring& fileName);
+bool IsRaggedyControllerJarFileName(const std::wstring& fileName);
 bool IsControlifyJarFileName(const std::wstring& fileName);
 bool IsLegacy4JJarFileName(const std::wstring& fileName);
 std::wstring PrepareEffectiveBundledModsDir(

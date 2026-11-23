@@ -12,7 +12,7 @@ Minecraft Java launcher for Xbox Series S|X (Dev Mode).
 > assistance — no hand-written code. On-console testing happens on a real
 > Series S devkit.
 
-Based on **Bandit Launcher** ([veroxsity/JavaUWP](https://github.com/veroxsity/JavaUWP)).
+Based on **Raggedy Launcher** ([veroxsity/JavaUWP](https://github.com/veroxsity/JavaUWP)).
 The goal is a better polished launcher for the every day consumer
 experience: clear settings, sane defaults, honest messages when something is
 not available on a version, and no silent surprises with your mods, worlds,
@@ -20,11 +20,11 @@ or login.
 
 > Experimental and under active development. Test builds come from the
 > `Test build (no publish)` workflow; nothing here auto-updates any console.
-> This is a **separate install** from Bandit Launcher, so back up your
+> This is a **separate install** from Raggedy Launcher, so back up your
 > worlds, saves, and profiles first.
 
 What is in this branch: a five-way controller bundle setting (Auto,
-Legacy4J, Bandit, Controlify, None), Minecraft 26.3 catalog rows, a
+Legacy4J, Raggedy, Controlify, None), Minecraft 26.3 catalog rows, a
 graphics renderer setting (OpenGL default, Vulkan experimental opt-in), and
 a performance renderer setting backed by a per-version data file. See
 [docs/GRAPHICS-AND-PERFORMANCE.md](docs/GRAPHICS-AND-PERFORMANCE.md) and
@@ -49,7 +49,7 @@ Raggedy Launcher runs **Minecraft Java Edition directly on Xbox Series X|S in De
 - An internet connection for sign-in and downloads.
 - Free console storage for game files, profiles, mods and worlds.
 
-Java and controller support are included in the launcher package for the targets that use them. No separate Java installation is needed on the console. Bandit Launcher requires Microsoft authentication and ownership verification. It does not support cracked or offline accounts.
+Java and controller support are included in the launcher package for the targets that use them. No separate Java installation is needed on the console. Raggedy Launcher requires Microsoft authentication and ownership verification. It does not support cracked or offline accounts.
 
 ## Download
 
@@ -66,7 +66,7 @@ These are pre-release testing builds. They are experimental and do not come with
 ## Getting started
 
 1. Install the signed APPX through Xbox Device Portal while the console is in Developer Mode.
-2. Open **Bandit Launcher**.
+2. Open **Raggedy Launcher**.
 3. When the Microsoft device code appears, open [microsoft.com/link](https://www.microsoft.com/link) on another device. Enter the code and sign in with the account that has Java Edition.
 4. Wait for the launcher to verify the account and Minecraft entitlement.
 5. Choose or create a profile, then select its Minecraft version and loader. The default is **Minecraft 1.21.11 with Fabric**.
@@ -79,7 +79,7 @@ Use the **Mods** page to manage profiles and install content. Start **Remote Fil
 - Separate profiles for different Minecraft versions, loaders and mod setups.
 - Modrinth and CurseForge browsing for mods, modpacks, resource packs and shaders.
 - Recommended mods filtered for the selected launch target.
-- Bundled Bandit Controller support for targets that list a controller provider.
+- Bundled Raggedy Controller support for targets that list a controller provider.
 - Profile backups and restore options, including undoing the last deleted profile.
 - Remote Files for managing profiles and worlds through a browser on the local network.
 - Download repair, current and previous run logs, and crash report ZIPs.
@@ -118,9 +118,9 @@ Shader packs need a compatible shader loader such as Iris or Oculus in the same 
 
 ## Controller and mouse
 
-Bandit Controller is included for the catalog targets that have a controller provider. Press **View/Back** in game to open its settings. Controller availability for each target is listed in [the version catalog](config/versions.tsv).
+Raggedy Controller is included for the catalog targets that have a controller provider. Press **View/Back** in game to open its settings. Controller availability for each target is listed in [the version catalog](config/versions.tsv).
 
-To use another controller mod, turn **Bandit Controller** off for that profile before installing it.
+To use another controller mod, turn **Raggedy Controller** off for that profile before installing it.
 
 - **Main nightly** uses the optional mouse relay. A browser page is available from the launcher. Companion downloads for Windows, Android and iOS are published alongside the mouse relay build.
 - **Native mouse nightly** accepts a USB mouse directly. Launcher Settings has separate menu and game mouse sensitivity controls.
@@ -183,4 +183,4 @@ Videos, streams, screenshots, reviews, benchmarks and tutorials are allowed when
 
 Redistributing APPX packages, including nightly builds, requires prior written permission. Removing or bypassing Microsoft/Xbox authentication or Minecraft ownership checks is not permitted.
 
-Bandit Launcher does not bundle Minecraft game files. Minecraft and all third-party components remain under their own licenses and terms. See [Legal notes](docs/LEGAL.md) for more detail.
+Raggedy Launcher does not bundle Minecraft game files. Minecraft and all third-party components remain under their own licenses and terms. See [Legal notes](docs/LEGAL.md) for more detail.

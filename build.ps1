@@ -27,7 +27,7 @@ try {
         [System.IO.FileAccess]::ReadWrite,
         [System.IO.FileShare]::None)
 } catch [System.IO.IOException] {
-    throw "Another Bandit Launcher build is already using this checkout."
+    throw "Another Raggedy Launcher build is already using this checkout."
 }
 
 try {
@@ -127,7 +127,7 @@ if ($AppxVersion) {
 }
 Ensure-Dir (Split-Path $verFile)
 Set-Content -Path $verFile -Value $appVersion -NoNewline
-$appx = Join-Path $outDir ("BanditLauncher_{0}.appx" -f $appVersion)
+$appx = Join-Path $outDir ("RaggedyLauncher_{0}.appx" -f $appVersion)
 
 $mcVersionSource = if ($McVersion) {
     "-McVersion"
@@ -495,7 +495,7 @@ Copy-Item (Join-Path $languageSource "*.json") (Join-Path $pkg "lang") -Force
 # NeoForge client jars are derived from the Minecraft client. Keep them out of normal and
 # nightly builds; opt in only for private diagnostics while on-device generation is being fixed.
 $prebuiltLibs = Join-Path $root "prebuilt\neoforge\libraries"
-if (($IncludePrebuiltNeoForgeArtifacts -or $env:BANDIT_INCLUDE_PREBUILT_NEOFORGE_ARTIFACTS -eq "1") -and (Test-Path $prebuiltLibs)) {
+if (($IncludePrebuiltNeoForgeArtifacts -or $env:RAGGEDY_INCLUDE_PREBUILT_NEOFORGE_ARTIFACTS -eq "1") -and (Test-Path $prebuiltLibs)) {
     $prebuiltDst = Join-Path $pkg "runtime\libraries"
     Get-ChildItem $prebuiltLibs -Recurse -File | ForEach-Object {
         $rel = $_.FullName.Substring($prebuiltLibs.Length).TrimStart('\')
@@ -652,7 +652,7 @@ if ($fabricLoaderVersions -contains "0.14.25") {
 }
 # Bundled mods (compat mod, optionally diagnostics) live under runtime\bundled-mods.
 # App.cpp copies them into LocalState\game\mods on launch.
-foreach ($name in @("banditvault-xbox-compat-1.0.0.jar", "banditvault-fabric-controller-1.0.0.jar")) {
+foreach ($name in @("raggedy-xbox-compat-1.0.0.jar", "raggedy-fabric-controller-1.0.0.jar")) {
     $source = Join-Path $gameDir "mods\$name"
     if (-not (Test-JarComplete $source)) { throw "Required bundled mod missing or incomplete $source" }
     Copy-Item -LiteralPath $source -Destination (Join-Path $pkg "runtime\bundled-mods\$name") -Force
@@ -744,7 +744,7 @@ $manifestsDir = Join-Path $pkg "runtime\manifests"
 Ensure-Dir $manifestsDir
 $defaultTargetId = "$($ProjectConfig.MinecraftVersion)-fabric-$($ProjectConfig.FabricLoaderVersion)"
 Ensure-Dir (Join-Path $pkg "runtime\version-mods\$defaultTargetId")
-foreach ($name in @("banditvault-xbox-compat-1.0.0.jar", "banditvault-fabric-controller-1.0.0.jar")) {
+foreach ($name in @("raggedy-xbox-compat-1.0.0.jar", "raggedy-fabric-controller-1.0.0.jar")) {
     Copy-Item (Join-Path $pkg "runtime\bundled-mods\$name") (Join-Path $pkg "runtime\version-mods\$defaultTargetId\$name") -Force
 }
 Copy-Item -Force $defaultDownloadManifest (Join-Path $manifestsDir "$defaultTargetId.tsv")
@@ -1154,7 +1154,7 @@ function Build-JavaDesktopUwpAwtPatch {
 
     $oldDesktopCall = "        getWindowsParameters();"
     $newDesktopCall = @'
-        if (!Boolean.getBoolean("banditvault.awt.skipDesktopProperties")) {
+        if (!Boolean.getBoolean("raggedy.awt.skipDesktopProperties")) {
             getWindowsParameters();
         }
 '@
@@ -1295,10 +1295,10 @@ $allSigningCertCandidates = Get-ChildItem Cert:\CurrentUser\My |
         ($_.EnhancedKeyUsageList | Where-Object { $_.FriendlyName -eq 'Code Signing' })
     }
 $exactSigningCertCandidates = $allSigningCertCandidates | Where-Object { $_.Subject -eq $certName } | Sort-Object NotBefore -Descending
-$banditVaultSigningCertCandidates = $allSigningCertCandidates | Where-Object { $_.Subject -like '*BanditVault*' -and $_.Subject -ne $certName } | Sort-Object NotBefore -Descending
-$signingCertCandidates = @($exactSigningCertCandidates) + @($banditVaultSigningCertCandidates)
+$raggedySigningCertCandidates = $allSigningCertCandidates | Where-Object { $_.Subject -like '*RaggedyBlueBox*' -and $_.Subject -ne $certName } | Sort-Object NotBefore -Descending
+$signingCertCandidates = @($exactSigningCertCandidates) + @($raggedySigningCertCandidates)
 if (-not $signingCertCandidates) {
-    throw "No signing certificate for '$certName' in Cert:\CurrentUser\My. Restore the BanditVault certificate, or set APPX_CERT_SUBJECT to the subject you want to sign with. Signing with an unrelated certificate changes the package family name and loses LocalState."
+    throw "No signing certificate for '$certName' in Cert:\CurrentUser\My. Restore the RaggedyBlueBox certificate, or set APPX_CERT_SUBJECT to the subject you want to sign with. Signing with an unrelated certificate changes the package family name and loses LocalState."
 }
 
 $makeappx = Get-ChildItem "${sdkRoot}bin\$sdkVer\x64\makeappx.exe","${sdkRoot}bin\$sdkToolsFallbackVer\x64\makeappx.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName

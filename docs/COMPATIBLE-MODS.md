@@ -1,7 +1,7 @@
 # Compatible Mods
 Mods that have been tested and confirmed working. Will update over time as more mods are tested. Please provide feedback to [this form](https://forms.gle/d3WUReg4YrjPTCGJ8) in order to add or remove mods from this list.
 
-## NOTE: A mod not being here does not mean that it is incompatible with Bandit Launcher. 
+## NOTE: A mod not being here does not mean that it is incompatible with Raggedy Launcher. 
 
 - [3D Skin Layers](https://modrinth.com/mod/3dskinlayers)
 - [Animatica](https://modrinth.com/mod/animatica)

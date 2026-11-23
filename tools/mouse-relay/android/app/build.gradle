@@ -36,12 +36,12 @@ tasks.register("downloadSdlAar") {
 }
 
 android {
-    namespace "dev.bandit.mouserelay"
+    namespace "dev.raggedy.mouserelay"
     compileSdk 36
     ndkVersion "28.2.13676358"
 
     defaultConfig {
-        applicationId "dev.bandit.mouserelay"
+        applicationId "dev.raggedy.mouserelay"
         minSdk 23
         targetSdk 36
         versionCode 1

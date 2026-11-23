@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "raggedy.fabriccontroller.mixin",
+  "compatibilityLevel": "__COMPAT_LEVEL__",
+  "client": [
+    "RaggedyControllerKeyAccessor",
+    "RaggedyControllerClientMixin",
+    "RaggedyControllerGameRendererMixin",
+    "RaggedyControllerHandledScreenMixin",
+    "RaggedyControllerRecipeBookScreenMixin",
+    "RaggedyControllerScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

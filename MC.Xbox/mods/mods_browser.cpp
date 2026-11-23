@@ -247,7 +247,7 @@ struct ProfileModInstallMeta {
 };
 
 static std::wstring ProfileModInstallMetaDirFromModsDir(const std::wstring& userModsDir) {
-    return GetParentDir(userModsDir) + L"\\.bandit\\mod-installs";
+    return GetParentDir(userModsDir) + L"\\.raggedy\\mod-installs";
 }
 
 static std::wstring ProfileModInstallMetaPathFromModsDir(const std::wstring& userModsDir, const std::wstring& fileName) {
@@ -1236,7 +1236,7 @@ bool InstallManagedModrinthProject(const std::wstring& runtimeRoot, const std::w
                 MoveFileExW(stash.c_str(), (userModsDir + L"\\" + name).c_str(), MOVEFILE_REPLACE_EXISTING);
             } else if (before.count(ToLowerW(name)) == 0) {
                 DeleteFileW((userModsDir + L"\\" + name).c_str());
-                DeleteFileW((userModsDir + L"\\.bandit\\mod-installs\\" + SafeFileName(name) + L".meta").c_str());
+                DeleteFileW((userModsDir + L"\\.raggedy\\mod-installs\\" + SafeFileName(name) + L".meta").c_str());
             }
         }
         DeleteDirectoryTree(backupDir);
@@ -1282,7 +1282,7 @@ bool ApplyControllerBundle(const std::wstring& runtimeRoot, const std::wstring& 
 
     std::vector<std::wstring> candidates;
     if (want == L"auto") {
-        candidates = { L"legacy4j", L"bandit", L"controlify", L"none" };
+        candidates = { L"legacy4j", L"raggedy", L"controlify", L"none" };
     } else {
         candidates = { want };
     }
@@ -1330,10 +1330,10 @@ bool ApplyControllerBundle(const std::wstring& runtimeRoot, const std::wstring& 
             status = installedCount == 0
                 ? Tr(L"Controller bundle: Auto using Legacy4J (already installed).")
                 : TrFormat(L"Controller bundle: Auto using Legacy4J ({0} file(s) installed).", { std::to_wstring(installedCount) });
-        } else if (chosen == L"bandit") {
-            status = Tr(L"Controller bundle: Auto using Bandit (Legacy4J has no build for this version).");
+        } else if (chosen == L"raggedy") {
+            status = Tr(L"Controller bundle: Auto using Raggedy (Legacy4J has no build for this version).");
         } else if (chosen == L"controlify") {
-            status = Tr(L"Controller bundle: Auto using Controlify (Legacy4J and Bandit are unavailable here).");
+            status = Tr(L"Controller bundle: Auto using Controlify (Legacy4J and Raggedy are unavailable here).");
         } else {
             status = Tr(L"Controller bundle: Auto found no usable controller here; nothing was installed.");
         }
@@ -1341,10 +1341,10 @@ bool ApplyControllerBundle(const std::wstring& runtimeRoot, const std::wstring& 
         status = installedCount == 0
             ? TrFormat(L"Controller bundle: {0} ready.", { Tr(ControllerBundleLabelKey(chosen)) })
             : TrFormat(L"Controller bundle: {0} installed ({1} file(s)).", { Tr(ControllerBundleLabelKey(chosen)), std::to_wstring(installedCount) });
-    } else if (chosen == L"bandit") {
+    } else if (chosen == L"raggedy") {
         status = removed > 0
-            ? Tr(L"Bandit controller mod will be forced on launch")
-            : Tr(L"Bandit controller mod enabled");
+            ? Tr(L"Raggedy controller mod will be forced on launch")
+            : Tr(L"Raggedy controller mod enabled");
     } else {
         status = removed > 0
             ? Tr(L"Controller bundle cleared; your own mods were left in place")
@@ -2492,7 +2492,7 @@ void ShowModsPage(
     compat::RefreshAsync();
     state.showMainMenu = false;
     state.showModsPage = true;
-    state.title = L"Bandit Launcher";
+    state.title = L"Raggedy Launcher";
     state.selectedModsTab = 0;
     state.selectedModIndex = 0;
     state.modsFocus = 0;

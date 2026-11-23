@@ -285,7 +285,7 @@ static int g_swap_log_count = 0;
 
 static std::atomic<unsigned long long> g_presented_frames{ 0 };
 
-extern "C" __declspec(dllexport) unsigned long long BanditShimPresentedFrames(void) {
+extern "C" __declspec(dllexport) unsigned long long RaggedyShimPresentedFrames(void) {
     return g_presented_frames.load(std::memory_order_relaxed);
 }
 
@@ -484,7 +484,7 @@ static void RemoveMouseDeviceHooks();
 static bool InstallMouseDeviceHooks();
 static void RemovePointerHooks();
 static bool InstallPointerHooks();
-namespace bandit_cursor { static void Reset(); }
+namespace raggedy_cursor { static void Reset(); }
 static IClipboardStatics* GetClipboardStatics();
 
 struct FakeWindow {
@@ -898,43 +898,43 @@ static void DispatchCharEvent(unsigned int codepoint) {
 // ---------------------------------------------------------------------------
 // Native Xbox text input
 // ---------------------------------------------------------------------------
-static constexpr int BANDIT_KEYBOARD_MULTILINE = 1;
-static constexpr int BANDIT_KEYBOARD_SUBMIT = 1;
-static constexpr int BANDIT_KEYBOARD_CLOSED = 2;
-static constexpr int BANDIT_KEYBOARD_HARD_LIMIT = 1 << 20;
+static constexpr int RAGGEDY_KEYBOARD_MULTILINE = 1;
+static constexpr int RAGGEDY_KEYBOARD_SUBMIT = 1;
+static constexpr int RAGGEDY_KEYBOARD_CLOSED = 2;
+static constexpr int RAGGEDY_KEYBOARD_HARD_LIMIT = 1 << 20;
 
-static std::mutex g_banditKeyboardMutex;
-static std::wstring g_banditKeyboardText;
-static int g_banditKeyboardSelectionStart = 0;
-static int g_banditKeyboardSelectionEnd = 0;
-static int g_banditKeyboardMaxLength = BANDIT_KEYBOARD_HARD_LIMIT;
-static int g_banditKeyboardRevision = 0;
-static int g_banditKeyboardFlags = 0;
-static bool g_banditKeyboardActive = false;
-static bool g_banditKeyboardWasVisible = false;
-static bool g_banditKeyboardMultiline = false;
-static winrt::Windows::UI::Core::CoreWindow g_banditKeyboardWindow{nullptr};
-static winrt::Windows::UI::Text::Core::CoreTextEditContext g_banditKeyboardContext{nullptr};
-static winrt::Windows::UI::ViewManagement::InputPane g_banditKeyboardPane{nullptr};
-static bool g_banditKeyboardFocusEntered = false;
-static winrt::event_token g_banditKeyboardTextRequested{};
-static winrt::event_token g_banditKeyboardSelectionRequested{};
-static winrt::event_token g_banditKeyboardTextUpdating{};
-static winrt::event_token g_banditKeyboardSelectionUpdating{};
-static winrt::event_token g_banditKeyboardLayoutRequested{};
-static winrt::event_token g_banditKeyboardFocusRemoved{};
+static std::mutex g_raggedyKeyboardMutex;
+static std::wstring g_raggedyKeyboardText;
+static int g_raggedyKeyboardSelectionStart = 0;
+static int g_raggedyKeyboardSelectionEnd = 0;
+static int g_raggedyKeyboardMaxLength = RAGGEDY_KEYBOARD_HARD_LIMIT;
+static int g_raggedyKeyboardRevision = 0;
+static int g_raggedyKeyboardFlags = 0;
+static bool g_raggedyKeyboardActive = false;
+static bool g_raggedyKeyboardWasVisible = false;
+static bool g_raggedyKeyboardMultiline = false;
+static winrt::Windows::UI::Core::CoreWindow g_raggedyKeyboardWindow{nullptr};
+static winrt::Windows::UI::Text::Core::CoreTextEditContext g_raggedyKeyboardContext{nullptr};
+static winrt::Windows::UI::ViewManagement::InputPane g_raggedyKeyboardPane{nullptr};
+static bool g_raggedyKeyboardFocusEntered = false;
+static winrt::event_token g_raggedyKeyboardTextRequested{};
+static winrt::event_token g_raggedyKeyboardSelectionRequested{};
+static winrt::event_token g_raggedyKeyboardTextUpdating{};
+static winrt::event_token g_raggedyKeyboardSelectionUpdating{};
+static winrt::event_token g_raggedyKeyboardLayoutRequested{};
+static winrt::event_token g_raggedyKeyboardFocusRemoved{};
 
-static int ClampBanditKeyboardIndex(int value, int length) {
+static int ClampRaggedyKeyboardIndex(int value, int length) {
     return (std::max)(0, (std::min)(value, length));
 }
 
-static void ClampBanditKeyboardSelection(int length, int& start, int& end) {
-    start = ClampBanditKeyboardIndex(start, length);
-    end = ClampBanditKeyboardIndex(end, length);
+static void ClampRaggedyKeyboardSelection(int length, int& start, int& end) {
+    start = ClampRaggedyKeyboardIndex(start, length);
+    end = ClampRaggedyKeyboardIndex(end, length);
     if (start > end) std::swap(start, end);
 }
 
-static void TruncateBanditKeyboardText(std::wstring& text, int maxLength) {
+static void TruncateRaggedyKeyboardText(std::wstring& text, int maxLength) {
     if ((int)text.size() <= maxLength) return;
     text.resize(maxLength);
     if (!text.empty() && text.back() >= 0xD800 && text.back() <= 0xDBFF) {
@@ -942,143 +942,143 @@ static void TruncateBanditKeyboardText(std::wstring& text, int maxLength) {
     }
 }
 
-static bool BanditKeyboardSelfCheck() {
+static bool RaggedyKeyboardSelfCheck() {
     int start = -2;
     int end = 9;
-    ClampBanditKeyboardSelection(4, start, end);
+    ClampRaggedyKeyboardSelection(4, start, end);
     std::wstring text = L"abc";
-    TruncateBanditKeyboardText(text, 2);
+    TruncateRaggedyKeyboardText(text, 2);
     return start == 0 && end == 4 && text == L"ab";
 }
 
-static bool BanditKeyboardCapturesInput() {
-    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-    return g_banditKeyboardActive;
+static bool RaggedyKeyboardCapturesInput() {
+    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+    return g_raggedyKeyboardActive;
 }
 
-static void NotifyBanditKeyboardChanged(int oldStart, int oldEnd, int newLength, int selectionStart, int selectionEnd) {
-    if (!g_banditKeyboardContext) return;
+static void NotifyRaggedyKeyboardChanged(int oldStart, int oldEnd, int newLength, int selectionStart, int selectionEnd) {
+    if (!g_raggedyKeyboardContext) return;
     using namespace winrt::Windows::UI::Text::Core;
     try {
-        g_banditKeyboardContext.NotifyTextChanged(
+        g_raggedyKeyboardContext.NotifyTextChanged(
             CoreTextRange{oldStart, oldEnd},
             newLength,
             CoreTextRange{selectionStart, selectionEnd});
-        g_banditKeyboardContext.NotifySelectionChanged(CoreTextRange{selectionStart, selectionEnd});
+        g_raggedyKeyboardContext.NotifySelectionChanged(CoreTextRange{selectionStart, selectionEnd});
     } catch (...) {
         // notify throws once the view is gone
     }
 }
 
-static void EndBanditKeyboard(bool markClosed) {
+static void EndRaggedyKeyboard(bool markClosed) {
     bool leaveFocus = false;
     {
-        std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-        if (markClosed && g_banditKeyboardActive) g_banditKeyboardFlags |= BANDIT_KEYBOARD_CLOSED;
-        g_banditKeyboardActive = false;
-        g_banditKeyboardWasVisible = false;
-        leaveFocus = g_banditKeyboardFocusEntered;
-        g_banditKeyboardFocusEntered = false;
+        std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+        if (markClosed && g_raggedyKeyboardActive) g_raggedyKeyboardFlags |= RAGGEDY_KEYBOARD_CLOSED;
+        g_raggedyKeyboardActive = false;
+        g_raggedyKeyboardWasVisible = false;
+        leaveFocus = g_raggedyKeyboardFocusEntered;
+        g_raggedyKeyboardFocusEntered = false;
     }
     if (!leaveFocus) return;
 
     // focus enter and leave have to pair, and b already tore it down from the window key handler
-    if (g_banditKeyboardContext) {
-        ShimLog("Bandit native keyboard teardown: notify focus leave");
-        try { g_banditKeyboardContext.NotifyFocusLeave(); } catch (...) {}
+    if (g_raggedyKeyboardContext) {
+        ShimLog("Raggedy native keyboard teardown: notify focus leave");
+        try { g_raggedyKeyboardContext.NotifyFocusLeave(); } catch (...) {}
     }
-    if (g_banditKeyboardPane) {
+    if (g_raggedyKeyboardPane) {
         bool visible = false;
-        try { visible = g_banditKeyboardPane.Visible(); } catch (...) {}
+        try { visible = g_raggedyKeyboardPane.Visible(); } catch (...) {}
         if (visible) {
-            ShimLog("Bandit native keyboard teardown: hiding pane");
-            try { g_banditKeyboardPane.TryHide(); } catch (...) {}
+            ShimLog("Raggedy native keyboard teardown: hiding pane");
+            try { g_raggedyKeyboardPane.TryHide(); } catch (...) {}
         }
     }
-    ShimLog("Bandit native keyboard teardown complete");
+    ShimLog("Raggedy native keyboard teardown complete");
 }
 
-static void RefreshBanditKeyboardVisibility() {
-    if (!BanditKeyboardCapturesInput() || !g_banditKeyboardPane) return;
+static void RefreshRaggedyKeyboardVisibility() {
+    if (!RaggedyKeyboardCapturesInput() || !g_raggedyKeyboardPane) return;
     bool visible = false;
-    try { visible = g_banditKeyboardPane.Visible(); } catch (...) { return; }
-    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-    if (!g_banditKeyboardActive) return;
+    try { visible = g_raggedyKeyboardPane.Visible(); } catch (...) { return; }
+    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+    if (!g_raggedyKeyboardActive) return;
     if (visible) {
-        g_banditKeyboardWasVisible = true;
-    } else if (g_banditKeyboardWasVisible) {
-        g_banditKeyboardActive = false;
-        g_banditKeyboardWasVisible = false;
-        g_banditKeyboardFlags |= BANDIT_KEYBOARD_CLOSED;
+        g_raggedyKeyboardWasVisible = true;
+    } else if (g_raggedyKeyboardWasVisible) {
+        g_raggedyKeyboardActive = false;
+        g_raggedyKeyboardWasVisible = false;
+        g_raggedyKeyboardFlags |= RAGGEDY_KEYBOARD_CLOSED;
     }
 }
 
-static bool ReplaceBanditKeyboardSelection(const std::wstring& replacement) {
+static bool ReplaceRaggedyKeyboardSelection(const std::wstring& replacement) {
     int oldStart = 0;
     int oldEnd = 0;
     int newSelection = 0;
     int inserted = 0;
     {
-        std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-        if (!g_banditKeyboardActive) return false;
-        const int oldLength = (int)g_banditKeyboardText.size();
-        oldStart = g_banditKeyboardSelectionStart;
-        oldEnd = g_banditKeyboardSelectionEnd;
-        ClampBanditKeyboardSelection(oldLength, oldStart, oldEnd);
-        std::wstring next = g_banditKeyboardText.substr(0, oldStart) + replacement + g_banditKeyboardText.substr(oldEnd);
-        TruncateBanditKeyboardText(next, g_banditKeyboardMaxLength);
+        std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+        if (!g_raggedyKeyboardActive) return false;
+        const int oldLength = (int)g_raggedyKeyboardText.size();
+        oldStart = g_raggedyKeyboardSelectionStart;
+        oldEnd = g_raggedyKeyboardSelectionEnd;
+        ClampRaggedyKeyboardSelection(oldLength, oldStart, oldEnd);
+        std::wstring next = g_raggedyKeyboardText.substr(0, oldStart) + replacement + g_raggedyKeyboardText.substr(oldEnd);
+        TruncateRaggedyKeyboardText(next, g_raggedyKeyboardMaxLength);
         inserted = (std::max)(0, (int)next.size() - (oldLength - (oldEnd - oldStart)));
-        newSelection = ClampBanditKeyboardIndex(oldStart + inserted, (int)next.size());
-        g_banditKeyboardText = std::move(next);
-        g_banditKeyboardSelectionStart = newSelection;
-        g_banditKeyboardSelectionEnd = newSelection;
-        ++g_banditKeyboardRevision;
+        newSelection = ClampRaggedyKeyboardIndex(oldStart + inserted, (int)next.size());
+        g_raggedyKeyboardText = std::move(next);
+        g_raggedyKeyboardSelectionStart = newSelection;
+        g_raggedyKeyboardSelectionEnd = newSelection;
+        ++g_raggedyKeyboardRevision;
     }
-    NotifyBanditKeyboardChanged(oldStart, oldEnd, inserted, newSelection, newSelection);
+    NotifyRaggedyKeyboardChanged(oldStart, oldEnd, inserted, newSelection, newSelection);
     return true;
 }
 
-static bool HandleBanditKeyboardKeyDown(VirtualKey virtualKey) {
-    if (!BanditKeyboardCapturesInput()) return false;
+static bool HandleRaggedyKeyboardKeyDown(VirtualKey virtualKey) {
+    if (!RaggedyKeyboardCapturesInput()) return false;
     if (virtualKey == VirtualKey_Back) {
         int start = 0;
         int end = 0;
         {
-            std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-            start = g_banditKeyboardSelectionStart;
-            end = g_banditKeyboardSelectionEnd;
-            ClampBanditKeyboardSelection((int)g_banditKeyboardText.size(), start, end);
+            std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+            start = g_raggedyKeyboardSelectionStart;
+            end = g_raggedyKeyboardSelectionEnd;
+            ClampRaggedyKeyboardSelection((int)g_raggedyKeyboardText.size(), start, end);
             if (start == end && start > 0) {
                 --start;
-                if (start > 0 && g_banditKeyboardText[start] >= 0xDC00 && g_banditKeyboardText[start] <= 0xDFFF &&
-                    g_banditKeyboardText[start - 1] >= 0xD800 && g_banditKeyboardText[start - 1] <= 0xDBFF) {
+                if (start > 0 && g_raggedyKeyboardText[start] >= 0xDC00 && g_raggedyKeyboardText[start] <= 0xDFFF &&
+                    g_raggedyKeyboardText[start - 1] >= 0xD800 && g_raggedyKeyboardText[start - 1] <= 0xDBFF) {
                     --start;
                 }
             }
-            g_banditKeyboardSelectionStart = start;
-            g_banditKeyboardSelectionEnd = end;
+            g_raggedyKeyboardSelectionStart = start;
+            g_raggedyKeyboardSelectionEnd = end;
         }
-        ReplaceBanditKeyboardSelection(L"");
+        ReplaceRaggedyKeyboardSelection(L"");
         return true;
     }
     if (virtualKey == VirtualKey_Enter) {
         bool multiline = false;
         {
-            std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-            multiline = g_banditKeyboardMultiline;
-            if (!multiline) g_banditKeyboardFlags |= BANDIT_KEYBOARD_SUBMIT;
+            std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+            multiline = g_raggedyKeyboardMultiline;
+            if (!multiline) g_raggedyKeyboardFlags |= RAGGEDY_KEYBOARD_SUBMIT;
         }
-        if (multiline) ReplaceBanditKeyboardSelection(L"\n");
+        if (multiline) ReplaceRaggedyKeyboardSelection(L"\n");
         return true;
     }
     if (virtualKey == VirtualKey_Escape || virtualKey == VirtualKey_GamepadB) {
-        EndBanditKeyboard(true);
+        EndRaggedyKeyboard(true);
         return true;
     }
     return true;
 }
 
-static void MarkBanditKeyboardEventHandled(IInspectable* args) {
+static void MarkRaggedyKeyboardEventHandled(IInspectable* args) {
     if (!args) return;
     ComPtr<ICoreWindowEventArgs> eventArgs;
     if (SUCCEEDED(args->QueryInterface(IID_PPV_ARGS(eventArgs.GetAddressOf()))) && eventArgs) {
@@ -1086,57 +1086,57 @@ static void MarkBanditKeyboardEventHandled(IInspectable* args) {
     }
 }
 
-static bool CreateBanditKeyboardContext() {
+static bool CreateRaggedyKeyboardContext() {
     using namespace winrt::Windows::UI::Text::Core;
-    if (g_banditKeyboardContext) return true;
-    if (!g_coreWindow || !BanditKeyboardSelfCheck()) {
-        ShimLog("Bandit keyboard unavailable: native self-check or CoreWindow failed");
+    if (g_raggedyKeyboardContext) return true;
+    if (!g_coreWindow || !RaggedyKeyboardSelfCheck()) {
+        ShimLog("Raggedy keyboard unavailable: native self-check or CoreWindow failed");
         return false;
     }
     try {
-        winrt::copy_from_abi(g_banditKeyboardWindow, g_coreWindow.Get());
+        winrt::copy_from_abi(g_raggedyKeyboardWindow, g_coreWindow.Get());
         auto manager = CoreTextServicesManager::GetForCurrentView();
-        g_banditKeyboardContext = manager.CreateEditContext();
-        g_banditKeyboardContext.InputPaneDisplayPolicy(CoreTextInputPaneDisplayPolicy::Manual);
-        g_banditKeyboardContext.InputScope(CoreTextInputScope::Text);
+        g_raggedyKeyboardContext = manager.CreateEditContext();
+        g_raggedyKeyboardContext.InputPaneDisplayPolicy(CoreTextInputPaneDisplayPolicy::Manual);
+        g_raggedyKeyboardContext.InputScope(CoreTextInputScope::Text);
 
-        g_banditKeyboardTextRequested = g_banditKeyboardContext.TextRequested(
+        g_raggedyKeyboardTextRequested = g_raggedyKeyboardContext.TextRequested(
             [](auto&&, CoreTextTextRequestedEventArgs const& args) {
                 auto request = args.Request();
                 auto range = request.Range();
                 std::wstring text;
                 {
-                    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-                    const int length = (int)g_banditKeyboardText.size();
-                    const int start = ClampBanditKeyboardIndex(range.StartCaretPosition, length);
-                    const int end = (std::max)(start, ClampBanditKeyboardIndex(range.EndCaretPosition, length));
-                    text = g_banditKeyboardText.substr(start, end - start);
+                    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+                    const int length = (int)g_raggedyKeyboardText.size();
+                    const int start = ClampRaggedyKeyboardIndex(range.StartCaretPosition, length);
+                    const int end = (std::max)(start, ClampRaggedyKeyboardIndex(range.EndCaretPosition, length));
+                    text = g_raggedyKeyboardText.substr(start, end - start);
                 }
                 request.Text(winrt::hstring(text));
             });
 
-        g_banditKeyboardSelectionRequested = g_banditKeyboardContext.SelectionRequested(
+        g_raggedyKeyboardSelectionRequested = g_raggedyKeyboardContext.SelectionRequested(
             [](auto&&, CoreTextSelectionRequestedEventArgs const& args) {
                 CoreTextRange selection;
                 {
-                    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-                    selection = CoreTextRange{g_banditKeyboardSelectionStart, g_banditKeyboardSelectionEnd};
+                    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+                    selection = CoreTextRange{g_raggedyKeyboardSelectionStart, g_raggedyKeyboardSelectionEnd};
                 }
                 args.Request().Selection(selection);
             });
 
-        g_banditKeyboardTextUpdating = g_banditKeyboardContext.TextUpdating(
+        g_raggedyKeyboardTextUpdating = g_raggedyKeyboardContext.TextUpdating(
             [](auto&&, CoreTextTextUpdatingEventArgs const& args) {
                 const auto range = args.Range();
                 std::wstring incoming;
                 bool multiline = false;
                 {
-                    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-                    if (!g_banditKeyboardActive) {
+                    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+                    if (!g_raggedyKeyboardActive) {
                         args.Result(CoreTextTextUpdatingResult::Succeeded);
                         return;
                     }
-                    multiline = g_banditKeyboardMultiline;
+                    multiline = g_raggedyKeyboardMultiline;
                 }
                 bool sawNewline = false;
                 bool previousCarriageReturn = false;
@@ -1151,111 +1151,111 @@ static bool CreateBanditKeyboardContext() {
                     if (ch != L'\t') incoming.push_back(ch);
                 }
                 {
-                    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-                    const int oldLength = (int)g_banditKeyboardText.size();
-                    const int start = ClampBanditKeyboardIndex(range.StartCaretPosition, oldLength);
-                    const int end = (std::max)(start, ClampBanditKeyboardIndex(range.EndCaretPosition, oldLength));
-                    g_banditKeyboardText = g_banditKeyboardText.substr(0, start) + incoming + g_banditKeyboardText.substr(end);
-                    TruncateBanditKeyboardText(g_banditKeyboardText, g_banditKeyboardMaxLength);
+                    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+                    const int oldLength = (int)g_raggedyKeyboardText.size();
+                    const int start = ClampRaggedyKeyboardIndex(range.StartCaretPosition, oldLength);
+                    const int end = (std::max)(start, ClampRaggedyKeyboardIndex(range.EndCaretPosition, oldLength));
+                    g_raggedyKeyboardText = g_raggedyKeyboardText.substr(0, start) + incoming + g_raggedyKeyboardText.substr(end);
+                    TruncateRaggedyKeyboardText(g_raggedyKeyboardText, g_raggedyKeyboardMaxLength);
                     const auto selection = args.NewSelection();
-                    g_banditKeyboardSelectionStart = selection.StartCaretPosition;
-                    g_banditKeyboardSelectionEnd = selection.EndCaretPosition;
-                    ClampBanditKeyboardSelection((int)g_banditKeyboardText.size(), g_banditKeyboardSelectionStart, g_banditKeyboardSelectionEnd);
-                    if (sawNewline && !multiline) g_banditKeyboardFlags |= BANDIT_KEYBOARD_SUBMIT;
-                    ++g_banditKeyboardRevision;
+                    g_raggedyKeyboardSelectionStart = selection.StartCaretPosition;
+                    g_raggedyKeyboardSelectionEnd = selection.EndCaretPosition;
+                    ClampRaggedyKeyboardSelection((int)g_raggedyKeyboardText.size(), g_raggedyKeyboardSelectionStart, g_raggedyKeyboardSelectionEnd);
+                    if (sawNewline && !multiline) g_raggedyKeyboardFlags |= RAGGEDY_KEYBOARD_SUBMIT;
+                    ++g_raggedyKeyboardRevision;
                 }
                 args.Result(CoreTextTextUpdatingResult::Succeeded);
             });
 
-        g_banditKeyboardSelectionUpdating = g_banditKeyboardContext.SelectionUpdating(
+        g_raggedyKeyboardSelectionUpdating = g_raggedyKeyboardContext.SelectionUpdating(
             [](auto&&, CoreTextSelectionUpdatingEventArgs const& args) {
                 {
-                    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-                    if (!g_banditKeyboardActive) {
+                    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+                    if (!g_raggedyKeyboardActive) {
                         args.Result(CoreTextSelectionUpdatingResult::Succeeded);
                         return;
                     }
                     const auto selection = args.Selection();
-                    g_banditKeyboardSelectionStart = selection.StartCaretPosition;
-                    g_banditKeyboardSelectionEnd = selection.EndCaretPosition;
-                    ClampBanditKeyboardSelection((int)g_banditKeyboardText.size(), g_banditKeyboardSelectionStart, g_banditKeyboardSelectionEnd);
-                    ++g_banditKeyboardRevision;
+                    g_raggedyKeyboardSelectionStart = selection.StartCaretPosition;
+                    g_raggedyKeyboardSelectionEnd = selection.EndCaretPosition;
+                    ClampRaggedyKeyboardSelection((int)g_raggedyKeyboardText.size(), g_raggedyKeyboardSelectionStart, g_raggedyKeyboardSelectionEnd);
+                    ++g_raggedyKeyboardRevision;
                 }
                 args.Result(CoreTextSelectionUpdatingResult::Succeeded);
             });
 
-        g_banditKeyboardLayoutRequested = g_banditKeyboardContext.LayoutRequested(
+        g_raggedyKeyboardLayoutRequested = g_raggedyKeyboardContext.LayoutRequested(
             [](auto&&, CoreTextLayoutRequestedEventArgs const& args) {
                 winrt::Windows::Foundation::Rect rect{0.0f, 0.0f, 1.0f, 1.0f};
-                if (g_banditKeyboardWindow) rect = g_banditKeyboardWindow.Bounds();
+                if (g_raggedyKeyboardWindow) rect = g_raggedyKeyboardWindow.Bounds();
                 auto bounds = args.Request().LayoutBounds();
                 bounds.TextBounds(rect);
                 bounds.ControlBounds(rect);
             });
 
-        g_banditKeyboardFocusRemoved = g_banditKeyboardContext.FocusRemoved(
+        g_raggedyKeyboardFocusRemoved = g_raggedyKeyboardContext.FocusRemoved(
             [](auto&&, auto&&) {
-                std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-                if (g_banditKeyboardActive) {
-                    g_banditKeyboardActive = false;
-                    g_banditKeyboardWasVisible = false;
-                    g_banditKeyboardFlags |= BANDIT_KEYBOARD_CLOSED;
+                std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+                if (g_raggedyKeyboardActive) {
+                    g_raggedyKeyboardActive = false;
+                    g_raggedyKeyboardWasVisible = false;
+                    g_raggedyKeyboardFlags |= RAGGEDY_KEYBOARD_CLOSED;
                 }
             });
 
         try {
-            g_banditKeyboardPane = winrt::Windows::UI::ViewManagement::InputPane::GetForCurrentView();
+            g_raggedyKeyboardPane = winrt::Windows::UI::ViewManagement::InputPane::GetForCurrentView();
         } catch (...) {
-            ShimLog("Bandit native keyboard input pane unavailable, visibility tracking disabled");
+            ShimLog("Raggedy native keyboard input pane unavailable, visibility tracking disabled");
         }
-        ShimLog("Bandit native keyboard context ready");
+        ShimLog("Raggedy native keyboard context ready");
         return true;
     } catch (winrt::hresult_error const& error) {
-        ShimLog("Bandit native keyboard context failed hr=0x%08X", static_cast<unsigned int>(error.code()));
+        ShimLog("Raggedy native keyboard context failed hr=0x%08X", static_cast<unsigned int>(error.code()));
     } catch (...) {
-        ShimLog("Bandit native keyboard context failed");
+        ShimLog("Raggedy native keyboard context failed");
     }
-    g_banditKeyboardContext = nullptr;
-    g_banditKeyboardPane = nullptr;
-    g_banditKeyboardWindow = nullptr;
+    g_raggedyKeyboardContext = nullptr;
+    g_raggedyKeyboardPane = nullptr;
+    g_raggedyKeyboardWindow = nullptr;
     return false;
 }
 
-static void DestroyBanditKeyboardContext() {
-    EndBanditKeyboard(false);
-    if (g_banditKeyboardContext) {
+static void DestroyRaggedyKeyboardContext() {
+    EndRaggedyKeyboard(false);
+    if (g_raggedyKeyboardContext) {
         try {
-            g_banditKeyboardContext.TextRequested(g_banditKeyboardTextRequested);
-            g_banditKeyboardContext.SelectionRequested(g_banditKeyboardSelectionRequested);
-            g_banditKeyboardContext.TextUpdating(g_banditKeyboardTextUpdating);
-            g_banditKeyboardContext.SelectionUpdating(g_banditKeyboardSelectionUpdating);
-            g_banditKeyboardContext.LayoutRequested(g_banditKeyboardLayoutRequested);
-            g_banditKeyboardContext.FocusRemoved(g_banditKeyboardFocusRemoved);
+            g_raggedyKeyboardContext.TextRequested(g_raggedyKeyboardTextRequested);
+            g_raggedyKeyboardContext.SelectionRequested(g_raggedyKeyboardSelectionRequested);
+            g_raggedyKeyboardContext.TextUpdating(g_raggedyKeyboardTextUpdating);
+            g_raggedyKeyboardContext.SelectionUpdating(g_raggedyKeyboardSelectionUpdating);
+            g_raggedyKeyboardContext.LayoutRequested(g_raggedyKeyboardLayoutRequested);
+            g_raggedyKeyboardContext.FocusRemoved(g_raggedyKeyboardFocusRemoved);
         } catch (...) {
             // revoking throws if the context is already dead
         }
     }
-    g_banditKeyboardContext = nullptr;
-    g_banditKeyboardPane = nullptr;
-    g_banditKeyboardWindow = nullptr;
-    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-    g_banditKeyboardText.clear();
-    g_banditKeyboardSelectionStart = 0;
-    g_banditKeyboardSelectionEnd = 0;
-    g_banditKeyboardFlags = 0;
-    g_banditKeyboardWasVisible = false;
+    g_raggedyKeyboardContext = nullptr;
+    g_raggedyKeyboardPane = nullptr;
+    g_raggedyKeyboardWindow = nullptr;
+    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+    g_raggedyKeyboardText.clear();
+    g_raggedyKeyboardSelectionStart = 0;
+    g_raggedyKeyboardSelectionEnd = 0;
+    g_raggedyKeyboardFlags = 0;
+    g_raggedyKeyboardWasVisible = false;
 }
 
-extern "C" __declspec(dllexport) int banditKeyboardBegin(
+extern "C" __declspec(dllexport) int raggedyKeyboardBegin(
     const wchar_t* text,
     int length,
     int selectionStart,
     int selectionEnd,
     int maxLength,
     int options) {
-    if (!CreateBanditKeyboardContext()) return 0;
-    const int boundedLength = text ? ClampBanditKeyboardIndex(length, BANDIT_KEYBOARD_HARD_LIMIT) : 0;
-    const int boundedMax = maxLength <= 0 ? BANDIT_KEYBOARD_HARD_LIMIT : ClampBanditKeyboardIndex(maxLength, BANDIT_KEYBOARD_HARD_LIMIT);
+    if (!CreateRaggedyKeyboardContext()) return 0;
+    const int boundedLength = text ? ClampRaggedyKeyboardIndex(length, RAGGEDY_KEYBOARD_HARD_LIMIT) : 0;
+    const int boundedMax = maxLength <= 0 ? RAGGEDY_KEYBOARD_HARD_LIMIT : ClampRaggedyKeyboardIndex(maxLength, RAGGEDY_KEYBOARD_HARD_LIMIT);
     int oldLength = 0;
     int newLength = 0;
     int newSelectionStart = 0;
@@ -1263,113 +1263,113 @@ extern "C" __declspec(dllexport) int banditKeyboardBegin(
     bool multiline = false;
     int revision = 0;
     {
-        std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-        oldLength = (int)g_banditKeyboardText.size();
-        g_banditKeyboardText.assign(text ? text : L"", boundedLength);
-        g_banditKeyboardMaxLength = boundedMax;
-        TruncateBanditKeyboardText(g_banditKeyboardText, boundedMax);
-        g_banditKeyboardSelectionStart = selectionStart;
-        g_banditKeyboardSelectionEnd = selectionEnd;
-        ClampBanditKeyboardSelection((int)g_banditKeyboardText.size(), g_banditKeyboardSelectionStart, g_banditKeyboardSelectionEnd);
-        g_banditKeyboardMultiline = (options & BANDIT_KEYBOARD_MULTILINE) != 0;
-        g_banditKeyboardFlags = 0;
-        g_banditKeyboardActive = true;
-        g_banditKeyboardWasVisible = false;
-        newLength = (int)g_banditKeyboardText.size();
-        newSelectionStart = g_banditKeyboardSelectionStart;
-        newSelectionEnd = g_banditKeyboardSelectionEnd;
-        multiline = g_banditKeyboardMultiline;
-        revision = ++g_banditKeyboardRevision;
+        std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+        oldLength = (int)g_raggedyKeyboardText.size();
+        g_raggedyKeyboardText.assign(text ? text : L"", boundedLength);
+        g_raggedyKeyboardMaxLength = boundedMax;
+        TruncateRaggedyKeyboardText(g_raggedyKeyboardText, boundedMax);
+        g_raggedyKeyboardSelectionStart = selectionStart;
+        g_raggedyKeyboardSelectionEnd = selectionEnd;
+        ClampRaggedyKeyboardSelection((int)g_raggedyKeyboardText.size(), g_raggedyKeyboardSelectionStart, g_raggedyKeyboardSelectionEnd);
+        g_raggedyKeyboardMultiline = (options & RAGGEDY_KEYBOARD_MULTILINE) != 0;
+        g_raggedyKeyboardFlags = 0;
+        g_raggedyKeyboardActive = true;
+        g_raggedyKeyboardWasVisible = false;
+        newLength = (int)g_raggedyKeyboardText.size();
+        newSelectionStart = g_raggedyKeyboardSelectionStart;
+        newSelectionEnd = g_raggedyKeyboardSelectionEnd;
+        multiline = g_raggedyKeyboardMultiline;
+        revision = ++g_raggedyKeyboardRevision;
     }
     try {
         using namespace winrt::Windows::UI::Text::Core;
-        g_banditKeyboardContext.InputScope(CoreTextInputScope::Text);
-        g_banditKeyboardContext.NotifyFocusEnter();
+        g_raggedyKeyboardContext.InputScope(CoreTextInputScope::Text);
+        g_raggedyKeyboardContext.NotifyFocusEnter();
         {
-            std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-            g_banditKeyboardFocusEntered = true;
+            std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+            g_raggedyKeyboardFocusEntered = true;
         }
-        NotifyBanditKeyboardChanged(0, oldLength, newLength, newSelectionStart, newSelectionEnd);
-        if (g_banditKeyboardPane) g_banditKeyboardPane.TryShow();
-        ShimLog("Bandit native keyboard opened length=%d multiline=%d", newLength, multiline ? 1 : 0);
+        NotifyRaggedyKeyboardChanged(0, oldLength, newLength, newSelectionStart, newSelectionEnd);
+        if (g_raggedyKeyboardPane) g_raggedyKeyboardPane.TryShow();
+        ShimLog("Raggedy native keyboard opened length=%d multiline=%d", newLength, multiline ? 1 : 0);
         return revision;
     } catch (...) {
-        EndBanditKeyboard(false);
-        ShimLog("Bandit native keyboard failed to open");
+        EndRaggedyKeyboard(false);
+        ShimLog("Raggedy native keyboard failed to open");
         return 0;
     }
 }
 
-extern "C" __declspec(dllexport) int banditKeyboardUpdate(
+extern "C" __declspec(dllexport) int raggedyKeyboardUpdate(
     const wchar_t* text,
     int length,
     int selectionStart,
     int selectionEnd,
     int maxLength) {
-    const int boundedLength = text ? ClampBanditKeyboardIndex(length, BANDIT_KEYBOARD_HARD_LIMIT) : 0;
-    const int boundedMax = maxLength <= 0 ? BANDIT_KEYBOARD_HARD_LIMIT : ClampBanditKeyboardIndex(maxLength, BANDIT_KEYBOARD_HARD_LIMIT);
+    const int boundedLength = text ? ClampRaggedyKeyboardIndex(length, RAGGEDY_KEYBOARD_HARD_LIMIT) : 0;
+    const int boundedMax = maxLength <= 0 ? RAGGEDY_KEYBOARD_HARD_LIMIT : ClampRaggedyKeyboardIndex(maxLength, RAGGEDY_KEYBOARD_HARD_LIMIT);
     int oldLength = 0;
     int newLength = 0;
     int newSelectionStart = 0;
     int newSelectionEnd = 0;
     int revision = 0;
     {
-        std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-        if (!g_banditKeyboardActive) return 0;
-        oldLength = (int)g_banditKeyboardText.size();
-        g_banditKeyboardText.assign(text ? text : L"", boundedLength);
-        g_banditKeyboardMaxLength = boundedMax;
-        TruncateBanditKeyboardText(g_banditKeyboardText, boundedMax);
-        g_banditKeyboardSelectionStart = selectionStart;
-        g_banditKeyboardSelectionEnd = selectionEnd;
-        ClampBanditKeyboardSelection((int)g_banditKeyboardText.size(), g_banditKeyboardSelectionStart, g_banditKeyboardSelectionEnd);
-        newLength = (int)g_banditKeyboardText.size();
-        newSelectionStart = g_banditKeyboardSelectionStart;
-        newSelectionEnd = g_banditKeyboardSelectionEnd;
-        revision = ++g_banditKeyboardRevision;
+        std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+        if (!g_raggedyKeyboardActive) return 0;
+        oldLength = (int)g_raggedyKeyboardText.size();
+        g_raggedyKeyboardText.assign(text ? text : L"", boundedLength);
+        g_raggedyKeyboardMaxLength = boundedMax;
+        TruncateRaggedyKeyboardText(g_raggedyKeyboardText, boundedMax);
+        g_raggedyKeyboardSelectionStart = selectionStart;
+        g_raggedyKeyboardSelectionEnd = selectionEnd;
+        ClampRaggedyKeyboardSelection((int)g_raggedyKeyboardText.size(), g_raggedyKeyboardSelectionStart, g_raggedyKeyboardSelectionEnd);
+        newLength = (int)g_raggedyKeyboardText.size();
+        newSelectionStart = g_raggedyKeyboardSelectionStart;
+        newSelectionEnd = g_raggedyKeyboardSelectionEnd;
+        revision = ++g_raggedyKeyboardRevision;
     }
-    NotifyBanditKeyboardChanged(0, oldLength, newLength, newSelectionStart, newSelectionEnd);
+    NotifyRaggedyKeyboardChanged(0, oldLength, newLength, newSelectionStart, newSelectionEnd);
     return revision;
 }
 
-extern "C" __declspec(dllexport) int banditKeyboardGetRevision() {
-    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-    return g_banditKeyboardRevision;
+extern "C" __declspec(dllexport) int raggedyKeyboardGetRevision() {
+    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+    return g_raggedyKeyboardRevision;
 }
 
-extern "C" __declspec(dllexport) int banditKeyboardGetTextLength() {
-    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-    return (int)g_banditKeyboardText.size();
+extern "C" __declspec(dllexport) int raggedyKeyboardGetTextLength() {
+    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+    return (int)g_raggedyKeyboardText.size();
 }
 
-extern "C" __declspec(dllexport) int banditKeyboardCopyText(wchar_t* output, int capacity) {
-    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-    const int length = (int)g_banditKeyboardText.size();
+extern "C" __declspec(dllexport) int raggedyKeyboardCopyText(wchar_t* output, int capacity) {
+    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+    const int length = (int)g_raggedyKeyboardText.size();
     const int copied = (std::max)(0, (std::min)(capacity, length));
-    if (output && copied > 0) memcpy(output, g_banditKeyboardText.data(), copied * sizeof(wchar_t));
+    if (output && copied > 0) memcpy(output, g_raggedyKeyboardText.data(), copied * sizeof(wchar_t));
     return copied;
 }
 
-extern "C" __declspec(dllexport) int banditKeyboardGetSelectionStart() {
-    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-    return g_banditKeyboardSelectionStart;
+extern "C" __declspec(dllexport) int raggedyKeyboardGetSelectionStart() {
+    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+    return g_raggedyKeyboardSelectionStart;
 }
 
-extern "C" __declspec(dllexport) int banditKeyboardGetSelectionEnd() {
-    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-    return g_banditKeyboardSelectionEnd;
+extern "C" __declspec(dllexport) int raggedyKeyboardGetSelectionEnd() {
+    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+    return g_raggedyKeyboardSelectionEnd;
 }
 
-extern "C" __declspec(dllexport) int banditKeyboardConsumeFlags() {
-    RefreshBanditKeyboardVisibility();
-    std::lock_guard<std::mutex> lock(g_banditKeyboardMutex);
-    const int flags = g_banditKeyboardFlags;
-    g_banditKeyboardFlags = 0;
+extern "C" __declspec(dllexport) int raggedyKeyboardConsumeFlags() {
+    RefreshRaggedyKeyboardVisibility();
+    std::lock_guard<std::mutex> lock(g_raggedyKeyboardMutex);
+    const int flags = g_raggedyKeyboardFlags;
+    g_raggedyKeyboardFlags = 0;
     return flags;
 }
 
-extern "C" __declspec(dllexport) void banditKeyboardEnd() {
-    EndBanditKeyboard(false);
+extern "C" __declspec(dllexport) void raggedyKeyboardEnd() {
+    EndRaggedyKeyboard(false);
 }
 
 static bool EnsureGameInput() {
@@ -1566,8 +1566,8 @@ static bool InstallKeyboardHooks() {
             CorePhysicalKeyStatus status = {};
             args->get_VirtualKey(&virtualKey);
             args->get_KeyStatus(&status);
-            if (HandleBanditKeyboardKeyDown(virtualKey)) {
-                MarkBanditKeyboardEventHandled(args);
+            if (HandleRaggedyKeyboardKeyDown(virtualKey)) {
+                MarkRaggedyKeyboardEventHandled(args);
                 return S_OK;
             }
             DispatchKeyEvent(virtualKey, status, GLFW_PRESS);
@@ -1580,8 +1580,8 @@ static bool InstallKeyboardHooks() {
             CorePhysicalKeyStatus status = {};
             args->get_VirtualKey(&virtualKey);
             args->get_KeyStatus(&status);
-            if (BanditKeyboardCapturesInput()) {
-                MarkBanditKeyboardEventHandled(args);
+            if (RaggedyKeyboardCapturesInput()) {
+                MarkRaggedyKeyboardEventHandled(args);
                 return S_OK;
             }
             DispatchKeyEvent(virtualKey, status, GLFW_RELEASE);
@@ -1592,8 +1592,8 @@ static bool InstallKeyboardHooks() {
             if (!args) return S_OK;
             UINT32 codepoint = 0;
             args->get_KeyCode(&codepoint);
-            if (BanditKeyboardCapturesInput()) {
-                MarkBanditKeyboardEventHandled(args);
+            if (RaggedyKeyboardCapturesInput()) {
+                MarkRaggedyKeyboardEventHandled(args);
                 return S_OK;
             }
             DispatchCharEvent(codepoint);
@@ -1642,7 +1642,7 @@ static void InstallCoreWindowLifecycleHooks() {
                 MarkCoreWindowInputStateChanged();
                 ClearKeyboardState();
                 ClearGamepadState();
-                if (!next) EndBanditKeyboard(true);
+                if (!next) EndRaggedyKeyboard(true);
                 ShimLog("CoreWindow VisibilityChanged visible=%d", next);
             }
             return S_OK;
@@ -1665,7 +1665,7 @@ static void InstallCoreWindowLifecycleHooks() {
                 MarkCoreWindowInputStateChanged();
                 ClearKeyboardState();
                 ClearGamepadState();
-                if (!next) EndBanditKeyboard(true);
+                if (!next) EndRaggedyKeyboard(true);
                 ShimLog("CoreWindow Activated state=%d active=%d", (int)state, next);
             }
             if (g_focus_cb) {
@@ -2709,7 +2709,7 @@ static IClipboardStatics* GetClipboardStatics() {
 
 extern "C" __declspec(dllexport) void glfwTerminate(void) {
     ShimLog("glfwTerminate");
-    DestroyBanditKeyboardContext();
+    DestroyRaggedyKeyboardContext();
     if (g_coreWindow && g_keyboardHooksInstalled) {
         g_coreWindow->remove_KeyDown(g_keyDownToken);
         g_coreWindow->remove_KeyUp(g_keyUpToken);
@@ -2740,7 +2740,7 @@ extern "C" __declspec(dllexport) void glfwTerminate(void) {
     g_visibilityHandler.Reset();
     g_activatedHandler.Reset();
     g_lifecycleHooksInstalled = false;
-    bandit_cursor::Reset();
+    raggedy_cursor::Reset();
     g_initialised = FALSE;
     ShimLog("glfwTerminate complete");
 }
@@ -3402,7 +3402,7 @@ extern "C" __declspec(dllexport) GLFWwindow* glfwGetCurrentContext(void) {
 // mouse cursor overlay drawn in the swap path, so it lands above whatever
 // minecraft rendered on any version or loader. saves and restores every bit
 // of gl state it touches so the game pipeline is unchanged after it returns.
-namespace bandit_cursor {
+namespace raggedy_cursor {
 
 typedef unsigned int GLenum;
 typedef unsigned int GLuint;
@@ -3709,7 +3709,7 @@ static void Draw() {
 
 static void Reset() { g_ready = false; g_failed = false; g_prog = 0; g_vao = 0; g_vbo = 0; }
 
-} // namespace bandit_cursor
+} // namespace raggedy_cursor
 
 extern "C" __declspec(dllexport) void glfwSwapBuffers(GLFWwindow*) {
     if (g_swap_log_count < 12) {
@@ -3728,7 +3728,7 @@ extern "C" __declspec(dllexport) void glfwSwapBuffers(GLFWwindow*) {
     if (MouseCompanionActive() &&
         g_cursorMode == GLFW_CURSOR_NORMAL &&
         CurrentCursorInputOwner() == CursorInputOwnerRelay) {
-        bandit_cursor::Draw();
+        raggedy_cursor::Draw();
     }
     if (wglb::Active()) {
         if (wglb::Swap()) g_presented_frames.fetch_add(1, std::memory_order_relaxed);

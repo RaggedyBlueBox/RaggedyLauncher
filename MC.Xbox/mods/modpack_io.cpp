@@ -666,7 +666,7 @@ bool ExportProfileMrpack(
     root.SetNamedValue(L"versionId", JsonValue::CreateStringValue(target.minecraftVersion));
     root.SetNamedValue(L"name", JsonValue::CreateStringValue(profile.name));
     root.SetNamedValue(L"summary", JsonValue::CreateStringValue(
-        L"Exported from Bandit Launcher profile " + profile.name + L" (" + TargetProfileText(target) + L")"));
+        L"Exported from Raggedy Launcher profile " + profile.name + L" (" + TargetProfileText(target) + L")"));
 
     JsonArray files = JsonArray();
     std::vector<std::pair<std::string, std::wstring>> overrideFiles;

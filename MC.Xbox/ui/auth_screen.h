@@ -453,7 +453,7 @@ private:
         FillGradient(D2D1::RectF(0.0f, height_ * 0.72f, width_, height_), pal_.bg, 0.0f, 0.55f, true);
 
         const float menuRight = L_ + 520.0f;
-        DrawBrand(L"BANDIT LAUNCHER", muted_);
+        DrawBrand(L"RAGGEDY LAUNCHER", muted_);
 
         DrawText(state.title.c_str(), displayFormat_.Get(), D2D1::RectF(L_ - 3.0f, T_ + 64.0f, R_ - 200.0f, T_ + 148.0f), text_);
 
@@ -551,7 +551,7 @@ private:
 
     void DrawDeviceCode(const AuthUiState& state) {
         DrawBackdrop(0.84f);
-        DrawBrand(L"BANDIT LAUNCHER", muted_);
+        DrawBrand(L"RAGGEDY LAUNCHER", muted_);
 
         const float colRight = L_ + (R_ - L_) * 0.52f;
         const std::wstring title = state.title.empty() ? std::wstring(Tr(L"Microsoft sign-in")) : state.title;
@@ -1154,7 +1154,7 @@ private:
         } else if (!state.modsProfileBuiltin) {
             if (gridFocus) profileHint = Tr(L"B  Back      X  Remove mod      Y  Rename");
             else if (state.modsProfileFocus == 4) profileHint = Tr(L"B  Back      A  Export .mrpack for PC");
-            else if (state.modsProfileFocus == 5) profileHint = Tr(L"B  Back      A  Toggle Bandit controller mod      Y Rename");
+            else if (state.modsProfileFocus == 5) profileHint = Tr(L"B  Back      A  Toggle Raggedy controller mod      Y Rename");
             else profileHint = Tr(L"B  Back      A select      X Delete      Y Rename");
         }
         DrawFooter(profileHint.c_str(), state.modsRenaming ? accent_ : muted_);

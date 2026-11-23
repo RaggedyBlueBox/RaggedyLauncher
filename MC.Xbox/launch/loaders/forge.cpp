@@ -574,10 +574,10 @@ void ForgeAddJvmOptions(const LoaderJvmContext& ctx, std::vector<std::string>& v
     // and breaks BootstrapLaunchConsumer with NoSuchMethodError on ProtectionDomainHelper.
     WriteLog(L"Forge skipping securejarhandler UWP patch (2.1.10 is incompatible with NeoForge 3.0.8 patch)");
     if (!ctx.neoForgeMinecraftSrgJar.empty()) {
-        vmOptions.push_back("-Dbanditvault.neoforge.minecraftSrgJar=" + w2a(fwd(ctx.neoForgeMinecraftSrgJar)));
+        vmOptions.push_back("-Draggedy.neoforge.minecraftSrgJar=" + w2a(fwd(ctx.neoForgeMinecraftSrgJar)));
         WriteLogF(L"Forge Minecraft SRG fallback jar: %s", ctx.neoForgeMinecraftSrgJar.c_str());
     }
-    vmOptions.push_back("-Dbanditvault.launcherOverrideDir=" + w2a(fwd(ctx.launcherOverrideDir)));
+    vmOptions.push_back("-Draggedy.launcherOverrideDir=" + w2a(fwd(ctx.launcherOverrideDir)));
     if (VerboseLoggingEnabled()) {
         vmOptions.push_back("-Dforge.logging.console.level=debug");
         vmOptions.push_back("-Dforge.logging.markers=REGISTRIES");

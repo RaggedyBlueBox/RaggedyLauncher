@@ -1,0 +1,272 @@
+package raggedy.fabriccontroller;
+
+import raggedy.fabriccontroller.mixin.RaggedyControllerCreativeInventoryAccessor;
+import raggedy.fabriccontroller.mixin.RaggedyControllerEditBoxAccessor;
+import raggedy.fabriccontroller.mixin.RaggedyControllerSignEditScreenAccessor;
+import raggedy.fabriccontroller.mixin.RaggedyControllerTextFieldAccessor;
+import raggedy.fabriccontroller.mixin.RaggedyControllerTextModelAccessor;
+import net.minecraft.class_339;
+import net.minecraft.class_342;
+import net.minecraft.class_364;
+import net.minecraft.class_3728;
+import net.minecraft.class_408;
+import net.minecraft.class_481;
+import net.minecraft.class_437;
+import net.minecraft.class_481;
+import net.minecraft.class_7529;
+import net.minecraft.class_7530;
+import net.minecraft.class_7533;
+import net.minecraft.class_7743;
+import org.lwjgl.glfw.GLFW;
+
+final class RaggedyControllerKeyboard {
+    private static final int SIGN_MAX_LENGTH = 384;
+
+    private static class_437 activeScreen;
+    private static Object activeTarget;
+    private static Object dismissedTarget;
+    private static String mirroredText = "";
+    private static int mirroredSelectionStart;
+    private static int mirroredSelectionEnd;
+    private static int nativeRevision;
+    private static boolean loggedUnavailable;
+
+    private RaggedyControllerKeyboard() {
+    }
+
+    static boolean tick(class_437 screen) {
+        Object target = findTarget(screen);
+        if (screen != activeScreen) {
+            closeSession();
+            activeScreen = screen;
+            dismissedTarget = null;
+        }
+        if (activeTarget != null && target != activeTarget) {
+            closeSession();
+        }
+        if (target != dismissedTarget) dismissedTarget = null;
+        if (activeTarget == null) {
+            boolean automatic = target != null && (target instanceof class_7743 || screen instanceof class_408);
+            if (!automatic || target == dismissedTarget || !begin(target)) return false;
+        }
+
+        if (RaggedyNativeKeyboard.revision() != nativeRevision) {
+            RaggedyNativeKeyboard.Snapshot snapshot = RaggedyNativeKeyboard.snapshot();
+            apply(activeTarget, snapshot.text, snapshot.selectionStart, snapshot.selectionEnd);
+            State applied = state(activeTarget);
+            if (applied.matches(snapshot.text, snapshot.selectionStart, snapshot.selectionEnd)) {
+                mirror(applied, snapshot.revision);
+            } else {
+                sync(applied);
+            }
+        } else {
+            State current = state(activeTarget);
+            if (!current.matches(mirroredText, mirroredSelectionStart, mirroredSelectionEnd)) {
+                sync(current);
+            }
+        }
+
+        int flags = RaggedyNativeKeyboard.consumeFlags();
+        if ((flags & RaggedyNativeKeyboard.SUBMIT) != 0) {
+            Object submitted = activeTarget;
+            if (submitted instanceof class_7743) {
+                FabricScreenApi.keyPressed(screen, GLFW.GLFW_KEY_ENTER, 0, 0);
+                syncFromGame();
+            } else {
+                if (screen instanceof class_408) FabricScreenApi.keyPressed(screen, GLFW.GLFW_KEY_ENTER, 0, 0);
+                dismiss(screen, submitted);
+            }
+            return true;
+        }
+        if ((flags & RaggedyNativeKeyboard.CLOSED) != 0) {
+            dismiss(screen, activeTarget);
+            // the pane is already gone, so swallowing this tick as well would cost a second press
+            return false;
+        }
+        return true;
+    }
+
+    static boolean activate(class_437 screen, double cursorX, double cursorY) {
+        Object target = textTargetAt(screen, cursorX, cursorY);
+        if (target == null) {
+            releaseFieldFocus(screen, findTarget(screen));
+            return false;
+        }
+        if (screen == activeScreen && target == activeTarget) return true;
+        if (screen != activeScreen) {
+            closeSession();
+            activeScreen = screen;
+        }
+        dismissedTarget = null;
+        if (target != findTarget(screen)) screen.method_25395((class_364)target);
+        return begin(target);
+    }
+
+    static void close() {
+        closeSession();
+        activeScreen = null;
+        dismissedTarget = null;
+    }
+
+    private static boolean begin(Object target) {
+        if (!RaggedyNativeKeyboard.available()) {
+            if (!loggedUnavailable) {
+                loggedUnavailable = true;
+                FabricControllerLog.log("Raggedy native keyboard unavailable in the loaded GLFW library");
+            }
+            dismissedTarget = target;
+            return false;
+        }
+        State initial = state(target);
+        int revision = RaggedyNativeKeyboard.begin(
+            initial.text,
+            initial.selectionStart,
+            initial.selectionEnd,
+            initial.maxLength,
+            target instanceof class_7529);
+        if (revision == 0) {
+            FabricControllerLog.log("Raggedy native keyboard failed to open for " + target.getClass().getName());
+            dismissedTarget = target;
+            return false;
+        }
+        activeTarget = target;
+        mirror(initial, revision);
+        return true;
+    }
+
+    private static void closeSession() {
+        if (activeTarget != null) {
+            RaggedyNativeKeyboard.end();
+            FabricControllerLog.log("Raggedy controller keyboard session ended for " + activeTarget.getClass().getName());
+        }
+        activeTarget = null;
+        nativeRevision = 0;
+        mirroredText = "";
+        mirroredSelectionStart = 0;
+        mirroredSelectionEnd = 0;
+    }
+
+    private static void dismiss(class_437 screen, Object target) {
+        dismissedTarget = target;
+        closeSession();
+        releaseFieldFocus(screen, target);
+        RaggedyControllerCompat.resumeMenuAfterKeyboard(screen);
+    }
+
+    // clear focus only, the pane is already gone by the time a deselect can happen
+    private static void releaseFieldFocus(class_437 screen, Object target) {
+        if (!(target instanceof class_342) && !(target instanceof class_7529)) return;
+        Fabric12111MenuNavigation.clearFocus(screen);
+    }
+
+    private static void syncFromGame() {
+        sync(state(activeTarget));
+    }
+
+    private static void sync(State current) {
+        int revision = RaggedyNativeKeyboard.update(
+            current.text,
+            current.selectionStart,
+            current.selectionEnd,
+            current.maxLength);
+        mirror(current, revision);
+    }
+
+    private static void mirror(State state, int revision) {
+        mirroredText = state.text;
+        mirroredSelectionStart = state.selectionStart;
+        mirroredSelectionEnd = state.selectionEnd;
+        nativeRevision = revision;
+    }
+
+    private static Object findTarget(class_437 screen) {
+        if (screen == null) return null;
+        class_364 focused = Fabric12111MenuNavigation.deepestFocused(screen);
+        if (focused instanceof class_342 || focused instanceof class_7529) return focused;
+        return screen instanceof class_7743 ? screen : null;
+    }
+
+    private static Object textTargetAt(class_437 screen, double cursorX, double cursorY) {
+        // searching the pre 1.21.2 creative screen kills the app, see BUG-23
+        if (screen instanceof class_481 && !RaggedyControllerCompat.creativeSearchKeyboardAllowed()) return null;
+        Object focused = findTarget(screen);
+        if (focused instanceof class_339 && ((class_339)focused).method_25405(cursorX, cursorY)) return focused;
+        class_364 hovered = screen.method_19355(cursorX, cursorY).orElse(null);
+        if (hovered == null && screen instanceof class_7743) return focused;
+        return hovered instanceof class_342 || hovered instanceof class_7529 ? hovered : null;
+    }
+
+    private static State state(Object target) {
+        if (target instanceof class_342) {
+            class_342 field = (class_342)target;
+            RaggedyControllerTextFieldAccessor access = (RaggedyControllerTextFieldAccessor)field;
+            return new State(field.method_1882(), access.raggedy$cursor(), access.raggedy$selectionStart(), access.raggedy$maxLength());
+        }
+        if (target instanceof class_7529) {
+            class_7529 field = (class_7529)target;
+            class_7530 model = ((RaggedyControllerEditBoxAccessor)field).raggedy$textModel();
+            RaggedyControllerTextModelAccessor access = (RaggedyControllerTextModelAccessor)model;
+            return new State(field.method_44405(), access.raggedy$cursor(), access.raggedy$selectionStart(), model.method_44409());
+        }
+        RaggedyControllerSignEditScreenAccessor sign = (RaggedyControllerSignEditScreenAccessor)target;
+        String text = sign.raggedy$lines()[sign.raggedy$currentLine()];
+        class_3728 selection = sign.raggedy$selectionManager();
+        return new State(text, selection.method_16201(), selection.method_16203(), SIGN_MAX_LENGTH);
+    }
+
+    private static void apply(Object target, String text, int selectionStart, int selectionEnd) {
+        if (target instanceof class_342) {
+            class_342 field = (class_342)target;
+            if (!field.method_1882().equals(text)) {
+                field.method_1852(text);
+                if (activeScreen instanceof class_481) {
+                    ((RaggedyControllerCreativeInventoryAccessor)activeScreen).raggedy$refreshSearchResults();
+                }
+            }
+            int length = field.method_1882().length();
+            field.method_1875(clamp(selectionEnd, length));
+            field.method_1884(clamp(selectionStart, length));
+            return;
+        }
+        if (target instanceof class_7529) {
+            class_7529 field = (class_7529)target;
+            if (!field.method_44405().equals(text)) field.method_44400(text);
+            class_7530 model = ((RaggedyControllerEditBoxAccessor)field).raggedy$textModel();
+            int length = field.method_44405().length();
+            int start = clamp(selectionStart, length);
+            int end = clamp(selectionEnd, length);
+            model.method_44417(false);
+            model.method_44412(class_7533.field_39535, start);
+            model.method_44417(true);
+            model.method_44412(class_7533.field_39535, end);
+            model.method_44417(false);
+            return;
+        }
+        RaggedyControllerSignEditScreenAccessor sign = (RaggedyControllerSignEditScreenAccessor)target;
+        if (sign.raggedy$acceptsLine(text)) sign.raggedy$setCurrentLine(text);
+        int length = sign.raggedy$lines()[sign.raggedy$currentLine()].length();
+        sign.raggedy$selectionManager().method_27548(clamp(selectionEnd, length), clamp(selectionStart, length));
+    }
+
+    private static int clamp(int value, int length) {
+        return Math.max(0, Math.min(value, length));
+    }
+
+    private static final class State {
+        final String text;
+        final int selectionStart;
+        final int selectionEnd;
+        final int maxLength;
+
+        State(String text, int selectionStart, int selectionEnd, int maxLength) {
+            this.text = text;
+            this.selectionStart = Math.min(selectionStart, selectionEnd);
+            this.selectionEnd = Math.max(selectionStart, selectionEnd);
+            this.maxLength = maxLength;
+        }
+
+        boolean matches(String otherText, int otherStart, int otherEnd) {
+            return text.equals(otherText) && selectionStart == otherStart && selectionEnd == otherEnd;
+        }
+    }
+}

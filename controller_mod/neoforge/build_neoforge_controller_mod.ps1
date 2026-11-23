@@ -18,7 +18,7 @@ $srcJava = Join-Path $PSScriptRoot "src\main\java"
 $srcResources = Join-Path $PSScriptRoot "src\main\resources"
 $compileJava = Join-Path $PSScriptRoot "src\compile\java"
 $coreJava = Join-Path $root "controller_mod\core\src\main\java"
-$jarName = "banditvault-neoforge-controller-1.0.0.jar"
+$jarName = "raggedy-neoforge-controller-1.0.0.jar"
 $jarPath = Join-Path $buildRoot $jarName
 
 $variantLayers = @{
@@ -196,11 +196,11 @@ function Invoke-Javac([string]$Name, [string[]]$Sources, [string]$Destination, [
 Invoke-Javac "compile-only" @($compileOnlySources.FullName) $compileOnlyDir $classpath
 Invoke-Javac "main" @($mainSources.FullName) $classesDir (@($compileOnlyDir) + $classpath)
 
-& (Join-Path $javaHome "bin\java.exe") -ea -cp $classesDir banditvault.controllercore.GridNavigation
+& (Join-Path $javaHome "bin\java.exe") -ea -cp $classesDir raggedy.controllercore.GridNavigation
 if ($LASTEXITCODE -ne 0) {
     throw "NeoForge controller navigation self-check failed."
 }
-& (Join-Path $javaHome "bin\java.exe") -ea -cp $classesDir banditvault.controllercore.ControllerBindings
+& (Join-Path $javaHome "bin\java.exe") -ea -cp $classesDir raggedy.controllercore.ControllerBindings
 if ($LASTEXITCODE -ne 0) {
     throw "NeoForge controller binding self-check failed."
 }
@@ -229,9 +229,9 @@ try {
 
 $listing = & $jar tf $jarPath
 foreach ($required in @(
-    "banditvault/neoforgecontroller/NeoForgeControllerMod.class",
+    "raggedy/neoforgecontroller/NeoForgeControllerMod.class",
     "META-INF/neoforge.mods.toml",
-    "banditvault-neoforge-controller.mixins.json",
+    "raggedy-neoforge-controller.mixins.json",
     "pack.mcmeta"
 )) {
     if ($listing -notcontains $required) {

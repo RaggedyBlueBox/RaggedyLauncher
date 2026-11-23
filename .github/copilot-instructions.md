@@ -1,6 +1,6 @@
 # GitHub Copilot Instructions
 
-Bandit Launcher is account respecting software. Keep Microsoft/Xbox authentication and Minecraft entitlement verification intact.
+Raggedy Launcher is account respecting software. Keep Microsoft/Xbox authentication and Minecraft entitlement verification intact.
 
 Do not suggest or generate changes that:
 - Remove or bypass login.

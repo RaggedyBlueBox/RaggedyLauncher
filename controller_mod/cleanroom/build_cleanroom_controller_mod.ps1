@@ -16,7 +16,7 @@ $srcResources = Join-Path $PSScriptRoot "src\main\resources"
 $controllerCoreJava = Join-Path $root "controller_mod\core\src\main\java"
 $buildRoot = Join-Path (Get-ConfigPath "BuildDir") "controller_mod\cleanroom\$CleanroomVersion"
 $classesDir = Join-Path $buildRoot "classes"
-$jarName = "banditvault-cleanroom-controller-1.0.0.jar"
+$jarName = "raggedy-cleanroom-controller-1.0.0.jar"
 $jarPath = Join-Path $buildRoot $jarName
 $gameDir = Get-ConfigPath "GameDir"
 $libraryDir = Join-Path $gameDir "libraries"
@@ -153,7 +153,7 @@ Copy-Item -Recurse "$srcResources\*" $classesDir -Force
 if ($LASTEXITCODE -ne 0) { throw "Cleanroom controller mod jar failed." }
 
 $jarListing = & $jar tf $jarPath
-foreach ($required in @("banditvault/cleanroomcontroller/CleanroomControllerMod.class", "banditvault/controllercore/ControllerState.class", "mcmod.info")) {
+foreach ($required in @("raggedy/cleanroomcontroller/CleanroomControllerMod.class", "raggedy/controllercore/ControllerState.class", "mcmod.info")) {
     if ($jarListing -notcontains $required) { throw "Packaged Cleanroom controller mod is missing $required" }
 }
 if ($jarListing | Where-Object { $_ -like "net/minecraft*" -or $_ -like "org/lwjgl*" }) {

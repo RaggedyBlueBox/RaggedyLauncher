@@ -1,6 +1,6 @@
 # Contributing
 
-Bandit Launcher is built for legitimate Minecraft accounts. Contributions must preserve Microsoft/Xbox authentication and Minecraft entitlement checks.
+Raggedy Launcher is built for legitimate Minecraft accounts. Contributions must preserve Microsoft/Xbox authentication and Minecraft entitlement checks.
 
 Please do not submit changes that remove login, bypass ownership verification, add offline sessions, forge account identities, or make authentication optional. Pull requests that weaken account or entitlement enforcement will not be accepted.
 

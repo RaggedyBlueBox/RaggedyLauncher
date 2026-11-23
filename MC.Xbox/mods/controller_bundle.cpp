@@ -20,7 +20,7 @@ std::set<std::wstring> SplitOwners(const std::wstring& value);
 std::wstring JoinOwners(const std::set<std::wstring>& values);
 
 std::wstring BundleMetaDir(const std::wstring& userModsDir) {
-    return GetParentDir(userModsDir) + L"\\.bandit\\mod-installs";
+    return GetParentDir(userModsDir) + L"\\.raggedy\\mod-installs";
 }
 
 std::wstring BundleMetaPath(const std::wstring& userModsDir, const std::wstring& fileName) {
@@ -135,7 +135,7 @@ bool HasForeignRefs(const std::wstring& requiredBy) {
 }  // namespace
 
 std::wstring BundleUserBackupDir(const std::wstring& userModsDir, const std::wstring& bundle) {
-    return GetParentDir(userModsDir) + L"\\.bandit\\bundle-backups\\" + SafeFileName(ToLowerW(NormalizeControllerBundle(bundle)));
+    return GetParentDir(userModsDir) + L"\\.raggedy\\bundle-backups\\" + SafeFileName(ToLowerW(NormalizeControllerBundle(bundle)));
 }
 
 bool BundleFileHasOwners(const std::wstring& userModsDir, const std::wstring& fileName) {
@@ -145,7 +145,7 @@ bool BundleFileHasOwners(const std::wstring& userModsDir, const std::wstring& fi
 }
 
 std::wstring ManagedBackupDir(const std::wstring& userModsDir, const std::wstring& ownerToken) {
-    return GetParentDir(userModsDir) + L"\\.bandit\\bundle-backups\\" + SafeFileName(ToLowerW(ownerToken));
+    return GetParentDir(userModsDir) + L"\\.raggedy\\bundle-backups\\" + SafeFileName(ToLowerW(ownerToken));
 }
 
 void NoteManagedUserBackup(
@@ -176,8 +176,8 @@ bool RemoveManagedMetaValue(const std::wstring& userModsDir, const std::wstring&
 std::wstring NextControllerBundle(const std::wstring& bundle) {
     const std::wstring b = NormalizeControllerBundle(bundle);
     if (b == L"auto") return L"legacy4j";
-    if (b == L"legacy4j") return L"bandit";
-    if (b == L"bandit") return L"controlify";
+    if (b == L"legacy4j") return L"raggedy";
+    if (b == L"raggedy") return L"controlify";
     if (b == L"controlify") return L"none";
     return L"auto";
 }
@@ -185,7 +185,7 @@ std::wstring NextControllerBundle(const std::wstring& bundle) {
 const wchar_t* ControllerBundleLabelKey(const std::wstring& bundle) {
     const std::wstring b = NormalizeControllerBundle(bundle);
     if (b == L"legacy4j") return L"Legacy4J";
-    if (b == L"bandit") return L"Bandit";
+    if (b == L"raggedy") return L"Raggedy";
     if (b == L"controlify") return L"Controlify";
     if (b == L"none") return L"None";
     return L"Auto";
@@ -256,7 +256,7 @@ static int RemoveOwnedImpl(const std::wstring& runtimeRoot, const std::wstring& 
         }
         ++removed;
         if (!backup.empty()) {
-            const std::wstring backupPath = GetParentDir(modsDir) + L"\\.bandit\\bundle-backups\\" + backup;
+            const std::wstring backupPath = GetParentDir(modsDir) + L"\\.raggedy\\bundle-backups\\" + backup;
             if (GetFileAttributesW(backupPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
                 if (MoveFileExW(backupPath.c_str(), path.c_str(), MOVEFILE_REPLACE_EXISTING)) {
                     WriteLogF(L"%s %s restored user file %s", label, want.c_str(), name.c_str());
@@ -277,7 +277,13 @@ void TagBundleOwnedFiles(
 }
 
 int RemoveBundleOwnedFiles(const std::wstring& runtimeRoot, const std::wstring& profileId, const std::wstring& bundle) {
-    return RemoveOwnedImpl(runtimeRoot, profileId, ToLowerW(NormalizeControllerBundle(bundle)), L"Bundle");
+    const std::wstring want = ToLowerW(NormalizeControllerBundle(bundle));
+    int removed = RemoveOwnedImpl(runtimeRoot, profileId, want, L"Bundle");
+    if (want == L"raggedy") {
+        // Pre-fork installs tracked the same bundle as "bundle:bandit".
+        removed += RemoveOwnedImpl(runtimeRoot, profileId, L"bundle:bandit", L"Bundle");
+    }
+    return removed;
 }
 
 int RemoveManagedFiles(const std::wstring& runtimeRoot, const std::wstring& profileId, const std::wstring& ownerToken) {
@@ -323,7 +329,7 @@ std::vector<std::wstring> FindBundleConflicts(
         if (!SplitOwners(owners).empty()) continue;  // launcher-managed, not a user conflict
         const bool isControlify = IsControlifyJarFileName(name);
         const bool isLegacy4J = IsLegacy4JJarFileName(name);
-        if (effective == L"bandit" && (isControlify || isLegacy4J)) conflicts.push_back(name);
+        if (effective == L"raggedy" && (isControlify || isLegacy4J)) conflicts.push_back(name);
         if (effective == L"legacy4j" && isControlify) conflicts.push_back(name);
         if (effective == L"controlify" && isLegacy4J) conflicts.push_back(name);
     }
@@ -336,8 +342,8 @@ int SyncControllerBundleForLaunch(
     const std::wstring effective = ResolveEffectiveControllerBundle(bundle, target);
     const std::wstring userModsDir = ProfileModsDir(runtimeRoot, profileId);
     int removed = 0;
-    if (effective != L"bandit") {
-        removed += DeleteBanditControllerModsFromDir(userModsDir);
+    if (effective != L"raggedy") {
+        removed += DeleteRaggedyControllerModsFromDir(userModsDir);
     }
     static const wchar_t* kManaged[] = { L"legacy4j", L"controlify" };
     for (const wchar_t* owned : kManaged) {

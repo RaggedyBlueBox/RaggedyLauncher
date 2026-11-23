@@ -5,7 +5,7 @@ This page covers a clean local build from the repo root.
 The build produces a signed UWP package at:
 
 ```text
-output\BanditLauncher_<appx-version>.appx
+output\RaggedyLauncher_<appx-version>.appx
 ```
 
 ## Requirements
@@ -84,7 +84,7 @@ For adding another playable Forge target, add it to `config\versions.tsv`, exten
 
 ### Minecraft 26.2 and 26.3
 
-`26.2` and `26.3` are calendar versioned targets. Both are cataloged as experimental. Loader versions are recorded in `config/versions.tsv`. Fabric loader is `0.20.1` on `26.3`. Neither `26.3` target ships a bundled Bandit controller build, so those rows use controller provider `none` and rely on Controlify or user mods where supported. Its Java and mapping requirements differ from earlier targets.
+`26.2` and `26.3` are calendar versioned targets. Both are cataloged as experimental. Loader versions are recorded in `config/versions.tsv`. Fabric loader is `0.20.1` on `26.3`. Neither `26.3` target ships a bundled Raggedy controller build, so those rows use controller provider `none` and rely on Controlify or user mods where supported. Its Java and mapping requirements differ from earlier targets.
 
 **It needs JDK 25.** Mojang declares Java 25 for `26.2` and its client classes are class file version 69, which JDK 21 refuses to read. `Resolve-JavaHomeForMinecraft` in `scripts\common.ps1` picks the higher of the version's declared Java major and the `JavaRelease` default, so a JDK 25 has to be installed to compile against this target or to remap for it. The catalog row records `javaRuntime=current`.
 
@@ -300,7 +300,7 @@ Run:
 
 The GitHub Actions workflow in `.github/workflows/nightly.yml` builds and publishes the moving `nightly` release when relevant source, build, runtime, or workflow files change on `main`. Documentation only changes such as README updates do not trigger a nightly package.
 
-The workflow publishes `BanditLauncher-nightly.appx` and `BanditLauncher-nightly.sha256` to the `nightly` release, and force moves the `nightly` tag to the commit that produced the package.
+The workflow publishes `RaggedyLauncher-nightly.appx` and `RaggedyLauncher-nightly.sha256` to the `nightly` release, and force moves the `nightly` tag to the commit that produced the package.
 
 Nightly releases are experimental, unsupported, and not full game releases. The generated release notes also remind users that APPX redistribution, public install tutorials, public mirrors, public modified copies, and auth bypass builds are not permitted before the full release.
 
@@ -329,7 +329,7 @@ The build script:
 10. Generates `runtime\manifests\<target-id>.tsv` for cataloged Fabric, Forge, and NeoForge targets.
 11. Builds per target compatibility mod jars and Fabric, Forge, and NeoForge controller mod jars under `runtime\version-mods`.
 12. Copies the tracked UWP tile and splash assets.
-13. Creates and signs `output\BanditLauncher_<appx-version>.appx`.
+13. Creates and signs `output\RaggedyLauncher_<appx-version>.appx`.
 14. Deletes `staging\package` unless `-KeepStaging` is set.
 
 ## Clean outputs

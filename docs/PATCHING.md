@@ -98,7 +98,7 @@ The mod provides:
 
 - Left stick movement, right stick camera look, triggers, face buttons, bumpers, and menu cursor support.
 - A small in game settings screen (open with **View/Back**).
-- Shared settings with the Fabric controller layer at `config/bandit-controller.properties`.
+- Shared settings with the Fabric controller layer at `config/raggedy-controller.properties`.
 
 Build it directly with:
 
@@ -109,7 +109,7 @@ Build it directly with:
 The top level build places the output jar under:
 
 ```text
-runtime\version-mods\1.20.1-forge-47.4.20\banditvault-forge-controller-1.0.0.jar
+runtime\version-mods\1.20.1-forge-47.4.20\raggedy-forge-controller-1.0.0.jar
 ```
 
 On Forge launch, `minecraft_launch.cpp` syncs bundled loader mods from `runtime\version-mods\<target-id>\` into the active profile `mods\` folder.
@@ -170,7 +170,7 @@ It handles:
 - Keyboard and text input callbacks.
 - Basic monitor, cursor, timing, and window API responses expected by LWJGL.
 - Xbox controller state through GameInput and the GLFW joystick and gamepad APIs.
-- Legacy controller input shaping when `MC_LEGACY_CONTROLLER_MOD=1` is set by the launcher after detecting a bundled Bandit controller jar.
+- Legacy controller input shaping when `MC_LEGACY_CONTROLLER_MOD=1` is set by the launcher after detecting a bundled Raggedy controller jar.
 - Relay mouse input sourced from the linked `mouse_support.dll`, surfaced through the GLFW cursor and mouse button callbacks.
 
 Build it directly with:

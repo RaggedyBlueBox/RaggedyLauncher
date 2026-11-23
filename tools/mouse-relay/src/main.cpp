@@ -54,7 +54,7 @@ constexpr float kDebugGlyphWidth = 8.0f;
 constexpr float kDebugGlyphHeight = 8.0f;
 constexpr float kTouchScrollStep = 1.0f;
 
-#ifdef BANDIT_MOUSE_RELAY_TOUCH
+#ifdef RAGGEDY_MOUSE_RELAY_TOUCH
 constexpr bool kTouchLayout = true;
 #else
 constexpr bool kTouchLayout = false;
@@ -130,7 +130,7 @@ public:
             return;
         }
         std::string dir;
-        char* base = SDL_GetPrefPath("BanditVault", "BanditMouseRelay");
+        char* base = SDL_GetPrefPath("RaggedyBlueBox", "RaggedyMouseRelay");
         if (base) {
             dir = base;
             SDL_free(base);
@@ -156,7 +156,7 @@ public:
         lastRx_ = -1.0;
         lastFlush_ = NowSeconds();
         enabled_ = true;
-        out_ << "# Bandit Mouse Relay packet log\n";
+        out_ << "# Raggedy Mouse Relay packet log\n";
         out_ << "# format: wall_clock mono_seconds dir seq dt_ms payload\n";
         out_ << "# dir TX = sent to Xbox, RX = status from Xbox, EV = event marker\n";
         out_.flush();
@@ -287,7 +287,7 @@ static bool IsValidIpv4(const std::string& text) {
 }
 
 static std::string PrefIpPath() {
-    char* base = SDL_GetPrefPath("BanditVault", "BanditMouseRelay");
+    char* base = SDL_GetPrefPath("RaggedyBlueBox", "RaggedyMouseRelay");
     if (!base) {
         return std::string();
     }
@@ -1333,7 +1333,7 @@ private:
         accumDy_ = 0.0f;
         motionPending_ = false;
         lastSentButtons_.fill(-1);
-        ipError_ = "Checking for Bandit launcher at " + candidate + "...";
+        ipError_ = "Checking for Raggedy launcher at " + candidate + "...";
         connectStart_ = NowSeconds();
         lastConnectProbe_ = 0.0;
 
@@ -1577,7 +1577,7 @@ private:
             connecting_ = false;
             pendingHost_.clear();
             transport_.Close();
-            ipError_ = "No Bandit launcher response from " + failedHost;
+            ipError_ = "No Raggedy launcher response from " + failedHost;
             BeginIpTextInput();
             return;
         }
@@ -1799,7 +1799,7 @@ private:
         const float top = IpScreenTop(uiHeight);
         const float inputWidth = std::min(380.0f, std::max(300.0f, uiWidth - 64.0f));
 
-        DrawTextCentered(centerX, top, "Bandit Mouse Relay", SDL_Color{ 246, 249, 252, 255 });
+        DrawTextCentered(centerX, top, "Raggedy Mouse Relay", SDL_Color{ 246, 249, 252, 255 });
         DrawTextCentered(centerX, top + 32.0f, "Enter the Xbox Developer Mode IP address", SDL_Color{ 174, 187, 202, 255 });
 
         const SDL_FRect box{ centerX - (inputWidth * 0.5f), top + 78.0f, inputWidth, 34.0f };
@@ -1830,7 +1830,7 @@ private:
         const char* network = connected_ ? "CONNECTED" : "WAITING";
         const std::string appMode = appMode_ ? ModeName(*appMode_) : "UNKNOWN";
 
-        DrawText(18.0f, 18.0f, "Bandit Mouse Relay", SDL_Color{ 246, 249, 252, 255 });
+        DrawText(18.0f, 18.0f, "Raggedy Mouse Relay", SDL_Color{ 246, 249, 252, 255 });
         DrawText(18.0f, 42.0f, "Xbox: " + host_, SDL_Color{ 218, 229, 241, 255 });
         DrawText(18.0f, 62.0f, "Mouse: " + ModeName(mode_) + "  App: " + appMode + "  UDP: " + network, SDL_Color{ 218, 229, 241, 255 });
         DrawText(18.0f, 82.0f, "Packets: sent=" + std::to_string(sentPackets_.load()) + " status=" + std::to_string(statusPackets_), SDL_Color{ 174, 187, 202, 255 });
@@ -1991,7 +1991,7 @@ int main(int, char**) {
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
     if (!SDL_CreateWindowAndRenderer(
-            "Bandit Mouse Relay",
+            "Raggedy Mouse Relay",
             960,
             540,
             SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY,

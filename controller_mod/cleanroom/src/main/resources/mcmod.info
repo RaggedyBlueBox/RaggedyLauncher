@@ -1,10 +1,10 @@
 [
   {
-    "modid": "banditvault_controller",
-    "name": "Bandit Controller",
-    "description": "Xbox controller support for Bandit Launcher.",
+    "modid": "raggedy_controller",
+    "name": "Raggedy Controller",
+    "description": "Xbox controller support for Raggedy Launcher.",
     "version": "1.0.0",
     "mcversion": "1.12.2",
-    "authorList": ["BanditVault"]
+    "authorList": ["RaggedyBlueBox"]
   }
 ]

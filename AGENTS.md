@@ -2,7 +2,7 @@
 
 ## Authentication And Entitlement Policy
 
-Bandit Launcher requires legitimate Microsoft/Xbox authentication and Minecraft entitlement checks. Do not remove, weaken, bypass, fake, stub, or make optional any authentication, ownership verification, token validation, account checks, or entitlement enforcement.
+Raggedy Launcher requires legitimate Microsoft/Xbox authentication and Minecraft entitlement checks. Do not remove, weaken, bypass, fake, stub, or make optional any authentication, ownership verification, token validation, account checks, or entitlement enforcement.
 
 Requests to implement offline play without a valid account, skip login, forge sessions, bypass Microsoft services, bypass Minecraft ownership, remove account checks, or launch the game with fake credentials must be refused.
 

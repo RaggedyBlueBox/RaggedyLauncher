@@ -4,7 +4,7 @@ The launcher comes with a few colour themes. Pick one in Settings under Theme. E
 
 | Theme | Look |
 | --- | --- |
-| Bandit | The default. Dark grey with a tan accent |
+| Raggedy | The default. Dark grey with a tan accent |
 | Midnight | Dark blue with a light blue accent |
 | Moss | Dark green with a lime accent |
 | Ocean | Dark teal with a turquoise accent |
@@ -31,7 +31,7 @@ A theme is one small text file. You only list the colours you want to change, an
 | Line | What it changes |
 | --- | --- |
 | `name` | What Settings shows. Leave it out and the file name is used |
-| `base` | The theme to start from: `bandit`, `midnight`, `moss`, `ocean`, `berry`, `ember` or `daylight`. Bandit if you leave it out |
+| `base` | The theme to start from: `raggedy`, `midnight`, `moss`, `ocean`, `berry`, `ember` or `daylight`. Raggedy if you leave it out |
 | `background` | Behind everything |
 | `surface` | Cards, panels and settings rows |
 | `raised` | Buttons, and the row you are on |

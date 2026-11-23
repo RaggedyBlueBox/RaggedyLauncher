@@ -1,14 +1,14 @@
 LIBRARY glfw
 EXPORTS
-    banditKeyboardBegin
-    banditKeyboardConsumeFlags
-    banditKeyboardCopyText
-    banditKeyboardEnd
-    banditKeyboardGetRevision
-    banditKeyboardGetSelectionEnd
-    banditKeyboardGetSelectionStart
-    banditKeyboardGetTextLength
-    banditKeyboardUpdate
+    raggedyKeyboardBegin
+    raggedyKeyboardConsumeFlags
+    raggedyKeyboardCopyText
+    raggedyKeyboardEnd
+    raggedyKeyboardGetRevision
+    raggedyKeyboardGetSelectionEnd
+    raggedyKeyboardGetSelectionStart
+    raggedyKeyboardGetTextLength
+    raggedyKeyboardUpdate
     glfwAttachWin32Window
     glfwCreateCursor
     glfwCreateStandardCursor

@@ -17,7 +17,7 @@ on:
           - "true"
 
 concurrency:
-  group: bandit-test-build
+  group: raggedy-test-build
   cancel-in-progress: true
 
 permissions:
@@ -124,16 +124,16 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           $appx = Get-ChildItem output\*.appx | Sort-Object LastWriteTime -Descending | Select-Object -First 1
           if (-not $appx) { throw "No appx produced in output\\" }
-          Copy-Item $appx.FullName dist\BanditLauncher-test.appx -Force
-          $hash = Get-FileHash dist\BanditLauncher-test.appx -Algorithm SHA256
-          "$($hash.Hash.ToLowerInvariant())  BanditLauncher-test.appx" | Set-Content -Path dist\BanditLauncher-test.sha256 -Encoding ascii
-          Write-Host "Test appx: $($appx.Name) -> BanditLauncher-test.appx"
+          Copy-Item $appx.FullName dist\RaggedyLauncher-test.appx -Force
+          $hash = Get-FileHash dist\RaggedyLauncher-test.appx -Algorithm SHA256
+          "$($hash.Hash.ToLowerInvariant())  RaggedyLauncher-test.appx" | Set-Content -Path dist\RaggedyLauncher-test.sha256 -Encoding ascii
+          Write-Host "Test appx: $($appx.Name) -> RaggedyLauncher-test.appx"
 
       - name: Upload test artifact
         uses: actions/upload-artifact@v6
         with:
-          name: BanditLauncher-test
+          name: RaggedyLauncher-test
           path: |
-            dist/BanditLauncher-test.appx
-            dist/BanditLauncher-test.sha256
+            dist/RaggedyLauncher-test.appx
+            dist/RaggedyLauncher-test.sha256
           if-no-files-found: error

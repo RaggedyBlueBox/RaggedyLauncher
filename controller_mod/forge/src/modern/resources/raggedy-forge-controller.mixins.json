@@ -1,0 +1,32 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "raggedy.neoforgecontroller.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "NeoForgeControllerClientMixin",
+    "NeoForgeControllerContainerAccessor",
+    "NeoForgeControllerControlsScreenMixin",
+    "NeoForgeControllerGameRendererMixin",
+    "NeoForgeControllerHandledScreenMixin",
+    "NeoForgeControllerHudMixin",
+    "NeoForgeControllerInventoryScreenMixin",
+    "NeoForgeControllerOptionsSubScreenAccessor",
+    "NeoForgeControllerRecipeBookAccessor",
+    "NeoForgeControllerRecipeBookPageAccessor",
+    "NeoForgeControllerRecipeOverlayAccessor",
+    "NeoForgeControllerScreenMixin",
+    "NeoForgeControllerTitleScreenMixin",
+    "NeoForgeControllerTextFieldAccessor",
+    "NeoForgeControllerTextModelAccessor",
+    "NeoForgeControllerEditBoxAccessor",
+    "NeoForgeControllerSignEditScreenAccessor",
+    "NeoForgeControllerTextHelperAccessor",
+    "NeoForgeControllerBookAccessor",
+    "NeoForgeControllerKeyboardAccessor",
+    "NeoForgeControllerCreativeInventoryAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

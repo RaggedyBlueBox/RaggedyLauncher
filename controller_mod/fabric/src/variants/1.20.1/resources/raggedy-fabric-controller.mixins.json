@@ -1,0 +1,30 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "raggedy.fabriccontroller.mixin",
+  "compatibilityLevel": "__COMPAT_LEVEL__",
+  "client": [
+    "RaggedyControllerKeyAccessor",
+    "RaggedyControllerClientMixin",
+    "RaggedyControllerContainerAccessor",
+    "RaggedyControllerControlsScreenMixin",
+    "RaggedyControllerCreativeInventoryAccessor",
+    "RaggedyControllerEditBoxAccessor",
+    "RaggedyControllerGameRendererMixin",
+    "RaggedyControllerHandledScreenMixin",
+    "RaggedyControllerHudMixin",
+    "RaggedyControllerInventoryScreenMixin",
+    "RaggedyControllerKeyboardInputMixin",
+    "RaggedyControllerRecipeBookAccessor",
+    "RaggedyControllerRecipeBookPageAccessor",
+    "RaggedyControllerRecipeBookScreenMixin",
+    "RaggedyControllerRecipeOverlayAccessor",
+    "RaggedyControllerScreenMixin",
+    "RaggedyControllerSignEditScreenAccessor",
+    "RaggedyControllerTextFieldAccessor",
+    "RaggedyControllerTextModelAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

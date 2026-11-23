@@ -79,7 +79,7 @@ std::wstring DefaultControllerBundle() { return L"auto"; }
 
 bool IsKnownControllerBundle(const std::wstring& bundle) {
     const std::wstring b = ToLowerW(bundle);
-    return b == L"auto" || b == L"legacy4j" || b == L"bandit" ||
+    return b == L"auto" || b == L"legacy4j" || b == L"raggedy" ||
         b == L"controlify" || b == L"none";
 }
 
@@ -88,8 +88,8 @@ std::wstring NormalizeControllerBundle(const std::wstring& bundle) {
     return IsKnownControllerBundle(b) ? b : L"auto";
 }
 
-bool ControllerBundleUsesBandit(const std::wstring& bundle) {
-    return NormalizeControllerBundle(bundle) == L"bandit";
+bool ControllerBundleUsesRaggedy(const std::wstring& bundle) {
+    return NormalizeControllerBundle(bundle) == L"raggedy";
 }
 
 static bool Legacy4JHasPublisherBuildFor(const std::wstring& minecraftVersion) {
@@ -105,12 +105,12 @@ bool ControllerBundleSupportedForTarget(
     const std::wstring b = NormalizeControllerBundle(bundle);
     if (b == L"auto" || b == L"none") return true;
     const std::wstring loader = ToLowerW(target.loader);
-    if (b == L"bandit") {
+    if (b == L"raggedy") {
         if (!loader.empty() && loader != L"vanilla" &&
             ToLowerW(target.controllerProvider) == loader) {
             return true;
         }
-        reason = L"No bundled Bandit controller is shipped for this target";
+        reason = L"No bundled Raggedy controller is shipped for this target";
         return false;
     }
     if (b == L"legacy4j") {
@@ -141,7 +141,7 @@ std::wstring ResolveEffectiveControllerBundle(
         std::wstring reason;
         return ControllerBundleSupportedForTarget(b, target, reason) ? b : L"none";
     }
-    static const wchar_t* kFallbackOrder[] = { L"legacy4j", L"bandit", L"controlify" };
+    static const wchar_t* kFallbackOrder[] = { L"legacy4j", L"raggedy", L"controlify" };
     for (const wchar_t* candidate : kFallbackOrder) {
         std::wstring reason;
         if (ControllerBundleSupportedForTarget(candidate, target, reason)) return candidate;
@@ -155,8 +155,13 @@ std::wstring NormalizePerfRenderer(const std::wstring& mode) {
 
 static std::wstring MigrateControllerBundle(
     const std::wstring& stored, bool controllerModEnabled) {
-    if (!stored.empty()) return NormalizeControllerBundle(stored);
-    return controllerModEnabled ? L"bandit" : L"none";
+    // Pre-fork profiles stored "bandit"; the bundle is now named "raggedy".
+    if (!stored.empty()) {
+        const std::wstring b = ToLowerW(stored);
+        if (b == L"bandit") return L"raggedy";
+        return NormalizeControllerBundle(stored);
+    }
+    return controllerModEnabled ? L"raggedy" : L"none";
 }
 
 LaunchTarget DefaultLaunchTarget() {
@@ -293,12 +298,12 @@ LaunchTarget ResolveProfileTarget(const std::wstring& runtimeRoot, const Profile
 Profile MakeBuiltinVanillaProfile() {
     const LaunchTarget def = DefaultLaunchTarget();
     return { kVanillaProfileId, Tr(L"Vanilla"), def.minecraftVersion, def.loader, def.loaderVersion, def.targetId, true,
-        ControllerBundleUsesBandit(DefaultControllerBundle()), DefaultControllerBundle(), L"auto" };
+        ControllerBundleUsesRaggedy(DefaultControllerBundle()), DefaultControllerBundle(), L"auto" };
 }
 
 Profile ProfileWithTarget(const std::wstring& id, const std::wstring& name, const LaunchTarget& target, bool builtin) {
     return { id, name.empty() ? id : StripNewlines(name), target.minecraftVersion, target.loader, target.loaderVersion, target.targetId, builtin,
-        ControllerBundleUsesBandit(DefaultControllerBundle()), DefaultControllerBundle(), L"auto" };
+        ControllerBundleUsesRaggedy(DefaultControllerBundle()), DefaultControllerBundle(), L"auto" };
 }
 
 std::wstring ReadActiveProfileShim(const std::wstring& runtimeRoot) {
@@ -365,7 +370,7 @@ static bool SaveProfilesJson(const std::wstring& runtimeRoot, const std::vector<
         obj.SetNamedValue(L"loaderVersion", jsonString(p.loaderVersion));
         obj.SetNamedValue(L"targetId", jsonString(p.targetId));
         obj.SetNamedValue(L"builtin", JsonValue::CreateBooleanValue(p.builtin));
-        obj.SetNamedValue(L"controllerModEnabled", JsonValue::CreateBooleanValue(ControllerBundleUsesBandit(p.controllerBundle)));
+        obj.SetNamedValue(L"controllerModEnabled", JsonValue::CreateBooleanValue(ControllerBundleUsesRaggedy(p.controllerBundle)));
         obj.SetNamedValue(L"controllerBundle", jsonString(NormalizeControllerBundle(p.controllerBundle)));
         obj.SetNamedValue(L"perfRenderer", jsonString(NormalizePerfRenderer(p.perfRenderer)));
         arr.Append(obj);
@@ -407,7 +412,7 @@ std::vector<Profile> LoadProfiles(const std::wstring& runtimeRoot) {
                     p.controllerModEnabled = JsonBoolOrDefault(obj, L"controllerModEnabled", true);
                     p.controllerBundle = MigrateControllerBundle(
                         JsonStringOrEmpty(obj, L"controllerBundle"), p.controllerModEnabled);
-                    p.controllerModEnabled = ControllerBundleUsesBandit(p.controllerBundle);
+                    p.controllerModEnabled = ControllerBundleUsesRaggedy(p.controllerBundle);
                     p.perfRenderer = NormalizePerfRenderer(JsonStringOrEmpty(obj, L"perfRenderer"));
                     if (p.id.empty()) continue;
                     if (p.name.empty()) p.name = p.id;
@@ -552,7 +557,7 @@ static bool WriteProfileBackupMeta(const std::wstring& backupDir, const Profile&
     obj.SetNamedValue(L"loader", jsonString(profile.loader));
     obj.SetNamedValue(L"loaderVersion", jsonString(profile.loaderVersion));
     obj.SetNamedValue(L"targetId", jsonString(profile.targetId));
-    obj.SetNamedValue(L"controllerModEnabled", JsonValue::CreateBooleanValue(ControllerBundleUsesBandit(profile.controllerBundle)));
+    obj.SetNamedValue(L"controllerModEnabled", JsonValue::CreateBooleanValue(ControllerBundleUsesRaggedy(profile.controllerBundle)));
     obj.SetNamedValue(L"controllerBundle", jsonString(NormalizeControllerBundle(profile.controllerBundle)));
     obj.SetNamedValue(L"perfRenderer", jsonString(NormalizePerfRenderer(profile.perfRenderer)));
     obj.SetNamedValue(L"created", jsonString(CrashTimestampForFileName()));
@@ -576,7 +581,7 @@ static bool ReadProfileBackupMeta(const std::wstring& backupDir, Profile& profil
         profile.controllerModEnabled = JsonBoolOrDefault(obj, L"controllerModEnabled", true);
         profile.controllerBundle = MigrateControllerBundle(
             JsonStringOrEmpty(obj, L"controllerBundle"), profile.controllerModEnabled);
-        profile.controllerModEnabled = ControllerBundleUsesBandit(profile.controllerBundle);
+        profile.controllerModEnabled = ControllerBundleUsesRaggedy(profile.controllerBundle);
         profile.perfRenderer = NormalizePerfRenderer(JsonStringOrEmpty(obj, L"perfRenderer"));
         profile.builtin = false;
         if (profile.id.empty()) return false;
@@ -715,7 +720,7 @@ bool RenameProfile(const std::wstring& runtimeRoot, const std::wstring& id, cons
 }
 
 bool SetProfileControllerModEnabled(const std::wstring& runtimeRoot, const std::wstring& id, bool enabled) {
-    return SetProfileControllerBundle(runtimeRoot, id, enabled ? L"bandit" : L"none");
+    return SetProfileControllerBundle(runtimeRoot, id, enabled ? L"raggedy" : L"none");
 }
 
 bool SetProfilePerfRenderer(const std::wstring& runtimeRoot, const std::wstring& id, const std::wstring& mode) {
@@ -739,7 +744,7 @@ bool SetProfileControllerBundle(const std::wstring& runtimeRoot, const std::wstr
     for (auto& p : profiles) {
         if (p.id == id && !p.builtin) {
             p.controllerBundle = NormalizeControllerBundle(bundle);
-            p.controllerModEnabled = ControllerBundleUsesBandit(p.controllerBundle);
+            p.controllerModEnabled = ControllerBundleUsesRaggedy(p.controllerBundle);
             break;
         }
     }

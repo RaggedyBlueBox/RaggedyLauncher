@@ -662,7 +662,7 @@ input,select{min-height:42px;min-width:0;max-width:100%;padding:8px 12px;backgro
 
         if (PeerLockedOut(peer)) {
             SendHttpResponse(s, 429, "Too Many Requests", "text/html; charset=utf-8",
-                Layout("Bandit Remote Files",
+                Layout("Raggedy Remote Files",
                     "<div class=\"card\"><h1>Too many attempts</h1>"
                     "<p class=\"muted\">Too many wrong PINs from this device. Wait and try again, or reopen the remote files page on your Xbox for a new PIN.</p></div>"));
             return;
@@ -670,12 +670,12 @@ input,select{min-height:42px;min-width:0;max-width:100%;padding:8px 12px;backgro
 
         if (!Authorized(query, body)) {
             if (SuppliedPin(query, body)) NotePinFailure(peer);
-            std::string form = "<main class=\"login\"><div class=\"card\"><div class=\"eyebrow\">Bandit Remote Files</div>"
+            std::string form = "<main class=\"login\"><div class=\"card\"><div class=\"eyebrow\">Raggedy Remote Files</div>"
                 "<h1>Connect to your Xbox</h1><p>Enter the six-digit PIN shown in Remote Files on the launcher.</p>"
                 "<form method=\"get\"><div class=\"field\"><label for=\"pin\">Session PIN</label>"
                 "<input id=\"pin\" name=\"pin\" inputmode=\"numeric\" pattern=\"[0-9]{6}\" maxlength=\"6\" autocomplete=\"one-time-code\" required autofocus></div>"
                 "<button>Connect</button></form></div></main>";
-            SendHttpResponse(s, 401, "Unauthorized", "text/html; charset=utf-8", Layout("Bandit Remote Files", form));
+            SendHttpResponse(s, 401, "Unauthorized", "text/html; charset=utf-8", Layout("Raggedy Remote Files", form));
             return;
         }
         NotePinSuccess(peer);
@@ -686,7 +686,7 @@ input,select{min-height:42px;min-width:0;max-width:100%;padding:8px 12px;backgro
         }
 
         if (method == "GET" && path == "/") {
-            SendHttpResponse(s, 200, "OK", "text/html; charset=utf-8", Layout("Bandit Launcher", HomeHtml(query)));
+            SendHttpResponse(s, 200, "OK", "text/html; charset=utf-8", Layout("Raggedy Launcher", HomeHtml(query)));
         } else if (method == "GET" && path == "/browse") {
             SendHttpResponse(s, 200, "OK", "text/html; charset=utf-8", ExplorerHtml(query));
         } else if (method == "GET" && path == "/api/list") {
@@ -1464,7 +1464,7 @@ pollPackImport();
 
         std::ostringstream out;
         out << "<header class=\"top\"><a class=\"brand\" href=\"" << UrlWithPinProfile("/", profileId)
-            << "\"><strong>BANDIT</strong><span class=\"brand-label\">Remote Files</span></a>"
+            << "\"><strong>RAGGEDY</strong><span class=\"brand-label\">Remote Files</span></a>"
             << "<div class=\"profsel\"><label for=\"profile\">Profile</label>" << sel.str() << "</div>"
             << "<div class=\"top-actions\"><span class=\"session\">PIN <span class=\"pin\">" << pin_ << "</span></span>"
             << "<a class=\"btn ghost sm\" href=\"" << UrlWithPinProfile("/?section=" + section, profileId) << "\">Refresh</a></div></header>"
@@ -1712,8 +1712,8 @@ pollPackImport();
     }
 
     static std::string ExplorerHead() {
-        return std::string(R"RFSPA(<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bandit Remote Files</title><style>)RFSPA") + RemoteStyles() + "</style>" + ThemeBootHtml() + R"RFSPA(</head><body><div class="app">
-<header class="top"><a class="brand" id="homebtn"><strong>BANDIT</strong><span class="brand-label">Remote Files</span></a>
+        return std::string(R"RFSPA(<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Raggedy Remote Files</title><style>)RFSPA") + RemoteStyles() + "</style>" + ThemeBootHtml() + R"RFSPA(</head><body><div class="app">
+<header class="top"><a class="brand" id="homebtn"><strong>RAGGEDY</strong><span class="brand-label">Remote Files</span></a>
 <div class="profsel"><label for="prof">Profile</label><select id="prof" onchange="switchProfile(this.value)"></select></div>
 <div class="top-actions"><span class="session">PIN <span class="pin" id="pinv"></span></span></div></header>
 <div class="shell"><details class="side" id="navigation" open><summary>Browse &amp; diagnostics</summary><div class="navbody"><nav class="rail" id="rail" aria-label="File locations"></nav></div></details>

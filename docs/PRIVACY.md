@@ -8,8 +8,8 @@ Accurate against `main` as of 23 November 2026.
 
 ## Who runs this
 
-Raggedy Launcher is made by RaggedyBlueBox, based on Bandit Launcher by veroxsity /
-BanditVault (see LICENSE). There is no Raggedy telemetry server. The only place launcher
+Raggedy Launcher is made by RaggedyBlueBox, based on Raggedy Launcher by veroxsity /
+RaggedyBlueBox (see LICENSE). There is no Raggedy telemetry server. The only place launcher
 crash reports can go is a private GitHub repository owned by the same account,
 `RaggedyBlueBox/RaggedyLauncher-telemetry`, and only as issues you opt into with a token
 you save yourself. Nothing is sold, shared with advertisers, or passed to a third party
@@ -50,8 +50,8 @@ Signing out removes the stored refresh token.
 ### Known issue: the application registration
 
 The Microsoft application ID the launcher currently uses is Prism Launcher's public client ID
-rather than one owned by BanditVault. The consent screen you see during sign-in therefore
-names an application that is not this one. Replacing it with a Bandit-owned registration is
+rather than one owned by RaggedyBlueBox. The consent screen you see during sign-in therefore
+names an application that is not this one. Replacing it with a Raggedy-owned registration is
 tracked work and this section will be removed when that lands.
 
 ## Telemetry
@@ -113,7 +113,7 @@ Crash issues go to the private repository `RaggedyBlueBox/RaggedyLauncher-teleme
 visible only to the repo owner, plus nothing else anywhere: no session events, no mod set
 uploads, no third-party analytics. You can still point the dormant custom protocol
 somewhere else with `endpoint.txt` in the telemetry folder or the
-`BANDIT_TELEMETRY_ENDPOINT` environment variable, but nothing in this build does that.
+`RAGGEDY_TELEMETRY_ENDPOINT` environment variable, but nothing in this build does that.
 
 Issues stay in the private repo until the repo owner deletes them. Your GitHub token
 stays in `LocalState\telemetry\github-token.txt` on the console until you clear it in
