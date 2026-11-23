@@ -14,6 +14,10 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 **Performance renderers.** Settings has a new Performance renderer row backed by a data file (`config/performance-mods.json`) that names one Sodium-family candidate per version and loader, or states the gap where none was found. Auto installs the candidate only after it is proven on Xbox; unproven candidates are reported, never forced. Turning it off removes only launcher-managed files. See docs/GRAPHICS-AND-PERFORMANCE.md.
 
+### Fixed
+
+**Settings rows no longer overlap or swallow clicks.** The nine rows fit above the footer, and the message after a setting change replaces the privacy text instead of being drawn on top of it. Controller bundle and performance renderer settings now work on the built in Vanilla profile as well as custom profiles, so the controller can be fixed without creating a profile first. The renderer row now states plainly that Vulkan is disabled until the bridge is validated instead of accepting a request that cannot be used.
+
 ## 2026-11-13
 
 ### Added

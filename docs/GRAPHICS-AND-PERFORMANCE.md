@@ -16,9 +16,10 @@ Sodium-family performance mods, and what is still untested.
   device negotiation, an SDL3 surface with presentation on Xbox UWP, the shader
   stack and memory behavior. A packaged DLL is not proof of a working path,
   and the probe does not claim otherwise.
-- Requesting Vulkan while the probe fails leaves OpenGL active, logs the
-  reason and tells the user in Settings. A launch that finds a stored Vulkan
-  request with a failing probe falls back to OpenGL and logs the fallback.
+- The Settings row shows Vulkan as unavailable while the probe fails, and the
+  request is not offered as a working toggle. A launch that finds a stored
+  Vulkan request with a failing probe falls back to OpenGL and logs the
+  fallback.
 - Every launch logs requested backend, actual backend, Minecraft version and
   the detected graphics runtime. No secrets are logged.
 - Recovery: pick OpenGL again in Settings. No separate safe mode is needed

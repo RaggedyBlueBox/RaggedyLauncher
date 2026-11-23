@@ -125,11 +125,6 @@ bool ApplyPerformanceMode(const std::wstring& runtimeRoot, const std::wstring& p
     const std::wstring& mode, std::wstring& status, bool& isError) {
     isError = false;
     const Profile profile = GetProfileById(runtimeRoot, profileId);
-    if (profile.builtin || profileId == kVanillaProfileId) {
-        status = Tr(L"Vanilla is read-only. Create a profile to change performance mods.");
-        isError = true;
-        return false;
-    }
     const std::wstring want = ToLowerW(mode) == L"off" ? L"off" : L"auto";
     const LaunchTarget target = ResolveProfileTarget(runtimeRoot, profile);
     const PerfSelection selection = SelectPerformanceCandidate(runtimeRoot, target);

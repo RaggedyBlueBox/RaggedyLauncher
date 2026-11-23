@@ -606,10 +606,6 @@ static void RefreshSettingsControllerNote(AuthUiState& state, const std::wstring
     const std::wstring activeId = GetActiveProfileId(runtimeRoot);
     const Profile activeProfile = GetProfileById(runtimeRoot, activeId);
     state.settingsControllerBundle = activeProfile.controllerBundle;
-    if (activeProfile.builtin || activeId == kVanillaProfileId) {
-        state.settingsControllerNote = Tr(L"Vanilla is read-only. Create a profile to change it.");
-        return;
-    }
     const LaunchTarget target = ResolveProfileTarget(runtimeRoot, activeProfile);
     const std::wstring effective = ResolveEffectiveControllerBundle(activeProfile.controllerBundle, target);
     state.settingsControllerNote = TrFormat(L"{0}: {1} in game",
@@ -618,25 +614,19 @@ static void RefreshSettingsControllerNote(AuthUiState& state, const std::wstring
 
 static void RefreshSettingsRendererNote(AuthUiState& state, const std::wstring& runtimeRoot) {
     const RendererBackend requested = RequestedRenderer(runtimeRoot);
-    state.settingsRendererName = RendererBackendName(requested);
-    if (requested == RendererBackend::VulkanExperimental) {
-        const VulkanProbeResult probe = ProbeVulkanBridge(GetExecutableDir(), runtimeRoot);
-        state.settingsRendererNote = probe.usable
-            ? Tr(L"Experimental Vulkan bridge enabled.")
-            : Tr(L"Vulkan unavailable; running OpenGL.");
-    } else {
-        state.settingsRendererNote = Tr(L"OpenGL via the packaged Mesa/D3D12 path.");
-    }
+    const VulkanProbeResult probe = ProbeVulkanBridge(GetExecutableDir(), runtimeRoot);
+    const bool vulkanReady = requested == RendererBackend::VulkanExperimental && probe.usable;
+    state.settingsRendererName = RendererBackendName(
+        vulkanReady ? RendererBackend::VulkanExperimental : RendererBackend::OpenGL);
+    state.settingsRendererNote = vulkanReady
+        ? Tr(L"Experimental Vulkan bridge enabled.")
+        : Tr(L"Vulkan is disabled until the bridge passes Xbox validation: ") + probe.reason;
 }
 
 static void RefreshSettingsPerfNote(AuthUiState& state, const std::wstring& runtimeRoot) {
     const std::wstring activeId = GetActiveProfileId(runtimeRoot);
     const Profile activeProfile = GetProfileById(runtimeRoot, activeId);
     state.settingsPerfMode = activeProfile.perfRenderer;
-    if (activeProfile.builtin || activeId == kVanillaProfileId) {
-        state.settingsPerfNote = Tr(L"Vanilla is read-only. Create a profile to change it.");
-        return;
-    }
     const LaunchTarget target = ResolveProfileTarget(runtimeRoot, activeProfile);
     const PerfSelection selection = SelectPerformanceCandidate(runtimeRoot, target);
     if (activeProfile.perfRenderer == L"off") {
@@ -813,21 +803,23 @@ static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, 
             state.settingsNote = saved ? TrFormat(L"Theme set to {0}.", { state.settingsThemeName })
                                        : Tr(L"The theme was changed but could not be saved.");
         } else if (pressed == 7) {
-            const RendererBackend requested = RequestedRenderer(runtimeRoot);
-            std::wstring note;
-            if (requested == RendererBackend::VulkanExperimental) {
+            const VulkanProbeResult probe = ProbeVulkanBridge(GetExecutableDir(), runtimeRoot);
+            if (!probe.usable) {
+                state.settingsNote = Tr(L"Vulkan is disabled until the bridge passes Xbox validation: ") + probe.reason;
+            } else if (RequestedRenderer(runtimeRoot) == RendererBackend::VulkanExperimental) {
+                std::wstring note;
                 SetRequestedRenderer(runtimeRoot, GetExecutableDir(), RendererBackend::OpenGL, note);
+                state.settingsNote = note.empty() ? Tr(L"OpenGL renderer selected.") : note;
             } else {
+                std::wstring note;
                 SetRequestedRenderer(runtimeRoot, GetExecutableDir(), RendererBackend::VulkanExperimental, note);
+                state.settingsNote = note;
             }
-            state.settingsNote = note;
             RefreshSettingsRendererNote(state, runtimeRoot);
         } else if (pressed == 8) {
             const std::wstring activeId = GetActiveProfileId(runtimeRoot);
             const Profile activeProfile = GetProfileById(runtimeRoot, activeId);
-            if (activeProfile.builtin || activeId == kVanillaProfileId) {
-                state.settingsNote = Tr(L"Vanilla is read-only. Create a profile to change performance mods.");
-            } else if (PerformanceJobPending(activeId)) {
+            if (PerformanceJobPending(activeId)) {
                 state.settingsNote = Tr(L"Still applying the performance renderer...");
             } else {
                 const std::wstring next = activeProfile.perfRenderer == L"off" ? L"auto" : L"off";
@@ -837,9 +829,7 @@ static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, 
         } else if (pressed == 6) {
             const std::wstring activeId = GetActiveProfileId(runtimeRoot);
             const Profile activeProfile = GetProfileById(runtimeRoot, activeId);
-            if (activeProfile.builtin || activeId == kVanillaProfileId) {
-                state.settingsNote = Tr(L"Vanilla is read-only. Create a profile to choose a controller bundle.");
-            } else if (ControllerBundleJobPending(activeId)) {
+            if (ControllerBundleJobPending(activeId)) {
                 state.settingsNote = Tr(L"Still applying the controller bundle...");
             } else {
                 const std::wstring next = NextControllerBundle(activeProfile.controllerBundle);

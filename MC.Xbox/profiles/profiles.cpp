@@ -725,10 +725,10 @@ bool SetProfileControllerModEnabled(const std::wstring& runtimeRoot, const std::
 
 bool SetProfilePerfRenderer(const std::wstring& runtimeRoot, const std::wstring& id, const std::wstring& mode) {
     std::lock_guard<std::recursive_mutex> guard(g_profilesMutex);
-    if (id.empty() || id == kVanillaProfileId) return false;
+    if (id.empty()) return false;
     std::vector<Profile> profiles = LoadProfiles(runtimeRoot);
     for (auto& p : profiles) {
-        if (p.id == id && !p.builtin) {
+        if (p.id == id) {
             p.perfRenderer = NormalizePerfRenderer(mode);
             break;
         }
@@ -738,11 +738,11 @@ bool SetProfilePerfRenderer(const std::wstring& runtimeRoot, const std::wstring&
 
 bool SetProfileControllerBundle(const std::wstring& runtimeRoot, const std::wstring& id, const std::wstring& bundle) {
     std::lock_guard<std::recursive_mutex> guard(g_profilesMutex);
-    if (id.empty() || id == kVanillaProfileId) return false;
+    if (id.empty()) return false;
     if (!IsKnownControllerBundle(bundle)) return false;
     std::vector<Profile> profiles = LoadProfiles(runtimeRoot);
     for (auto& p : profiles) {
-        if (p.id == id && !p.builtin) {
+        if (p.id == id) {
             p.controllerBundle = NormalizeControllerBundle(bundle);
             p.controllerModEnabled = ControllerBundleUsesRaggedy(p.controllerBundle);
             break;

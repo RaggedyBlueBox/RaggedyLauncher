@@ -679,9 +679,9 @@ private:
     void DrawSettings(const AuthUiState& state) {
         DrawHeader(Tr(L"Settings"));
 
-        const float rowH = 88.0f;
-        const float rowGap = 10.0f;
-        float rowY = T_ + 104.0f;
+        const float rowH = 70.0f;
+        const float rowGap = 6.0f;
+        float rowY = T_ + 92.0f;
 
         auto row = [&](int index, const wchar_t* label, const wchar_t* sub, float controlW) {
             const D2D1_RECT_F r = D2D1::RectF(L_, rowY, R_, rowY + rowH);
@@ -689,8 +689,8 @@ private:
             FillRound(r, sel ? raised_ : surface_, 14.0f);
             if (sel) FocusRing(r, 14.0f);
             const float textRight = r.right - controlW - 44.0f;
-            DrawText(label, rowStrongFormat_.Get(), D2D1::RectF(r.left + 26.0f, r.top + 10.0f, textRight, r.top + 48.0f), text_);
-            DrawText(sub, smallMid_.Get(), D2D1::RectF(r.left + 26.0f, r.top + 46.0f, textRight, r.bottom - 10.0f), muted_);
+            DrawText(label, rowStrongFormat_.Get(), D2D1::RectF(r.left + 26.0f, r.top + 7.0f, textRight, r.top + 36.0f), text_);
+            DrawText(sub, smallMid_.Get(), D2D1::RectF(r.left + 26.0f, r.top + 35.0f, textRight, r.bottom - 5.0f), muted_);
             RegisterHit(launchhit::kSettingsRowBase + index, r);
             rowY = r.bottom + rowGap;
             return r;
@@ -772,15 +772,19 @@ private:
                 D2D1::RectF(r.right - 380.0f, r.top, r.right - 66.0f, r.bottom),
                 state.settingsPerfMode == L"off" ? muted_ : text_);
         }
-        DrawFlow(
-            state.settingsConfigured
-                ? Tr(L"Reports use a random id and include launcher and Minecraft versions, loader details, launch stage, memory totals and a mod list hash. Mod jar names and project ids can be sent when a crash needs them. A crash trace can include exception text and Java class names. The launcher does not add your account, gamertag, worlds or access token. Common user and app storage paths are scrubbed. The id stays the same until it is reset.")
-                : Tr(L"No reporting server is configured on this install, so nothing can be sent either way."),
-            captionFormat_.Get(), L_ + 4.0f, rowY + 14.0f, R_ - L_ - 8.0f, 130.0f, muted_);
-
+        const float noteTop = rowY + 12.0f;
+        const float noteBottom = B_ - 62.0f;
         if (!state.settingsNote.empty()) {
-            DrawText(state.settingsNote.c_str(), smallMid_.Get(),
-                D2D1::RectF(L_, B_ - 92.0f, R_, B_ - 56.0f), accent_);
+            const D2D1_RECT_F box = D2D1::RectF(L_, noteTop, R_, noteBottom);
+            FillRound(box, raised_, 12.0f);
+            DrawFlow(state.settingsNote.c_str(), smallMid_.Get(), L_ + 16.0f, noteTop + 10.0f,
+                R_ - L_ - 32.0f, noteBottom - noteTop - 20.0f, accent_);
+        } else {
+            DrawFlow(
+                state.settingsConfigured
+                    ? Tr(L"Reports use a random id and include launcher and Minecraft versions, loader details, launch stage, memory totals and a mod list hash. Mod jar names and project ids can be sent when a crash needs them. A crash trace can include exception text and Java class names. The launcher does not add your account, gamertag, worlds or access token. Common user and app storage paths are scrubbed. The id stays the same until it is reset.")
+                    : Tr(L"No reporting server is configured on this install, so nothing can be sent either way."),
+                captionFormat_.Get(), L_ + 4.0f, noteTop, R_ - L_ - 8.0f, noteBottom - noteTop, muted_);
         }
         DrawFooter(Tr(L"Press B or select Back to return to the launcher."));
     }
@@ -1040,7 +1044,9 @@ private:
         const float btnW = 168.0f;
         const float btnH = 58.0f;
         const float btnGap = 10.0f;
-        const float actionBarW = state.modsProfileBuiltin ? btnW : (btnW * 5.0f + btnGap * 4.0f);
+        const float actionBarW = state.modsProfileBuiltin
+            ? (btnW * 2.0f + btnGap)
+            : (btnW * 5.0f + btnGap * 4.0f);
         const float headRight = R_ - actionBarW - 30.0f;
 
         const std::wstring nameShown = state.modsRenaming ? (state.modsRenameText + L"_") : state.modsProfileName;
@@ -1070,13 +1076,13 @@ private:
             DrawButton(playBtn, L"\uE768", Tr(L"Play"), state.modsProfileFocus == 0, ButtonKind::Primary);
         }
 
-        if (!state.modsProfileBuiltin) {
-            const D2D1_RECT_F controllerBtn = slot(1);
-            RegisterHit(launchhit::kProfileController, controllerBtn);
-            DrawButton(controllerBtn, L"\uE7FC", Tr(ControllerBundleLabelKey(state.modsProfileControllerBundle)),
-                state.modsProfileFocus == 5, ButtonKind::Neutral,
-                NormalizeControllerBundle(state.modsProfileControllerBundle) == L"none" ? muted_ : accent_);
+        const D2D1_RECT_F controllerBtn = slot(1);
+        RegisterHit(launchhit::kProfileController, controllerBtn);
+        DrawButton(controllerBtn, L"\uE7FC", Tr(ControllerBundleLabelKey(state.modsProfileControllerBundle)),
+            state.modsProfileFocus == 5, ButtonKind::Neutral,
+            NormalizeControllerBundle(state.modsProfileControllerBundle) == L"none" ? muted_ : accent_);
 
+        if (!state.modsProfileBuiltin) {
             const D2D1_RECT_F exportBtn = slot(2);
             RegisterHit(launchhit::kProfileExport, exportBtn);
             DrawButton(exportBtn, L"\uE898", Tr(L"Export"), state.modsProfileFocus == 4, ButtonKind::Neutral);
@@ -1151,10 +1157,14 @@ private:
         std::wstring profileHint = Tr(L"B  Back");
         if (state.modsRenaming) {
             profileHint = Tr(L"Type a name, then close the keyboard to save");
-        } else if (!state.modsProfileBuiltin) {
+        } else if (state.modsProfileBuiltin) {
+            profileHint = state.modsProfileFocus == 5
+                ? Tr(L"B  Back      A  Change controller bundle")
+                : Tr(L"B  Back      A select");
+        } else {
             if (gridFocus) profileHint = Tr(L"B  Back      X  Remove mod      Y  Rename");
             else if (state.modsProfileFocus == 4) profileHint = Tr(L"B  Back      A  Export .mrpack for PC");
-            else if (state.modsProfileFocus == 5) profileHint = Tr(L"B  Back      A  Toggle Raggedy controller mod      Y Rename");
+            else if (state.modsProfileFocus == 5) profileHint = Tr(L"B  Back      A  Change controller bundle      Y Rename");
             else profileHint = Tr(L"B  Back      A select      X Delete      Y Rename");
         }
         DrawFooter(profileHint.c_str(), state.modsRenaming ? accent_ : muted_);

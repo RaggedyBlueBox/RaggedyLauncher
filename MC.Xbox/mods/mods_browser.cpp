@@ -1190,10 +1190,6 @@ static std::wstring ControllerBundleRootSlug(const std::wstring& bundle) {
 static bool InstallControllerBundleMods(const std::wstring& runtimeRoot, const std::wstring& profileId,
     const std::wstring& bundle, std::wstring& error, std::vector<std::wstring>& installedOut) {
     const Profile profile = GetProfileById(runtimeRoot, profileId);
-    if (profile.builtin || profileId == kVanillaProfileId) {
-        error = Tr(L"Vanilla is read-only. Pick or make a profile first.");
-        return false;
-    }
     const LaunchTarget target = ResolveProfileTarget(runtimeRoot, profile);
     const std::wstring loader = ToLowerW(target.loader);
     if (loader != L"fabric" && loader != L"forge" && loader != L"neoforge") {
@@ -1259,11 +1255,6 @@ bool ApplyControllerBundle(const std::wstring& runtimeRoot, const std::wstring& 
     isError = false;
     chosenOut.clear();
     const Profile profile = GetProfileById(runtimeRoot, profileId);
-    if (profile.builtin || profileId == kVanillaProfileId) {
-        status = Tr(L"Vanilla is read-only. Create a profile to choose a controller bundle.");
-        isError = true;
-        return false;
-    }
     const std::wstring want = NormalizeControllerBundle(bundle);
     if (!IsKnownControllerBundle(bundle)) {
         status = Tr(L"Unknown controller bundle.");
@@ -2878,7 +2869,9 @@ void ShowModsPage(
                 state.modsRenaming = true;
                 ModsSearchBeginInput();
             } else if (!gridFocus && leftDown && !leftWasDown) {
-                if (!state.modsProfileBuiltin) {
+                if (state.modsProfileBuiltin) {
+                    state.modsProfileFocus = state.modsProfileFocus == 0 ? 5 : 0;
+                } else {
                     if (state.modsProfileFocus == 0) state.modsProfileFocus = 5;
                     else if (state.modsProfileFocus == 5) state.modsProfileFocus = 4;
                     else if (state.modsProfileFocus == 4) state.modsProfileFocus = 3;
@@ -2886,14 +2879,14 @@ void ShowModsPage(
                     else state.modsProfileFocus = 1;
                 }
             } else if (!gridFocus && rightDown && !rightWasDown) {
-                if (!state.modsProfileBuiltin) {
+                if (state.modsProfileBuiltin) {
+                    state.modsProfileFocus = state.modsProfileFocus == 5 ? 0 : 5;
+                } else {
                     if (state.modsProfileFocus == 1) state.modsProfileFocus = 3;
                     else if (state.modsProfileFocus == 3) state.modsProfileFocus = 4;
                     else if (state.modsProfileFocus == 4) state.modsProfileFocus = 5;
                     else if (state.modsProfileFocus == 5) state.modsProfileFocus = 0;
                     else state.modsProfileFocus = 0;
-                } else {
-                    state.modsProfileFocus = 0;
                 }
             } else if (!gridFocus && (downDown && !downWasDown)) {
                 if (pmTotal > 0) {
@@ -2903,7 +2896,7 @@ void ShowModsPage(
                 }
             } else if (gridFocus && (upDown && !upWasDown)) {
                 if (state.modsProfileSel < 2) {
-                    state.modsProfileFocus = state.modsProfileBuiltin ? 0 : 5;
+                    state.modsProfileFocus = 5;
                 }
                 else { state.modsProfileSel -= 2; pmEnsureVisible(); }
             } else if (gridFocus && (downDown && !downWasDown)) {
@@ -2963,7 +2956,7 @@ void ShowModsPage(
                         state.status = exportError.empty() ? Tr(L"Could not export profile pack") : exportError;
                         state.isError = true;
                     }
-                } else if (state.modsProfileFocus == 5 && !state.modsProfileBuiltin) {
+                } else if (state.modsProfileFocus == 5) {
                     if (ControllerBundleJobPending(state.modsProfileId)) continue;
                     const std::wstring next = NextControllerBundle(
                         GetProfileById(runtimeRoot, state.modsProfileId).controllerBundle);
