@@ -27,44 +27,6 @@ std::wstring BundleMetaPath(const std::wstring& userModsDir, const std::wstring&
     return BundleMetaDir(userModsDir) + L"\\" + SafeFileName(fileName) + L".meta";
 }
 
-std::wstring BundleUserBackupDir(const std::wstring& userModsDir, const std::wstring& bundle) {
-    return GetParentDir(userModsDir) + L"\\.bandit\\bundle-backups\\" + SafeFileName(ToLowerW(NormalizeControllerBundle(bundle)));
-}
-
-bool BundleFileHasOwners(const std::wstring& userModsDir, const std::wstring& fileName) {
-    std::wstring owners;
-    if (!ReadMetaLine(userModsDir, fileName, L"bundleOwners", owners)) return false;
-    return !SplitOwners(owners).empty();
-}
-
-std::wstring ManagedBackupDir(const std::wstring& userModsDir, const std::wstring& ownerToken) {
-    return GetParentDir(userModsDir) + L"\\.bandit\\bundle-backups\\" + SafeFileName(ToLowerW(ownerToken));
-}
-
-void NoteManagedUserBackup(
-    const std::wstring& userModsDir, const std::wstring& fileName, const std::wstring& ownerToken) {
-    WriteMetaLine(userModsDir, fileName, L"bundleUserBackup",
-        SafeFileName(ToLowerW(ownerToken)) + L"\\" + SafeFileName(fileName));
-}
-
-void NoteBundleUserBackup(
-    const std::wstring& userModsDir, const std::wstring& fileName, const std::wstring& bundle) {
-    NoteManagedUserBackup(userModsDir, fileName, ToLowerW(NormalizeControllerBundle(bundle)));
-}
-
-bool ReadManagedMetaValue(const std::wstring& userModsDir, const std::wstring& fileName,
-    const std::wstring& key, std::wstring& value) {
-    return ReadMetaLine(userModsDir, fileName, key, value);
-}
-
-bool WriteManagedMetaValue(const std::wstring& userModsDir, const std::wstring& fileName,
-    const std::wstring& key, const std::wstring& value) {
-    return WriteMetaLine(userModsDir, fileName, key, value);
-}
-
-bool RemoveManagedMetaValue(const std::wstring& userModsDir, const std::wstring& fileName, const std::wstring& key) {
-    return RemoveMetaLine(userModsDir, fileName, key);
-}
 
 bool ReadMetaLine(const std::wstring& userModsDir, const std::wstring& fileName,
     const std::wstring& key, std::wstring& value) {
@@ -171,6 +133,45 @@ bool HasForeignRefs(const std::wstring& requiredBy) {
 }
 
 }  // namespace
+
+std::wstring BundleUserBackupDir(const std::wstring& userModsDir, const std::wstring& bundle) {
+    return GetParentDir(userModsDir) + L"\\.bandit\\bundle-backups\\" + SafeFileName(ToLowerW(NormalizeControllerBundle(bundle)));
+}
+
+bool BundleFileHasOwners(const std::wstring& userModsDir, const std::wstring& fileName) {
+    std::wstring owners;
+    if (!ReadMetaLine(userModsDir, fileName, L"bundleOwners", owners)) return false;
+    return !SplitOwners(owners).empty();
+}
+
+std::wstring ManagedBackupDir(const std::wstring& userModsDir, const std::wstring& ownerToken) {
+    return GetParentDir(userModsDir) + L"\\.bandit\\bundle-backups\\" + SafeFileName(ToLowerW(ownerToken));
+}
+
+void NoteManagedUserBackup(
+    const std::wstring& userModsDir, const std::wstring& fileName, const std::wstring& ownerToken) {
+    WriteMetaLine(userModsDir, fileName, L"bundleUserBackup",
+        SafeFileName(ToLowerW(ownerToken)) + L"\\" + SafeFileName(fileName));
+}
+
+void NoteBundleUserBackup(
+    const std::wstring& userModsDir, const std::wstring& fileName, const std::wstring& bundle) {
+    NoteManagedUserBackup(userModsDir, fileName, ToLowerW(NormalizeControllerBundle(bundle)));
+}
+
+bool ReadManagedMetaValue(const std::wstring& userModsDir, const std::wstring& fileName,
+    const std::wstring& key, std::wstring& value) {
+    return ReadMetaLine(userModsDir, fileName, key, value);
+}
+
+bool WriteManagedMetaValue(const std::wstring& userModsDir, const std::wstring& fileName,
+    const std::wstring& key, const std::wstring& value) {
+    return WriteMetaLine(userModsDir, fileName, key, value);
+}
+
+bool RemoveManagedMetaValue(const std::wstring& userModsDir, const std::wstring& fileName, const std::wstring& key) {
+    return RemoveMetaLine(userModsDir, fileName, key);
+}
 
 std::wstring NextControllerBundle(const std::wstring& bundle) {
     const std::wstring b = NormalizeControllerBundle(bundle);
