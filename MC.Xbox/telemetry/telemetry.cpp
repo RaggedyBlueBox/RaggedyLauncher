@@ -126,6 +126,8 @@ std::string BuildReportBody(
     const crashfp::JavaCrash& crash);
 std::string BuildTraceBody(const crashfp::JavaCrash& crash);
 
+std::string InstallId();
+
 static std::wstring GithubTokenPath() {
     const std::wstring dir = TelemetryDir();
     if (dir.empty()) return std::wstring();
@@ -139,41 +141,6 @@ static std::string GithubToken() {
         return w2a(TrimWhitespace(StripNewlines(text)));
     }
     return std::string();
-}
-
-bool GithubTokenPresent() {
-    return !GithubToken().empty();
-}
-
-std::wstring GithubTokenHint() {
-    const std::string token = GithubToken();
-    if (token.empty()) return std::wstring();
-    const std::string tail = token.size() <= 4 ? token : token.substr(token.size() - 4);
-    return L"ends " + a2w(tail.c_str());
-}
-
-bool SetGithubToken(const std::wstring& token) {
-    const std::wstring path = GithubTokenPath();
-    if (path.empty() || !EnsureDirectoryTree(TelemetryDir())) {
-        WriteLog(L"github token could not be saved");
-        return false;
-    }
-    const std::wstring clean = TrimWhitespace(StripNewlines(token));
-    if (clean.empty()) {
-        const bool removed = DeleteFileW(path.c_str()) || GetLastError() == ERROR_FILE_NOT_FOUND;
-        if (!removed) {
-            WriteLogF(L"github token could not be cleared error=%lu", GetLastError());
-            return false;
-        }
-        WriteLog(L"github token cleared");
-        return true;
-    }
-    if (!WriteTextFile(path, clean + L"\n")) {
-        WriteLog(L"github token could not be saved");
-        return false;
-    }
-    WriteLog(L"github token saved");
-    return true;
 }
 
 static bool GithubReady() {
@@ -567,6 +534,41 @@ bool Enabled() {
 
 bool Configured() {
     return !Endpoint().empty() || GithubTokenPresent();
+}
+
+bool GithubTokenPresent() {
+    return !GithubToken().empty();
+}
+
+std::wstring GithubTokenHint() {
+    const std::string token = GithubToken();
+    if (token.empty()) return std::wstring();
+    const std::string tail = token.size() <= 4 ? token : token.substr(token.size() - 4);
+    return L"ends " + a2w(tail.c_str());
+}
+
+bool SetGithubToken(const std::wstring& token) {
+    const std::wstring path = GithubTokenPath();
+    if (path.empty() || !EnsureDirectoryTree(TelemetryDir())) {
+        WriteLog(L"github token could not be saved");
+        return false;
+    }
+    const std::wstring clean = TrimWhitespace(StripNewlines(token));
+    if (clean.empty()) {
+        const bool removed = DeleteFileW(path.c_str()) || GetLastError() == ERROR_FILE_NOT_FOUND;
+        if (!removed) {
+            WriteLogF(L"github token could not be cleared error=%lu", GetLastError());
+            return false;
+        }
+        WriteLog(L"github token cleared");
+        return true;
+    }
+    if (!WriteTextFile(path, clean + L"\n")) {
+        WriteLog(L"github token could not be saved");
+        return false;
+    }
+    WriteLog(L"github token saved");
+    return true;
 }
 
 static std::wstring ConsentPath() {
