@@ -247,7 +247,7 @@ HttpResult HttpGetWithHeaders(const wchar_t* url, const HttpHeaders& headers) {
 
         HttpClient client;
         HttpRequestMessage request(HttpMethod::Get(), winrt::Windows::Foundation::Uri(url));
-        request.Headers().UserAgent().ParseAdd(L"RaggedyBlueBox-RaggedyLauncher/1.0");
+        request.Headers().UserAgent().ParseAdd(L"RaggedyLauncher/1.0");
         for (const auto& header : headers) {
             request.Headers().Append(header.first, header.second);
         }
@@ -305,7 +305,7 @@ HttpResult HttpPostWithHeaders(
 
         HttpClient client;
         HttpRequestMessage request(HttpMethod::Post(), winrt::Windows::Foundation::Uri(url));
-        request.Headers().UserAgent().ParseAdd(L"RaggedyBlueBox-RaggedyLauncher/1.0");
+        request.Headers().UserAgent().ParseAdd(L"RaggedyLauncher/1.0");
         for (const auto& header : headers) {
             request.Headers().Append(header.first, header.second);
         }
@@ -334,7 +334,7 @@ HttpResult HttpGetConditionalTimed(
 
         HttpClient client;
         HttpRequestMessage request(HttpMethod::Get(), winrt::Windows::Foundation::Uri(url));
-        request.Headers().UserAgent().ParseAdd(L"RaggedyBlueBox-RaggedyLauncher/1.0");
+        request.Headers().UserAgent().ParseAdd(L"RaggedyLauncher/1.0");
         if (!etag.empty()) {
             // ParseAdd rejects quoted etags that do not round trip
             request.Headers().Append(L"If-None-Match", winrt::to_hstring(etag));
