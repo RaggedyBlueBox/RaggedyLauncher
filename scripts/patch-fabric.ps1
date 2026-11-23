@@ -14,6 +14,7 @@ $buildDir = Get-ConfigPath "BuildDir"
 $loaderVersion = if ($LoaderVersion) { $LoaderVersion } else { $ProjectConfig.FabricLoaderVersion }
 $loader = Join-Path $gameDir "libraries\net\fabricmc\fabric-loader\$loaderVersion\fabric-loader-$loaderVersion.jar"
 $patch  = Join-Path $root "patch"
+$fsUtilPatch = $patch
 $tmp    = Join-Path $buildDir "patch\$loaderVersion"
 $classesTmp = Join-Path $tmp "classes"
 $jarTmp = Join-Path $tmp "jar"
@@ -28,14 +29,19 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $loaderArchive = [System.IO.Compression.ZipFile]::OpenRead($loader)
 try {
     $hasTinyRemapperOutputConsumer = [bool]$loaderArchive.GetEntry("net/fabricmc/loader/impl/lib/tinyremapper/OutputConsumerPath.class")
+    $hasFileSystemUtilAccessMode = [bool]$loaderArchive.GetEntry('net/fabricmc/loader/impl/util/FileSystemUtil$AccessMode.class')
 } finally {
     $loaderArchive.Dispose()
+}
+
+if ($hasFileSystemUtilAccessMode) {
+    $fsUtilPatch = Join-Path $patch "fabric-0.20.1"
 }
 
 $jarExe = Join-Path $java "bin\jar.exe"
 $patchSources = @(
     (Join-Path $patch "LoaderUtil.java"),
-    (Join-Path $patch "FileSystemUtil.java"),
+    (Join-Path $fsUtilPatch "FileSystemUtil.java"),
     (Join-Path $patch "FabricLauncherBase.java")
 )
 if ($hasTinyRemapperOutputConsumer) {
@@ -51,7 +57,7 @@ if ($hasTinyRemapperOutputConsumer) {
 # a jar that still hashes to the recorded output is already patched, a freshly downloaded one is not
 function Get-PatchStamp {
     return New-BuildStamp `
-        -Values @("patch_fabric", $loaderVersion, "tinyremapper=$hasTinyRemapperOutputConsumer") `
+        -Values @("patch_fabric", $loaderVersion, "tinyremapper=$hasTinyRemapperOutputConsumer", "fsutil=$hasFileSystemUtilAccessMode") `
         -ContentFiles (@($PSCommandPath, $loader) + $patchSources)
 }
 
@@ -67,6 +73,18 @@ Ensure-Dir $jarTmp
 Write-Host "Compiling patched Fabric loader classes..."
 & (Join-Path $java "bin\javac.exe") --release 21 -cp $loader -d $classesTmp $patchSources
 if ($LASTEXITCODE -ne 0) { throw "Compile failed" }
+
+$expectedFileUtilDescriptor = if ($hasFileSystemUtilAccessMode) {
+    '(Ljava/nio/file/Path;Lnet/fabricmc/loader/impl/util/FileSystemUtil$AccessMode;)Lnet/fabricmc/loader/impl/util/FileSystemUtil$FileSystemDelegate;'
+} else {
+    '(Ljava/nio/file/Path;Z)Lnet/fabricmc/loader/impl/util/FileSystemUtil$FileSystemDelegate;'
+}
+$javap = Join-Path $java "bin\javap.exe"
+$fileUtilSignatures = (& $javap -classpath $classesTmp -p -s "net.fabricmc.loader.impl.util.FileSystemUtil" 2>&1 | Out-String)
+if ($LASTEXITCODE -ne 0) { throw "FileSystemUtil signature inspection failed" }
+if (-not $fileUtilSignatures.Contains($expectedFileUtilDescriptor)) {
+    throw "FileSystemUtil ABI mismatch in fabric-loader-$loaderVersion; expected $expectedFileUtilDescriptor"
+}
 
 # Repack a fresh JAR instead of updating in place. Repeated ZipArchive updates
 # can leave headers that jar.exe tolerates but .NET refuses to open later.

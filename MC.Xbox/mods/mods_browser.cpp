@@ -382,6 +382,73 @@ static const int kModPageSize = 50;
 // fabric api, curseforge project 306612
 static const wchar_t* kCurseForgeFabricApiId = L"306612";
 
+struct CuratedModpack {
+    const wchar_t* projectId;
+    const wchar_t* slug;
+    const wchar_t* title;
+    const wchar_t* description;
+    const wchar_t* iconUrl;
+    std::set<std::wstring> gameVersions;
+};
+
+static const std::vector<CuratedModpack>& CuratedModpacks() {
+    static const std::vector<CuratedModpack> packs = {
+        {
+            L"g9O0WaGR", L"legacy-minecraft", L"Re-Console",
+            L"A continued Legacy Console Edition experience with modern Java Edition features",
+            L"https://cdn.modrinth.com/data/g9O0WaGR/18e9ae214e1ca1bd8874abbcf6784948e224e1e8.png",
+            { L"26.3", L"26.2", L"26.1.2", L"1.21.10", L"1.21.8", L"1.21.5", L"1.21.4", L"1.21.3", L"1.21.1", L"1.21", L"1.20.4", L"1.20.1" }
+        },
+        {
+            L"f63ynpri", L"simply-legacy", L"Simply Legacy",
+            L"A faithful, performant continuation of the vanilla Legacy Console Edition experience",
+            L"https://cdn.modrinth.com/data/f63ynpri/79dd6a009a4cb101837b931234f4ba146837df85.png",
+            { L"26.3", L"26.1.2", L"1.21.10" }
+        }
+    };
+    return packs;
+}
+
+static bool CuratedModpackMatchesTarget(const CuratedModpack& pack, const LaunchTarget& target) {
+    return ToLowerW(target.loader) == L"fabric" && pack.gameVersions.count(target.minecraftVersion) != 0;
+}
+
+static void PrependCuratedModpacks(const AuthUiState& state, const LaunchTarget& target, const std::wstring& runtimeRoot, std::vector<ModCard>& out) {
+    if (state.modsSource == ModSource::CurseForge || !state.modsSearchQuery.empty()) return;
+    if (ModsTabAt(state.selectedModsTab).kind != ContentKind::Modpack) return;
+
+    std::vector<ModCard> featured;
+    for (const CuratedModpack& pack : CuratedModpacks()) {
+        if (!CuratedModpackMatchesTarget(pack, target)) continue;
+
+        bool duplicate = false;
+        for (const ModCard& existing : out) {
+            if (ToLowerW(existing.projectId) == ToLowerW(pack.projectId) ||
+                ToLowerW(existing.slug) == ToLowerW(pack.slug)) {
+                duplicate = true;
+                break;
+            }
+        }
+        if (duplicate) continue;
+
+        ModCard card;
+        card.kind = ContentKind::Modpack;
+        card.source = ModSource::Modrinth;
+        card.projectId = pack.projectId;
+        card.slug = pack.slug;
+        card.title = pack.title;
+        card.description = pack.description;
+        card.status = Tr(L"Recommended");
+        card.iconUrl = pack.iconUrl;
+        card.iconPath = ModIconCachePath(runtimeRoot, pack.projectId);
+        featured.push_back(card);
+    }
+
+    if (featured.empty()) return;
+    featured.insert(featured.end(), out.begin(), out.end());
+    out.swap(featured);
+}
+
 static bool FetchModrinthMods(const std::wstring& runtimeRoot, const char* index, const std::wstring& query, int offset, int limit, std::vector<ModCard>& out, int& totalHits, std::wstring& error, ContentKind kind, const std::string& gameVersion, const std::string& targetLoaderId) {
     using namespace winrt::Windows::Data::Json;
     error.clear();
@@ -458,8 +525,10 @@ static bool FetchTabPage(
 
     if (state.modsSource != ModSource::CurseForge) {
         const char* index = !query.empty() ? "relevance" : (tab.sortByDownloads ? "downloads" : "newest");
-        return FetchModrinthMods(runtimeRoot, index, query, offset, kModPageSize, out, totalHits,
+        const bool ok = FetchModrinthMods(runtimeRoot, index, query, offset, kModPageSize, out, totalHits,
             error, tab.kind, gameVersion, ModrinthLoaderId(target.loader));
+        if (ok && offset == 0) PrependCuratedModpacks(state, target, runtimeRoot, out);
+        return ok;
     }
 
     // curseforge has no relevance sort, downloads is the closest

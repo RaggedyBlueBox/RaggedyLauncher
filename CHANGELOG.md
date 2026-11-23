@@ -12,11 +12,15 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 **Graphics renderer setting.** Settings has a new Graphics renderer row. OpenGL through the packaged Mesa/D3D12 path stays the default. Vulkan is an experimental opt-in that is only stored when a bridge probe passes; until the Vulkan bridge is validated on Xbox the request is refused and the game keeps running on OpenGL. Launches log the requested and actual renderer.
 
+**Re-Console and Simply Legacy are featured in Modpacks.** On compatible Fabric targets the Modpacks tab shows both packs at the top with their Modrinth details, so they can be installed without searching for project IDs. Existing install, update and profile flows are unchanged.
+
 **Performance renderers.** Settings has a new Performance renderer row backed by a data file (`config/performance-mods.json`) that names one Sodium-family candidate per version and loader, or states the gap where none was found. Auto installs the candidate only after it is proven on Xbox; unproven candidates are reported, never forced. Turning it off removes only launcher-managed files. See docs/GRAPHICS-AND-PERFORMANCE.md.
 
 ### Fixed
 
 **Settings rows no longer overlap or swallow clicks.** The nine rows fit above the footer, and the message after a setting change replaces the privacy text instead of being drawn on top of it. Controller bundle and performance renderer settings now work on the built in Vanilla profile as well as custom profiles, so the controller can be fixed without creating a profile first. The renderer row now states plainly that Vulkan is disabled until the bridge is validated instead of accepting a request that cannot be used.
+
+**Fabric Loader 0.20.1 modpacks no longer crash during startup.** Loader 0.20.1 changed the file system helper signature, and the old UWP patch made packs such as Re-Console fail with NoSuchMethodError. The patch build now detects the loader API and applies a matching helper, including a signature check before the JAR is repacked.
 
 ## 2026-11-13
 
