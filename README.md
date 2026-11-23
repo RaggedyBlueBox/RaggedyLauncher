@@ -1,4 +1,27 @@
-# Bandit Launcher
+# Raggedy Launcher
+
+Raggedy Launcher by **RaggedyBlueBox** — a polished, everyday-consumer
+Minecraft Java launcher for Xbox Series S|X (Dev Mode).
+
+Based on **Bandit Launcher** ([veroxsity/JavaUWP](https://github.com/veroxsity/JavaUWP)).
+The goal is a better polished launcher for the every day consumer
+experience: clear settings, sane defaults, honest messages when something is
+not available on a version, and no silent surprises with your mods, worlds,
+or login.
+
+> Experimental and under active development. Test builds come from the
+> `Test build (no publish)` workflow; nothing here auto-updates any console.
+> This is a **separate install** from Bandit Launcher, so back up your
+> worlds, saves, and profiles first.
+
+What is in this branch: a five-way controller bundle setting (Auto,
+Legacy4J, Bandit, Controlify, None), Minecraft 26.3 catalog rows, a
+graphics renderer setting (OpenGL default, Vulkan experimental opt-in), and
+a performance renderer setting backed by a per-version data file. See
+[docs/GRAPHICS-AND-PERFORMANCE.md](docs/GRAPHICS-AND-PERFORMANCE.md) and
+[CHANGELOG.md](CHANGELOG.md).
+
+---
 
 ![Pre-release](https://img.shields.io/badge/status-pre%20release-2ea44f)
 ![Xbox Series X|S](https://img.shields.io/badge/platform-Xbox%20Series%20X%7CS-107c10)
