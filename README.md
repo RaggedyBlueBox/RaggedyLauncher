@@ -1,7 +1,16 @@
 # Raggedy Launcher
 
+![Test build](https://github.com/RaggedyBlueBox/RaggedyLauncher/actions/workflows/test-build.yml/badge.svg)
+![Xbox Series X|S](https://img.shields.io/badge/platform-Xbox%20Series%20X%7CS-107c10)
+![Minecraft Java Edition](https://img.shields.io/badge/Minecraft-Java%20Edition-62b47a)
+![vibe-coded](https://img.shields.io/badge/vibe--coded-100%25-7c3aed)
+
 Raggedy Launcher by **RaggedyBlueBox** — a polished, everyday-consumer
 Minecraft Java launcher for Xbox Series S|X (Dev Mode).
+
+> **FULLY VIBE CODED.** This entire project is designed and built with AI
+> assistance — no hand-written code. On-console testing happens on a real
+> Series S devkit.
 
 Based on **Bandit Launcher** ([veroxsity/JavaUWP](https://github.com/veroxsity/JavaUWP)).
 The goal is a better polished launcher for the every day consumer
