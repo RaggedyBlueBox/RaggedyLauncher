@@ -36,12 +36,11 @@ a performance renderer setting backed by a per-version data file. See
 ![Xbox Series X|S](https://img.shields.io/badge/platform-Xbox%20Series%20X%7CS-107c10)
 ![Minecraft Java Edition](https://img.shields.io/badge/Minecraft-Java%20Edition-62b47a)
 
-Bandit Launcher runs **Minecraft Java Edition directly on Xbox Series X|S in Developer Mode**, with Fabric, Forge and NeoForge. It signs in through Microsoft, verifies Java Edition ownership and downloads the official game files. Website and downloads at [launcher.banditvault.co.uk](https://launcher.banditvault.co.uk/).
+Raggedy Launcher runs **Minecraft Java Edition directly on Xbox Series X|S in Developer Mode**, with Fabric, Forge and NeoForge. It signs in through Microsoft, verifies Java Edition ownership and downloads the official game files.
 
 > **Xbox One, Xbox One S and Xbox One X are not supported.** Both launcher builds are for Xbox Series S and Xbox Series X only.
 
-[Website](https://launcher.banditvault.co.uk/) ·
-[Download](#download) · [Getting started](#getting-started) · [Minecraft versions](#minecraft-versions) · [Discord](https://discord.gg/XTFYUKbG7g) · [Video guide](https://youtu.be/ATHiVaBenY8)
+[Download](#download) · [Getting started](#getting-started) · [Minecraft versions](#minecraft-versions)
 
 ## Requirements
 
@@ -56,12 +55,11 @@ Java and controller support are included in the launcher package for the targets
 
 | Build | Download | Mouse input |
 | --- | --- | --- |
-| Nightly | [Main nightly release](https://github.com/veroxsity/JavaUWP/releases/tag/nightly) | Optional mouse relay from a phone or PC on the same network. |
-| Native mouse | [Native mouse nightly release](https://github.com/veroxsity/JavaUWP/releases/tag/nightly-native) | Direct USB mouse input in launcher menus and Minecraft. |
+| Test | [Test build workflow artifacts](https://github.com/RaggedyBlueBox/RaggedyLauncher/actions/workflows/test-build.yml) | Optional mouse relay from a phone or PC on the same network. |
 
-Download the `.appx` from the chosen release. For the native mouse build, also use the matching public `.cer` certificate from that release. Both releases include a `.sha256` file for checking the package download.
+Download the `.appx` from a successful test-build run and check it against the published `.sha256`. Sideload it through Xbox Device Portal while the console is in Developer Mode, trusting the certificate that ships with the build.
 
-These are pre-release testing builds. Nightly builds are experimental and do not come with support. Read the release notes before installing.
+These are pre-release testing builds. They are experimental and do not come with support.
 
 **The native mouse build installs as a separate app and has its own saves, profiles and settings.** Switching between builds does not transfer data automatically. Export important worlds through Remote Files before changing builds or removing an app.
 
@@ -124,7 +122,7 @@ Bandit Controller is included for the catalog targets that have a controller pro
 
 To use another controller mod, turn **Bandit Controller** off for that profile before installing it.
 
-- **Main nightly** uses the optional mouse relay. A browser page is available from the launcher. Companion downloads for Windows, Android and iOS are on the [Mouse Relay release](https://github.com/veroxsity/JavaUWP/releases/tag/mouse-relay-nightly).
+- **Main nightly** uses the optional mouse relay. A browser page is available from the launcher. Companion downloads for Windows, Android and iOS are published alongside the mouse relay build.
 - **Native mouse nightly** accepts a USB mouse directly. Launcher Settings has separate menu and game mouse sensitivity controls.
 
 ## Remote Files

@@ -19,7 +19,7 @@ Bandit Launcher requires a valid copy of Minecraft: Java Edition. The launcher d
 If you have Minecraft through Game Pass, you need to create an account on minecraft.net and set a player name.
 
 ## How do I use my mouse?
-The [mouse relay release](https://github.com/veroxsity/JavaUWP/releases/tag/mouse-relay-nightly) provides Windows, Android and iOS companions. The native mouse build supports direct USB mouse input. Check the main README for the package and input mode in use.
+The mouse relay build provides Windows, Android and iOS companions. The native mouse build supports direct USB mouse input. Check the main README for the package and input mode in use.
 
 ## Is the mouse relay laggy?
 The mouse relay does not lag unless you have a bad computer or *really* bad wifi. In other words, if it does lag, look into better wifi or a better device to use the relay.

@@ -146,11 +146,11 @@ AuthUiState Changelog(bool offer, int scroll, bool withBody) {
     state.showChangelog = true;
     state.changelogOffer = offer;
     state.changelogScroll = scroll;
-    state.changelogUrl = L"https://github.com/veroxsity/JavaUWP/releases";
+    state.changelogUrl = L"https://github.com/RaggedyBlueBox/RaggedyLauncher";
     if (offer) {
         state.changelogHeadline = L"Version 1.0.0.510 is available";
         state.changelogSub = L"You are running 1.0.0.509. Updating is up to you.";
-        state.qr = GenerateLoginQrMatrix("https://github.com/veroxsity/JavaUWP/releases");
+        state.qr = GenerateLoginQrMatrix("https://github.com/RaggedyBlueBox/RaggedyLauncher");
     } else {
         state.changelogHeadline = L"What's new";
         state.changelogSub = L"The latest changes, fetched from GitHub.";

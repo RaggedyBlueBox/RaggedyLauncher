@@ -20,8 +20,8 @@ constexpr unsigned kReleaseTimeoutMs = 6000;
 constexpr unsigned kChangelogTimeoutMs = 8000;
 constexpr unsigned long long kRefreshSeconds = 6ull * 60ull * 60ull;
 constexpr size_t kMaxChangelogBytes = 512u * 1024u;
-constexpr wchar_t kRepo[] = L"veroxsity/JavaUWP";
-constexpr wchar_t kReleasesPage[] = L"https://github.com/veroxsity/JavaUWP/releases";
+constexpr wchar_t kRepo[] = L"RaggedyBlueBox/RaggedyLauncher";
+constexpr wchar_t kReleasesPage[] = L"https://github.com/RaggedyBlueBox/RaggedyLauncher/actions/workflows/test-build.yml";
 
 struct Channel {
     const wchar_t* name;
