@@ -9,6 +9,10 @@
 #include <winrt/base.h>
 #include <winrt/Windows.Data.Json.h>
 #include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Foundation.Collections.h>
+
+using i18n::Tr;
+using i18n::TrFormat;
 
 #include <mutex>
 #include <set>

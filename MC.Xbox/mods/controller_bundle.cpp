@@ -5,6 +5,7 @@
 #include "runtime_manager.h"
 
 #include <set>
+#include <sstream>
 
 namespace {
 

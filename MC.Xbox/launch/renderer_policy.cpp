@@ -4,6 +4,9 @@
 #include "launcher_common.h"
 #include "runtime_manager.h"
 
+using i18n::Tr;
+using i18n::TrFormat;
+
 namespace {
 
 std::wstring RendererPath(const std::wstring& runtimeRoot) {
