@@ -22,6 +22,8 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 **Fabric Loader 0.20.1 modpacks no longer crash during startup.** Loader 0.20.1 changed the file system helper signature, and the old UWP patch made packs such as Re-Console fail with NoSuchMethodError. The patch build now detects the loader API and applies a matching helper, including a signature check before the JAR is repacked.
 
+**Minecraft 26.3 now uses a UWP build of SDL3.** The desktop SDL3 native from LWJGL could not load on Xbox and stopped modpacks before the game window opened. The build now compiles the SDL3 UWP fork and stages that DLL into each modern target's native directory, replacing the desktop copy.
+
 ## 2026-11-13
 
 ### Added

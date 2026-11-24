@@ -661,6 +661,13 @@ foreach ($name in @("raggedy-xbox-compat-1.0.0.jar", "raggedy-fabric-controller-
 Write-Host "Copying natives..."
 Copy-Item (Join-Path $nativesSourceDir "*.dll") (Join-Path $pkg "natives\")
 
+Write-Host "Building SDL3 UWP runtime..."
+& (Join-Path $root "sdl3_uwp\build_sdl3.ps1")
+$uwpSdlPath = Join-Path (Get-ConfigPath "BuildDir") "sdl3-uwp\SDL3.dll"
+if (-not (Test-Path $uwpSdlPath)) { throw "UWP SDL3.dll was not built." }
+Copy-Item $uwpSdlPath (Join-Path $pkg "natives\SDL3.dll") -Force
+Write-Host "Packaged UWP SDL3.dll"
+
 Write-Host "Extracting JNA native..."
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $jnaVersion = $ProjectConfig.JnaVersion

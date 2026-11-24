@@ -1323,15 +1323,17 @@ bool PrepareTargetNativeDir(
     nativeDir = runtimeRoot + L"\\runtime\\natives\\" + SafePathSegment(targetId);
     const std::wstring packageNativesDir = packageDir + L"\\natives";
     const std::wstring markerPath = nativeDir + L"\\.native_manifest";
-    const std::wstring marker = L"nativeVersion=3\nmanifest=" + FileStamp(manifestPath) +
-        L"\nglfw=" + FileStamp(packageNativesDir + L"\\glfw.dll") + L"\n";
+    const std::wstring marker = L"nativeVersion=4\nmanifest=" + FileStamp(manifestPath) +
+        L"\nglfw=" + FileStamp(packageNativesDir + L"\\glfw.dll") +
+        L"\nsdl3=" + FileStamp(packageNativesDir + L"\\SDL3.dll") + L"\n";
 
     std::wstring existingMarker;
     if (ReadTextFile(markerPath, existingMarker) && existingMarker == marker &&
         GetFileAttributesW((nativeDir + L"\\lwjgl.dll").c_str()) != INVALID_FILE_ATTRIBUTES &&
         GetFileAttributesW((nativeDir + L"\\glfw.dll").c_str()) != INVALID_FILE_ATTRIBUTES &&
         GetFileAttributesW((nativeDir + L"\\jemalloc.dll").c_str()) != INVALID_FILE_ATTRIBUTES &&
-        GetFileAttributesW((nativeDir + L"\\jnidispatch.dll").c_str()) != INVALID_FILE_ATTRIBUTES) {
+        GetFileAttributesW((nativeDir + L"\\jnidispatch.dll").c_str()) != INVALID_FILE_ATTRIBUTES &&
+        GetFileAttributesW((nativeDir + L"\\SDL3.dll").c_str()) != INVALID_FILE_ATTRIBUTES) {
         return true;
     }
 
@@ -1356,13 +1358,21 @@ bool PrepareTargetNativeDir(
 
     CopyFileIfNeeded(packageNativesDir + L"\\glfw.dll", nativeDir + L"\\glfw.dll");
 
+    const std::wstring packagedSdl3 = packageNativesDir + L"\\SDL3.dll";
+    if (GetFileAttributesW(packagedSdl3.c_str()) != INVALID_FILE_ATTRIBUTES) {
+        if (!CopyFileIfNeeded(packagedSdl3, nativeDir + L"\\SDL3.dll")) {
+            WriteLogF(L"Could not stage UWP SDL3.dll for target %s", targetId.c_str());
+        }
+    }
+
     const bool ready =
         extractedLwjgl &&
         extractedJna &&
         GetFileAttributesW((nativeDir + L"\\lwjgl.dll").c_str()) != INVALID_FILE_ATTRIBUTES &&
         GetFileAttributesW((nativeDir + L"\\glfw.dll").c_str()) != INVALID_FILE_ATTRIBUTES &&
         GetFileAttributesW((nativeDir + L"\\jemalloc.dll").c_str()) != INVALID_FILE_ATTRIBUTES &&
-        GetFileAttributesW((nativeDir + L"\\jnidispatch.dll").c_str()) != INVALID_FILE_ATTRIBUTES;
+        GetFileAttributesW((nativeDir + L"\\jnidispatch.dll").c_str()) != INVALID_FILE_ATTRIBUTES &&
+        GetFileAttributesW((nativeDir + L"\\SDL3.dll").c_str()) != INVALID_FILE_ATTRIBUTES;
     if (ready) {
         WriteTextFile(markerPath, marker);
     } else {
