@@ -95,6 +95,10 @@ try {
     Require-Contains $profileSource 'Simply Legacy' 'Built-in profile source'
     $appSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/App.cpp') -Raw
     Require-Contains $appSource 'SDL_OPENGL_LIBRARY' 'SDL OpenGL library hint source'
+    Require-Contains $appSource 'L"graphics\\" + graphicsRuntime + L"\\opengl32.dll"' 'Package-relative SDL OpenGL hint source'
+    $launchSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/launch/minecraft_launch.cpp') -Raw
+    Require-Contains $launchSource 'org.lwjgl.opengl.libname' 'LWJGL OpenGL library source'
+    Require-Contains $launchSource 'L"graphics\\" + graphicsRuntime + L"\\opengl32.dll"' 'Package-relative SDL OpenGL hint source'
     Require-Contains $appSource 'EnsureDefaultModpackInstalled' 'Default modpack bootstrap source'
     Require-Contains $browserSource 'EnsureDefaultModpackInstalled' 'Default modpack installer source'
     $sdlBuildSource = Get-Content -LiteralPath (Join-Path $root 'sdl3_uwp/build_sdl3.ps1') -Raw

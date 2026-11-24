@@ -102,7 +102,7 @@ When version JSON needs loader specific fields, `ResolveVersionInfo()` delegates
 - Locates packaged JREs (`jre`, `jre21`, and `jre17` when packaged for Java 17 targets).
 - Syncs bundled loader mods from `runtime/version-mods/<target-id>/` into the active profile `mods/` folder when a target defines them.
 - Builds the base classpath from resolved version data.
-- Applies UWP native library paths. For 26.3, skips the legacy GLFW override and sets `SDL_OPENGL_LIBRARY` to the selected Mesa `opengl32.dll` so RenderPearl/SDL uses the same bridge as LWJGL.
+- Applies UWP native library paths. For 26.3, skips the legacy GLFW override, points LWJGL at the absolute Mesa `opengl32.dll`, and sets `SDL_OPENGL_LIBRARY` to the package-relative `graphics/<runtime>/opengl32.dll` so RenderPearl/SDL uses the same bridge under UWP's `LoadPackagedLibrary` rules.
 - Calls loader hooks before adjusting classpath and JVM options.
 - Starts the selected main class in the same UWP process.
 

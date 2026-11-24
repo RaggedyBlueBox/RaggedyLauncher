@@ -7,10 +7,12 @@ Sodium-family performance mods, and what is still untested.
 
 - The launcher no longer offers a graphics-backend choice. The only supported
   path is OpenGL through the packaged Mesa/D3D12 bridge.
-- For 26.3/Fabric, launch skips the legacy GLFW override and sets both
-  `org.lwjgl.opengl.libname` and the `SDL_OPENGL_LIBRARY` hint to the packaged
-  `graphics/<runtime>/opengl32.dll`. This is required because RenderPearl's SDL
-  backend calls `SDL_GL_LoadLibrary()` before LWJGL uses the OpenGL library.
+- For 26.3/Fabric, launch skips the legacy GLFW override, sets
+  `org.lwjgl.opengl.libname` to the absolute packaged `opengl32.dll`, and sets
+  the `SDL_OPENGL_LIBRARY` hint to the package-relative
+  `graphics/<runtime>/opengl32.dll` (UWP SDL uses `LoadPackagedLibrary`). This is
+  required because RenderPearl's SDL backend calls `SDL_GL_LoadLibrary()` before
+  LWJGL uses the OpenGL library.
 - Older targets keep the legacy GLFW and LWJGL OpenGL overrides. `java.library.path`
   and the extracted LWJGL native directory are unchanged.
 - Vulkan is open work, not an opt-in toggle. There is no `runtime/renderer.txt`,

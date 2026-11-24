@@ -1111,10 +1111,12 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
         GetFileAttributesW(packagedOpenGl.c_str()) != INVALID_FILE_ATTRIBUTES
             ? packagedOpenGl
             : localOpenGl;
+    const std::wstring sdlOpenGlLibrary = L"graphics\\" + graphicsRuntime + L"\\opengl32.dll";
     if (GetFileAttributesW(selectedOpenGl.c_str()) != INVALID_FILE_ATTRIBUTES) {
         vmOptionStorage.push_back("-Dorg.lwjgl.opengl.libname=" + w2a(fwd(selectedOpenGl)));
-        SetEnvironmentVariableW(L"SDL_OPENGL_LIBRARY", selectedOpenGl.c_str());
-        WriteLogF(L"LWJGL and SDL OpenGL library forced: %s", selectedOpenGl.c_str());
+        SetEnvironmentVariableW(L"SDL_OPENGL_LIBRARY", sdlOpenGlLibrary.c_str());
+        WriteLogF(L"LWJGL OpenGL library forced: %s", selectedOpenGl.c_str());
+        WriteLogF(L"SDL OpenGL library hint: %s", sdlOpenGlLibrary.c_str());
     } else {
         WriteLogF(L"LWJGL OpenGL library override missing: %s", selectedOpenGl.c_str());
     }

@@ -92,7 +92,7 @@ For adding another playable Forge target, add it to `config\versions.tsv`, exten
 
 **Mixin targets are written in Mojang names.** The `src\main` compatibility mixins target intermediary names such as `net.minecraft.class_4239` and `method_47525`. The `26.x` variants under `compat_mod\src\variants` target Mojang names such as `net.minecraft.util.FileUtil` and `createDirectoriesSafe` instead. A mixin copied between the two will not apply.
 
-**RenderPearl needs the SDL OpenGL hint.** For 26.3, `launch\minecraft_launch.cpp` skips the legacy GLFW override and sets `SDL_OPENGL_LIBRARY` to the packaged Mesa `opengl32.dll`, matching the LWJGL OpenGL library name. This is required because SDL asks for its own GL library before LWJGL loads one.
+**RenderPearl needs the SDL OpenGL hint.** For 26.3, `launch\minecraft_launch.cpp` skips the legacy GLFW override, sets LWJGL to the absolute packaged Mesa `opengl32.dll`, and sets `SDL_OPENGL_LIBRARY` to the package-relative `graphics\<runtime>\opengl32.dll`. UWP SDL uses `LoadPackagedLibrary`, which rejects absolute paths; SDL asks for its own GL library before LWJGL loads one.
 
 **LWJGL natives are listed differently.** Mojang lists each platform's LWJGL natives for `26.x` as its own library entry sharing the base artifact's maven key. `Add-LibraryJar` in `scripts\setup.ps1` drops every `-natives-` entry for that reason: without the filter, `natives-linux` sorts first, wins the maven dedupe, and takes LWJGL's classes off the generated classpath.
 

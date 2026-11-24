@@ -538,9 +538,11 @@ public:
         updates::StartCheckAsync();
         const std::wstring graphicsRuntime = DetectGraphicsRuntimeName();
         SetEnvironmentVariableW(L"MC_GRAPHICS_RUNTIME", graphicsRuntime.c_str());
-        const std::wstring sdlOpenGlLibrary =
+        const std::wstring packagedOpenGl =
             packageDir + L"\\graphics\\" + graphicsRuntime + L"\\opengl32.dll";
-        if (GetFileAttributesW(sdlOpenGlLibrary.c_str()) != INVALID_FILE_ATTRIBUTES) {
+        const std::wstring sdlOpenGlLibrary =
+            L"graphics\\" + graphicsRuntime + L"\\opengl32.dll";
+        if (GetFileAttributesW(packagedOpenGl.c_str()) != INVALID_FILE_ATTRIBUTES) {
             SetEnvironmentVariableW(L"SDL_OPENGL_LIBRARY", sdlOpenGlLibrary.c_str());
             WriteLogF(L"SDL OpenGL library hint: %s", sdlOpenGlLibrary.c_str());
         }
