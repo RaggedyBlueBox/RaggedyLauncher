@@ -13,7 +13,7 @@ $sourceDir = Join-Path $cacheRoot "src"
 $buildDir = Join-Path $cacheRoot "build"
 $installDir = Join-Path $cacheRoot "install"
 $stampPath = Join-Path $cacheRoot "build.stamp"
-$stamp = "SDL3-UWP|$commit|x64|WindowsStore|10.0"
+$stamp = "SDL3-UWP|$commit|x64|WindowsStore|10.0|mainready"
 
 if (-not $OutputDir) {
     $OutputDir = Join-Path (Get-ConfigPath "BuildDir") "sdl3-uwp"
@@ -45,6 +45,17 @@ if ($head -ne $commit) {
     if ($LASTEXITCODE -ne 0) { throw "Could not fetch pinned SDL3-UWP commit." }
     & $git.Source -C $sourceDir checkout --detach $commit
     if ($LASTEXITCODE -ne 0) { throw "Could not checkout pinned SDL3-UWP commit." }
+}
+
+$sdlCPath = Join-Path $sourceDir 'src\SDL.c'
+$sdlCSource = [IO.File]::ReadAllText($sdlCPath)
+$mainReadyPattern = '(?m)^#ifdef SDL_MAIN_NEEDED\r?\nstatic bool SDL_MainIsReady = false;\r?\n#else\r?\nstatic bool SDL_MainIsReady = true;\r?\n#endif$'
+if ([regex]::IsMatch($sdlCSource, $mainReadyPattern)) {
+    Write-Host "Patching SDL3-UWP main-ready behavior..."
+    $sdlCSource = [regex]::Replace($sdlCSource, $mainReadyPattern, 'static bool SDL_MainIsReady = true;')
+    [IO.File]::WriteAllText($sdlCPath, $sdlCSource)
+} elseif (-not $sdlCSource.Contains('static bool SDL_MainIsReady = true;')) {
+    throw "Could not apply SDL3-UWP main-ready patch."
 }
 
 if ((Test-Path $dllPath) -and (Test-Path $stampPath) -and ([IO.File]::ReadAllText($stampPath).Trim() -eq $stamp)) {

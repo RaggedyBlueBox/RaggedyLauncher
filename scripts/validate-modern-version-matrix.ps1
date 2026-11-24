@@ -86,6 +86,8 @@ try {
     Require-Contains $browserSource 'PrependCuratedModpacks' 'Featured modpack source'
     $profileSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/profiles/profiles.cpp') -Raw
     Require-Contains $profileSource 'L"legacy4j", L"raggedy", L"controlify"' 'Legacy4J controller fallback source'
+    $sdlBuildSource = Get-Content -LiteralPath (Join-Path $root 'sdl3_uwp/build_sdl3.ps1') -Raw
+    Require-Contains $sdlBuildSource 'SDL_MainIsReady' 'UWP SDL3 main-ready patch source'
     foreach ($inputFile in @(
         @{ Source = $CatalogPath; Relative = 'runtime/version_catalog.tsv' },
         @{ Source = (Join-Path $root 'config/recommended-mods.json'); Relative = 'runtime/recommended-mods.json' },
