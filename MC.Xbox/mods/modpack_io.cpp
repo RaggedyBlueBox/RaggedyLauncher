@@ -1,3 +1,8 @@
+#ifdef WIN32_LEAN_AND_MEAN
+#undef WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+
 #include "modpack_io.h"
 #include "i18n.h"
 
