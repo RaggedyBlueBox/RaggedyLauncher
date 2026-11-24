@@ -1040,9 +1040,10 @@ static bool InstallModrinthProjectRecursive(
                 }
             }
 
+            std::wstring existingOwners;
             if (!userBackupDir.empty() &&
                 GetFileAttributesW(destination.c_str()) != INVALID_FILE_ATTRIBUTES &&
-                !BundleFileHasOwners(userModsDir, installedFileName)) {
+                !ReadManagedMetaValue(userModsDir, installedFileName, L"bundleOwners", existingOwners)) {
                 // A user-owned jar is in the way. Stash it so the bundle can
                 // install without destroying it; removal restores it later.
                 EnsureDirectoryTree(userBackupDir);
@@ -1246,33 +1247,10 @@ static bool InstallModProject(
         &card, error, gameVersion, loaderName, loaderVersion, modsource::QualifyProjectId(ModSource::CurseForge, id), false);
 }
 
-// ---- Launcher-managed controller bundles ----
-// Bundles download from Modrinth with the same validation as manual installs
-// (game version + loader match, SHA-1 verification, blocked-mod checks) and
-// additionally stash any colliding user-owned jars before replacing them.
-
-static std::wstring ControllerBundleRootSlug(const std::wstring& bundle) {
-    if (NormalizeControllerBundle(bundle) == L"legacy4j") return L"legacy4j";
-    return L"controlify";
-}
-
-static bool InstallControllerBundleMods(const std::wstring& runtimeRoot, const std::wstring& profileId,
-    const std::wstring& bundle, std::wstring& error, std::vector<std::wstring>& installedOut) {
-    const Profile profile = GetProfileById(runtimeRoot, profileId);
-    const LaunchTarget target = ResolveProfileTarget(runtimeRoot, profile);
-    const std::wstring loader = ToLowerW(target.loader);
-    if (loader != L"fabric" && loader != L"forge" && loader != L"neoforge") {
-        error = Tr(L"Controller bundles need a Fabric, Forge or NeoForge profile.");
-        return false;
-    }
-    std::wstring reason;
-    if (!ControllerBundleSupportedForTarget(bundle, target, reason)) {
-        error = reason.empty() ? Tr(L"This controller bundle is unavailable for the profile target.") : reason;
-        return false;
-    }
-    return InstallManagedModrinthProject(runtimeRoot, profileId, ControllerBundleRootSlug(bundle),
-        L"bundle:" + NormalizeControllerBundle(bundle), target, installedOut, error);
-}
+// ---- Launcher-managed mods ----
+// Managed installs download from Modrinth with the same validation as manual
+// installs (game version + loader match, SHA-1 verification, blocked-mod
+// checks) and stash colliding user-owned jars before replacing them.
 
 bool InstallManagedModrinthProject(const std::wstring& runtimeRoot, const std::wstring& profileId,
     const std::wstring& rootSlug, const std::wstring& ownerToken, const LaunchTarget& target,
@@ -1318,160 +1296,6 @@ bool InstallManagedModrinthProject(const std::wstring& runtimeRoot, const std::w
     installedOut = installed;
     return true;
 }
-
-bool ApplyControllerBundle(const std::wstring& runtimeRoot, const std::wstring& profileId,
-    const std::wstring& bundle, std::wstring& chosenOut, std::wstring& status, bool& isError) {
-    isError = false;
-    chosenOut.clear();
-    const Profile profile = GetProfileById(runtimeRoot, profileId);
-    const std::wstring want = NormalizeControllerBundle(bundle);
-    if (!IsKnownControllerBundle(bundle)) {
-        status = Tr(L"Unknown controller bundle.");
-        isError = true;
-        return false;
-    }
-    const LaunchTarget target = ResolveProfileTarget(runtimeRoot, profile);
-    if (want != L"auto") {
-        std::wstring reason;
-        if (!ControllerBundleSupportedForTarget(want, target, reason)) {
-            status = reason.empty() ? Tr(L"This controller bundle is unavailable for the profile target.") : reason;
-            isError = true;
-            return false;
-        }
-    }
-
-    std::vector<std::wstring> candidates;
-    if (want == L"auto") {
-        candidates = { L"legacy4j", L"raggedy", L"controlify", L"none" };
-    } else {
-        candidates = { want };
-    }
-    std::wstring chosen;
-    std::wstring lastError;
-    int installedCount = 0;
-    for (const std::wstring& candidate : candidates) {
-        std::wstring reason;
-        if (!ControllerBundleSupportedForTarget(candidate, target, reason)) {
-            lastError = reason;
-            continue;
-        }
-        if (candidate == L"legacy4j" || candidate == L"controlify") {
-            std::vector<std::wstring> installed;
-            if (!InstallControllerBundleMods(runtimeRoot, profileId, candidate, lastError, installed)) {
-                WriteLogF(L"Controller bundle %s install failed: %s", candidate.c_str(), lastError.c_str());
-                continue;
-            }
-            installedCount = static_cast<int>(installed.size());
-        }
-        chosen = candidate;
-        break;
-    }
-    if (chosen.empty()) {
-        status = lastError.empty() ? Tr(L"No usable controller bundle for this target.") : lastError;
-        isError = true;
-        return false;
-    }
-    if (!SetProfileControllerBundle(runtimeRoot, profileId, want)) {
-        status = Tr(L"Could not save controller setting");
-        isError = true;
-        return false;
-    }
-    // Drop managed files of the bundles that are no longer effective. Shared
-    // dependencies survive through ownership refcounts; user jars are untouched.
-    static const wchar_t* kManaged[] = { L"legacy4j", L"controlify" };
-    int removed = 0;
-    for (const wchar_t* owned : kManaged) {
-        if (chosen != owned) removed += RemoveBundleOwnedFiles(runtimeRoot, profileId, owned);
-    }
-    const std::wstring effective = ResolveEffectiveControllerBundle(want, target);
-    const std::vector<std::wstring> conflicts = FindBundleConflicts(runtimeRoot, profileId, effective);
-    if (want == L"auto") {
-        if (chosen == L"legacy4j") {
-            status = installedCount == 0
-                ? Tr(L"Controller bundle: Auto using Legacy4J (already installed).")
-                : TrFormat(L"Controller bundle: Auto using Legacy4J ({0} file(s) installed).", { std::to_wstring(installedCount) });
-        } else if (chosen == L"raggedy") {
-            status = Tr(L"Controller bundle: Auto using Raggedy (Legacy4J has no build for this version).");
-        } else if (chosen == L"controlify") {
-            status = Tr(L"Controller bundle: Auto using Controlify (Legacy4J and Raggedy are unavailable here).");
-        } else {
-            status = Tr(L"Controller bundle: Auto found no usable controller here; nothing was installed.");
-        }
-    } else if (chosen == L"legacy4j" || chosen == L"controlify") {
-        status = installedCount == 0
-            ? TrFormat(L"Controller bundle: {0} ready.", { Tr(ControllerBundleLabelKey(chosen)) })
-            : TrFormat(L"Controller bundle: {0} installed ({1} file(s)).", { Tr(ControllerBundleLabelKey(chosen)), std::to_wstring(installedCount) });
-    } else if (chosen == L"raggedy") {
-        status = removed > 0
-            ? Tr(L"Raggedy controller mod will be forced on launch")
-            : Tr(L"Raggedy controller mod enabled");
-    } else {
-        status = removed > 0
-            ? Tr(L"Controller bundle cleared; your own mods were left in place")
-            : Tr(L"No launcher controller bundle; your own mods were left in place");
-    }
-    if (!conflicts.empty()) {
-        status += L" " + TrFormat(L"Unmanaged {0} may conflict; remove it yourself to avoid double input.",
-            { conflicts.front() });
-    }
-    chosenOut = chosen;
-    return true;
-}
-
-namespace {
-struct BundleJobState {
-    std::mutex mutex;
-    bool running = false;
-    bool ready = false;
-    bool ok = false;
-    bool error = false;
-    std::wstring profileId;
-    std::wstring status;
-    std::wstring chosen;
-};
-BundleJobState g_bundleJob;
-}  // namespace
-
-void StartControllerBundleJob(
-    const std::wstring& runtimeRoot, const std::wstring& profileId, const std::wstring& bundle) {
-    std::lock_guard<std::mutex> lk(g_bundleJob.mutex);
-    if (g_bundleJob.running) return;
-    g_bundleJob.running = true;
-    g_bundleJob.ready = false;
-    g_bundleJob.profileId = profileId;
-    const std::wstring rootCopy = runtimeRoot;
-    const std::wstring profileCopy = profileId;
-    const std::wstring bundleCopy = bundle;
-    std::thread([rootCopy, profileCopy, bundleCopy]() {
-        std::wstring chosen, status;
-        bool isError = false;
-        const bool ok = ApplyControllerBundle(rootCopy, profileCopy, bundleCopy, chosen, status, isError);
-        std::lock_guard<std::mutex> inner(g_bundleJob.mutex);
-        g_bundleJob.ok = ok;
-        g_bundleJob.error = isError;
-        g_bundleJob.status = status;
-        g_bundleJob.chosen = chosen;
-        g_bundleJob.ready = true;
-        g_bundleJob.running = false;
-    }).detach();
-}
-
-bool PollControllerBundleJob(const std::wstring& profileId, std::wstring& status, bool& isError, std::wstring& chosen) {
-    std::lock_guard<std::mutex> lk(g_bundleJob.mutex);
-    if (g_bundleJob.running || !g_bundleJob.ready) return false;
-    if (g_bundleJob.profileId != profileId) return false;
-    g_bundleJob.ready = false;
-    status = g_bundleJob.status;
-    isError = g_bundleJob.error;
-    chosen = g_bundleJob.chosen;
-    return true;
-}
-
-bool ControllerBundleJobPending(const std::wstring& profileId) {
-    std::lock_guard<std::mutex> lk(g_bundleJob.mutex);
-    return (g_bundleJob.running || g_bundleJob.ready) && g_bundleJob.profileId == profileId;
-}
-
 
 static bool ResolveModrinthProjectFile(const std::wstring& idOrSlug, const wchar_t* noun, std::wstring& url, std::wstring& filename, std::string& sha1, unsigned long long& size, std::wstring& error, const std::string& gameVersion, const std::string& loaderId) {
     using namespace winrt::Windows::Data::Json;
@@ -1561,6 +1385,29 @@ static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot,
     DeleteFileW(mrPath.c_str());
     if (ok && !skippedNote.empty()) error = skippedNote;
     return ok;
+}
+
+bool EnsureDefaultModpackInstalled(
+    const std::wstring& runtimeRoot, const std::wstring& profileId, std::wstring& error) {
+    const std::wstring marker = ProfileDir(runtimeRoot, profileId) + L"\\.raggedy\\default-modpack.txt";
+    if (GetFileAttributesW(marker.c_str()) != INVALID_FILE_ATTRIBUTES) return true;
+    if (profileId != kVanillaProfileId && profileId != kReConsoleProfileId) {
+        return WriteTextFile(marker, L"custom-profile\n");
+    }
+    if (ProfileModCount(runtimeRoot, profileId) > 0) {
+        WriteTextFile(marker, L"existing-profile\n");
+        return true;
+    }
+
+    const bool reConsole = profileId == kReConsoleProfileId;
+    ModCard pack;
+    pack.kind = ContentKind::Modpack;
+    pack.source = ModSource::Modrinth;
+    pack.projectId = reConsole ? L"g9O0WaGR" : L"f63ynpri";
+    pack.slug = reConsole ? L"legacy-minecraft" : L"simply-legacy";
+    pack.title = reConsole ? L"Re-Console" : L"Simply Legacy";
+    if (!InstallModpack(pack, runtimeRoot, profileId, error, "26.3", "fabric")) return false;
+    return WriteTextFile(marker, reConsole ? L"g9O0WaGR\n" : L"f63ynpri\n");
 }
 
 // a filename check, because install records only cover mods added through the browser
@@ -1857,9 +1704,9 @@ static void StartInstallJob(const ModCard& card, const std::wstring& runtimeRoot
                 }
             } else {
                 const std::wstring active = GetActiveProfileId(rootCopy);
-                if (active == kVanillaProfileId) {
+                if (GetProfileById(rootCopy, active).builtin) {
                     ok = false;
-                    SetInstallStatus(Tr(L"Vanilla is read-only. Pick or make a profile first."));
+                    SetInstallStatus(Tr(L"The built-in modpack is read-only. Pick or make a profile first."));
                 } else {
                     const LaunchTarget activeTarget = ResolveProfileTarget(rootCopy, GetProfileById(rootCopy, active));
                     if (activeTarget.targetId != targetCopy.targetId) {
@@ -2167,7 +2014,8 @@ static void FetchModsTab(AuthUiState& state, const std::wstring& runtimeRoot) {
             c.installed = isActive;
             const std::wstring targetText = TargetProfileText(ResolveProfileTarget(runtimeRoot, p));
             if (p.builtin) {
-                c.description = TrFormat(L"{0} - Pure vanilla, no mods", { targetText });
+                c.description = TrFormat(L"{0} - {1}, ready to play",
+                    { targetText, p.id == kVanillaProfileId ? Tr(L"Simply Legacy") : Tr(L"Re-Console") });
             } else {
                 const int n = ProfileModCount(runtimeRoot, p.id);
                 c.description = targetText + L" - " + std::to_wstring(n) + (n == 1 ? L" mod" : L" mods");
@@ -2837,7 +2685,6 @@ void ShowModsPage(
                     else if (hid == launchhit::kProfileDelete) profileFocus = 1;
                     else if (hid == launchhit::kProfileBackup) profileFocus = 3;
                     else if (hid == launchhit::kProfileExport) profileFocus = 4;
-                    else if (hid == launchhit::kProfileController) profileFocus = 5;
                     if (profileFocus >= 0) {
                         if (apply) state.modsProfileFocus = profileFocus;
                         if (clicked) clickActivate = true;
@@ -2938,23 +2785,17 @@ void ShowModsPage(
                 state.modsRenaming = true;
                 ModsSearchBeginInput();
             } else if (!gridFocus && leftDown && !leftWasDown) {
-                if (state.modsProfileBuiltin) {
-                    state.modsProfileFocus = state.modsProfileFocus == 0 ? 5 : 0;
-                } else {
-                    if (state.modsProfileFocus == 0) state.modsProfileFocus = 5;
-                    else if (state.modsProfileFocus == 5) state.modsProfileFocus = 4;
+                if (!state.modsProfileBuiltin) {
+                    if (state.modsProfileFocus == 0) state.modsProfileFocus = 4;
                     else if (state.modsProfileFocus == 4) state.modsProfileFocus = 3;
                     else if (state.modsProfileFocus == 3) state.modsProfileFocus = 1;
                     else state.modsProfileFocus = 1;
                 }
             } else if (!gridFocus && rightDown && !rightWasDown) {
-                if (state.modsProfileBuiltin) {
-                    state.modsProfileFocus = state.modsProfileFocus == 5 ? 0 : 5;
-                } else {
+                if (!state.modsProfileBuiltin) {
                     if (state.modsProfileFocus == 1) state.modsProfileFocus = 3;
                     else if (state.modsProfileFocus == 3) state.modsProfileFocus = 4;
-                    else if (state.modsProfileFocus == 4) state.modsProfileFocus = 5;
-                    else if (state.modsProfileFocus == 5) state.modsProfileFocus = 0;
+                    else if (state.modsProfileFocus == 4) state.modsProfileFocus = 0;
                     else state.modsProfileFocus = 0;
                 }
             } else if (!gridFocus && (downDown && !downWasDown)) {
@@ -2965,7 +2806,7 @@ void ShowModsPage(
                 }
             } else if (gridFocus && (upDown && !upWasDown)) {
                 if (state.modsProfileSel < 2) {
-                    state.modsProfileFocus = 5;
+                    state.modsProfileFocus = 0;
                 }
                 else { state.modsProfileSel -= 2; pmEnsureVisible(); }
             } else if (gridFocus && (downDown && !downWasDown)) {
@@ -3025,13 +2866,6 @@ void ShowModsPage(
                         state.status = exportError.empty() ? Tr(L"Could not export profile pack") : exportError;
                         state.isError = true;
                     }
-                } else if (state.modsProfileFocus == 5) {
-                    if (ControllerBundleJobPending(state.modsProfileId)) continue;
-                    const std::wstring next = NextControllerBundle(
-                        GetProfileById(runtimeRoot, state.modsProfileId).controllerBundle);
-                    StartControllerBundleJob(runtimeRoot, state.modsProfileId, next);
-                    state.status = TrFormat(L"Applying controller bundle {0}...", { Tr(ControllerBundleLabelKey(next)) });
-                    state.isError = false;
                 } else if (state.modsProfileFocus == 0) {
                     if (!SetActiveProfileId(runtimeRoot, state.modsProfileId)) { state.status = Tr(L"Could not save active profile"); state.isError = true; continue; }
                     state.activeProfileId = state.modsProfileId;
@@ -3055,17 +2889,6 @@ void ShowModsPage(
             rightWasDown = rightDown; selectWasDown = selectDown; enterWasDown = enterDown;
             backWasDown = backDown; pageUpWasDown = pageUpDown; pageDownWasDown = pageDownDown; xWasDown = xDown; yWasDown = yDown;
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
-            if (!state.modsProfileId.empty()) {
-                std::wstring jobStatus, jobChosen;
-                bool jobError = false;
-                if (PollControllerBundleJob(state.modsProfileId, jobStatus, jobError, jobChosen)) {
-                    state.modsProfileControllerBundle =
-                        GetProfileById(runtimeRoot, state.modsProfileId).controllerBundle;
-                    state.modsProfileMods = ListProfileMods(runtimeRoot, state.modsProfileId);
-                    state.status = jobStatus;
-                    state.isError = jobError;
-                }
-            }
             continue;
         }
 
@@ -3271,7 +3094,7 @@ void ShowModsPage(
             if (state.selectedModsTab == modstab::kProfiles && xDown && !xWasDown &&
                 state.selectedModIndex >= 0 && state.selectedModIndex < count) {
                 const ModCard& sel = state.modsCards[static_cast<size_t>(state.selectedModIndex)];
-                if (sel.projectId == L"__profile__" && sel.filePath != kVanillaProfileId) {
+                if (sel.projectId == L"__profile__" && !GetProfileById(runtimeRoot, sel.filePath).builtin) {
                     const bool ok = DeleteProfile(runtimeRoot, sel.filePath);
                     const std::wstring deleted = sel.title;
                     LoadModsTab(state, runtimeRoot);
@@ -3330,8 +3153,7 @@ void ShowModsPage(
                         state.modsProfileId = selected.filePath;
                         state.modsProfileName = selected.title;
                         state.modsProfileTargetText = ProfileDisplayTarget(runtimeRoot, selected.filePath);
-                        state.modsProfileBuiltin = (selected.filePath == kVanillaProfileId);
-                        state.modsProfileControllerBundle = GetProfileById(runtimeRoot, selected.filePath).controllerBundle;
+                        state.modsProfileBuiltin = GetProfileById(runtimeRoot, selected.filePath).builtin;
                         state.modsProfileMods = ListProfileMods(runtimeRoot, selected.filePath);
                         state.modsProfileScroll = 0;
                         state.modsProfileFocus = 0;

@@ -20,15 +20,8 @@ void ShowModsPage(
     AuthUiState& state,
     const std::wstring& runtimeRoot);
 
-// Applies a controller bundle to a profile on a worker thread started by
-// StartControllerBundleJob; PollControllerBundleJob collects the result.
-// ApplyControllerBundle is the synchronous core (also used by tests/tools).
-bool ApplyControllerBundle(const std::wstring& runtimeRoot, const std::wstring& profileId,
-    const std::wstring& bundle, std::wstring& chosenOut, std::wstring& status, bool& isError);
-void StartControllerBundleJob(
-    const std::wstring& runtimeRoot, const std::wstring& profileId, const std::wstring& bundle);
+bool EnsureDefaultModpackInstalled(const std::wstring& runtimeRoot, const std::wstring& profileId,
+    std::wstring& error);
 bool InstallManagedModrinthProject(const std::wstring& runtimeRoot, const std::wstring& profileId,
     const std::wstring& rootSlug, const std::wstring& ownerToken, const LaunchTarget& target,
     std::vector<std::wstring>& installedOut, std::wstring& error);
-bool PollControllerBundleJob(const std::wstring& profileId, std::wstring& status, bool& isError, std::wstring& chosen);
-bool ControllerBundleJobPending(const std::wstring& profileId);

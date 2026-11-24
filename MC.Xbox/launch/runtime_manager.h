@@ -62,16 +62,6 @@ bool SeedLocalRuntime(
     const std::wstring& localDir,
     const RuntimeSeedProgressCallback& progress = RuntimeSeedProgressCallback());
 bool CopyDirectoryContentsAlways(const std::wstring& src, const std::wstring& dst);
-int DeleteRaggedyControllerModsFromDir(const std::wstring& modsDir);
-int DeleteControlifyModsFromDir(const std::wstring& modsDir);
-bool IsRaggedyControllerJarFileName(const std::wstring& fileName);
-bool IsControlifyJarFileName(const std::wstring& fileName);
-bool IsLegacy4JJarFileName(const std::wstring& fileName);
-std::wstring PrepareEffectiveBundledModsDir(
-    const std::wstring& runtimeRoot,
-    const std::wstring& targetId,
-    const std::wstring& bundledModsDir,
-    const std::wstring& controllerBundle);
 void ArchiveCurrentLogsToPrevious(const std::wstring& runtimeRoot);
 std::wstring DetectGraphicsRuntimeName();
 bool EnsureRuntimeDownloads(

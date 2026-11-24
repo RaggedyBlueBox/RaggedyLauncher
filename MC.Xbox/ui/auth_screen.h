@@ -6,7 +6,6 @@
 #include "launcher_mouse.h"
 #include "mods_ui_globals.h"
 #include "profiles.h"
-#include "controller_bundle.h"
 #include "themes.h"
 
 #include <d2d1_1.h>
@@ -753,20 +752,7 @@ private:
         }
 
         {
-            const D2D1_RECT_F r = row(6, Tr(L"Controller bundle"), state.settingsControllerNote.c_str(), 300.0f);
-            DrawIcon(L"\uE7FC", D2D1::RectF(r.right - 56.0f, r.top, r.right - 22.0f, r.bottom), muted_);
-            DrawText(Tr(ControllerBundleLabelKey(state.settingsControllerBundle)), valueFormat_.Get(),
-                D2D1::RectF(r.right - 380.0f, r.top, r.right - 66.0f, r.bottom),
-                NormalizeControllerBundle(state.settingsControllerBundle) == L"none" ? muted_ : text_);
-        }
-        {
-            const D2D1_RECT_F r = row(7, Tr(L"Graphics renderer"), state.settingsRendererNote.c_str(), 300.0f);
-            DrawIcon(L"\uE9E9", D2D1::RectF(r.right - 56.0f, r.top, r.right - 22.0f, r.bottom), muted_);
-            DrawText(state.settingsRendererName.c_str(), valueFormat_.Get(),
-                D2D1::RectF(r.right - 380.0f, r.top, r.right - 66.0f, r.bottom), text_);
-        }
-        {
-            const D2D1_RECT_F r = row(8, Tr(L"Performance renderer"), state.settingsPerfNote.c_str(), 300.0f);
+            const D2D1_RECT_F r = row(6, Tr(L"Performance renderer"), state.settingsPerfNote.c_str(), 300.0f);
             DrawIcon(L"\uE7F4", D2D1::RectF(r.right - 56.0f, r.top, r.right - 22.0f, r.bottom), muted_);
             DrawText(state.settingsPerfMode == L"off" ? Tr(L"Off") : Tr(L"Auto"), valueFormat_.Get(),
                 D2D1::RectF(r.right - 380.0f, r.top, r.right - 66.0f, r.bottom),
@@ -1046,7 +1032,7 @@ private:
         const float btnGap = 10.0f;
         const float actionBarW = state.modsProfileBuiltin
             ? (btnW * 2.0f + btnGap)
-            : (btnW * 5.0f + btnGap * 4.0f);
+            : (btnW * 4.0f + btnGap * 3.0f);
         const float headRight = R_ - actionBarW - 30.0f;
 
         const std::wstring nameShown = state.modsRenaming ? (state.modsRenameText + L"_") : state.modsProfileName;
@@ -1056,7 +1042,7 @@ private:
             D2D1::RectF(headX, T_ - 4.0f, headRight, T_ + 54.0f), state.modsRenaming ? accent_ : text_);
         const std::wstring modCount = std::to_wstring(state.modsProfileMods.size());
         const std::wstring sub = state.modsProfileBuiltin
-            ? TrFormat(L"{0} - Pure vanilla, always available", { state.modsProfileTargetText })
+            ? TrFormat(L"{0} - Ready to play", { state.modsProfileTargetText })
             : state.modsProfileMods.size() == 1
                 ? TrFormat(L"{0} - {1} mod installed", { state.modsProfileTargetText, modCount })
                 : TrFormat(L"{0} - {1} mods installed", { state.modsProfileTargetText, modCount });
@@ -1076,22 +1062,16 @@ private:
             DrawButton(playBtn, L"\uE768", Tr(L"Play"), state.modsProfileFocus == 0, ButtonKind::Primary);
         }
 
-        const D2D1_RECT_F controllerBtn = slot(1);
-        RegisterHit(launchhit::kProfileController, controllerBtn);
-        DrawButton(controllerBtn, L"\uE7FC", Tr(ControllerBundleLabelKey(state.modsProfileControllerBundle)),
-            state.modsProfileFocus == 5, ButtonKind::Neutral,
-            NormalizeControllerBundle(state.modsProfileControllerBundle) == L"none" ? muted_ : accent_);
-
         if (!state.modsProfileBuiltin) {
-            const D2D1_RECT_F exportBtn = slot(2);
+            const D2D1_RECT_F exportBtn = slot(1);
             RegisterHit(launchhit::kProfileExport, exportBtn);
             DrawButton(exportBtn, L"\uE898", Tr(L"Export"), state.modsProfileFocus == 4, ButtonKind::Neutral);
 
-            const D2D1_RECT_F backupBtn = slot(3);
+            const D2D1_RECT_F backupBtn = slot(2);
             RegisterHit(launchhit::kProfileBackup, backupBtn);
             DrawButton(backupBtn, L"\uE74E", Tr(L"Backup"), state.modsProfileFocus == 3, ButtonKind::Neutral);
 
-            const D2D1_RECT_F delBtn = slot(4);
+            const D2D1_RECT_F delBtn = slot(3);
             RegisterHit(launchhit::kProfileDelete, delBtn);
             DrawButton(delBtn, L"\uE74D", Tr(L"Delete"), state.modsProfileFocus == 1, ButtonKind::Danger);
         }
@@ -1158,13 +1138,12 @@ private:
         if (state.modsRenaming) {
             profileHint = Tr(L"Type a name, then close the keyboard to save");
         } else if (state.modsProfileBuiltin) {
-            profileHint = state.modsProfileFocus == 5
-                ? Tr(L"B  Back      A  Change controller bundle")
+            profileHint = gridFocus
+                ? Tr(L"B  Back      X  Remove mod")
                 : Tr(L"B  Back      A select");
         } else {
             if (gridFocus) profileHint = Tr(L"B  Back      X  Remove mod      Y  Rename");
             else if (state.modsProfileFocus == 4) profileHint = Tr(L"B  Back      A  Export .mrpack for PC");
-            else if (state.modsProfileFocus == 5) profileHint = Tr(L"B  Back      A  Change controller bundle      Y Rename");
             else profileHint = Tr(L"B  Back      A select      X Delete      Y Rename");
         }
         DrawFooter(profileHint.c_str(), state.modsRenaming ? accent_ : muted_);

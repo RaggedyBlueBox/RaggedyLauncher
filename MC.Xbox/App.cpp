@@ -38,9 +38,8 @@
 #include "app_globals.h"
 #include "loader.h"
 #include "runtime_manager.h"
-#include "controller_bundle.h"
+#include "mods_browser.h"
 #include "performance_bundle.h"
-#include "renderer_policy.h"
 #include "minecraft_launch.h"
 #include "telemetry.h"
 #include "update_check.h"
@@ -539,6 +538,12 @@ public:
         updates::StartCheckAsync();
         const std::wstring graphicsRuntime = DetectGraphicsRuntimeName();
         SetEnvironmentVariableW(L"MC_GRAPHICS_RUNTIME", graphicsRuntime.c_str());
+        const std::wstring sdlOpenGlLibrary =
+            packageDir + L"\\graphics\\" + graphicsRuntime + L"\\opengl32.dll";
+        if (GetFileAttributesW(sdlOpenGlLibrary.c_str()) != INVALID_FILE_ATTRIBUTES) {
+            SetEnvironmentVariableW(L"SDL_OPENGL_LIBRARY", sdlOpenGlLibrary.c_str());
+            WriteLogF(L"SDL OpenGL library hint: %s", sdlOpenGlLibrary.c_str());
+        }
         SetEnvironmentVariableW(L"mesa_glthread", L"true");
         const std::wstring mesaCacheDir = exeDir + L"\\mesa_cache";
         if (EnsureDirectoryTree(mesaCacheDir)) {
@@ -599,6 +604,30 @@ public:
         }
 
         EnsureProfilesInitialized(exeDir);
+        {
+            AuthScreenRenderer packRendererInstance;
+            AuthScreenRenderer* packRenderer = nullptr;
+            if (packRendererInstance.Initialize(g_authWindow.Get())) {
+                packRenderer = &packRendererInstance;
+            }
+            AuthUiState packState;
+            RenderPreparationProgress(
+                packRenderer,
+                packState,
+                Tr(L"Preparing Simply Legacy"),
+                Tr(L"Downloading the latest supported modpack"),
+                0.0f);
+            std::wstring defaultPackError;
+            const bool defaultPackReady = EnsureDefaultModpackInstalled(
+                exeDir, GetActiveProfileId(exeDir), defaultPackError);
+            RenderPreparationProgress(
+                packRenderer,
+                packState,
+                defaultPackReady ? Tr(L"Simply Legacy ready") : Tr(L"Modpack setup failed"),
+                defaultPackReady ? Tr(L"Starting Minecraft") : defaultPackError.c_str(),
+                defaultPackReady ? 1.0f : 0.0f);
+            if (!defaultPackReady) SleepWithAuthUi(packRenderer, packState, 5000);
+        }
         const Profile selectedProfile = GetProfileById(exeDir, GetActiveProfileId(exeDir));
         const LaunchTarget selectedTarget = ResolveProfileTarget(exeDir, selectedProfile);
         WriteLogF(L"Selected profile id=%s name=%s target=%s minecraft=%s loader=%s loaderVersion=%s",
@@ -787,13 +816,7 @@ public:
         const std::wstring packagedLibrariesDir = packageRuntimeDir + L"\\libraries";
         const std::wstring userModsDir = ProfileModsDir(exeDir, activeProfile);
         const LaunchTarget effectiveTarget = ResolveProfileTarget(exeDir, activeProfileInfo);
-        const std::wstring effectiveBundle =
-            ResolveEffectiveControllerBundle(activeProfileInfo.controllerBundle, effectiveTarget);
-        const std::wstring bundledModsDir = PrepareEffectiveBundledModsDir(
-            exeDir,
-            versionInfo.targetId,
-            versionInfo.bundledModsDir,
-            effectiveBundle);
+        const std::wstring bundledModsDir = versionInfo.bundledModsDir;
         const std::wstring clientJar = sharedGameDir + L"\\versions\\" + minecraftVersion + L"\\" + minecraftVersion + L".jar";
         const std::wstring argsPath = g_logDir + L"\\java_args.txt";
         const std::wstring javaLog = g_logDir + L"\\java_output.log";
@@ -814,16 +837,9 @@ public:
         WriteLogF(L"sharedGameDir: %s", sharedGameDir.c_str());
         WriteLogF(L"profileGameDir: %s", gameDir.c_str());
         WriteLogF(L"downloadedLibrariesDir: %s", (sharedGameDir + L"\\libraries").c_str());
-        WriteLogF(L"profile controller bundle=%s effective=%s", activeProfileInfo.controllerBundle.c_str(), effectiveBundle.c_str());
         WriteLogF(L"bundledModsDir: %s", bundledModsDir.c_str());
         WriteLogF(L"userModsDir: %s", userModsDir.c_str());
-        {
-            const int bundleRemoved = SyncControllerBundleForLaunch(exeDir, activeProfile, activeProfileInfo.controllerBundle, effectiveTarget);
-            if (bundleRemoved > 0) {
-                WriteLogF(L"Removed %d stale bundle file(s) from active profile before launch", bundleRemoved);
-            }
-        }
-        LogRendererDecision(packageDir, exeDir, minecraftVersion);
+        WriteLogF(L"renderer fixed=OpenGL graphics=%s minecraft=%s", graphicsRuntime.c_str(), minecraftVersion.c_str());
         LogPerformanceDecision(exeDir, activeProfile, effectiveTarget);
         const int blockedRemoved = PurgeBlockedModsFromDir(exeDir, userModsDir);
         if (blockedRemoved > 0) {

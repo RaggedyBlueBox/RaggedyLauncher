@@ -1094,9 +1094,13 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
         vmOptionStorage.push_back("-Djna.debug_load.jna=true");
     }
     vmOptionStorage.push_back("-Dorg.lwjgl.system.SharedLibraryExtractDirectory=" + w2a(fwd(lwjglTmpDir)));
-    vmOptionStorage.push_back("-Dorg.lwjgl.glfw.libname=" + w2a(fwd(lwjglGlfwDll)));
     WriteLogF(L"LWJGL native directory: %s", lwjglNativeDir.c_str());
-    WriteLogF(L"LWJGL GLFW library forced: %s", lwjglGlfwDll.c_str());
+    if (CompareVersionNumbers(w2a(minecraftVersion), "26.3") < 0) {
+        vmOptionStorage.push_back("-Dorg.lwjgl.glfw.libname=" + w2a(fwd(lwjglGlfwDll)));
+        WriteLogF(L"LWJGL GLFW library forced: %s", lwjglGlfwDll.c_str());
+    } else {
+        WriteLogF(L"Skipping legacy GLFW override for RenderPearl target %s", minecraftVersion.c_str());
+    }
     std::wstring graphicsRuntime = GetEnvVarString(L"MC_GRAPHICS_RUNTIME");
     if (graphicsRuntime.empty()) {
         graphicsRuntime = L"mesa";
@@ -1109,7 +1113,8 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
             : localOpenGl;
     if (GetFileAttributesW(selectedOpenGl.c_str()) != INVALID_FILE_ATTRIBUTES) {
         vmOptionStorage.push_back("-Dorg.lwjgl.opengl.libname=" + w2a(fwd(selectedOpenGl)));
-        WriteLogF(L"LWJGL OpenGL library forced: %s", selectedOpenGl.c_str());
+        SetEnvironmentVariableW(L"SDL_OPENGL_LIBRARY", selectedOpenGl.c_str());
+        WriteLogF(L"LWJGL and SDL OpenGL library forced: %s", selectedOpenGl.c_str());
     } else {
         WriteLogF(L"LWJGL OpenGL library override missing: %s", selectedOpenGl.c_str());
     }

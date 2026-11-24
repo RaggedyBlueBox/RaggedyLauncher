@@ -62,7 +62,6 @@ struct AuthUiState {
     std::wstring modsProfileName;
     std::wstring modsProfileTargetText;
     bool modsProfileBuiltin = false;
-    std::wstring modsProfileControllerBundle = L"auto";
     std::vector<std::wstring> modsProfileMods;
     int modsProfileScroll = 0;
     int modsProfileFocus = 0;
@@ -103,10 +102,6 @@ struct AuthUiState {
 
     bool showSettings = false;
     bool settingsUpdateCheckOn = true;
-    std::wstring settingsControllerBundle = L"auto";
-    std::wstring settingsControllerNote;
-    std::wstring settingsRendererName = L"OpenGL";
-    std::wstring settingsRendererNote;
     std::wstring settingsPerfMode = L"auto";
     std::wstring settingsPerfNote;
     std::wstring settingsLanguageName;

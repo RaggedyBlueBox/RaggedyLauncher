@@ -410,7 +410,7 @@ if ($mcNeedsBuild) {
     $env:INCLUDE = "$mcBuildDir;$($tools.MsvcRoot)\include;${sdkRoot}Include\$sdkVer\ucrt;${sdkRoot}Include\$sdkVer\shared;${sdkRoot}Include\$sdkVer\um;${sdkRoot}Include\$sdkVer\winrt;${sdkRoot}Include\$sdkVer\cppwinrt;$jreSrc\include;$jreSrc\include\win32"
     $env:LIB = "$($tools.MsvcRoot)\lib\x64;${sdkRoot}Lib\$sdkVer\ucrt\x64;${sdkRoot}Lib\$sdkVer\um\x64"
 
-    & $tools.ClExe App.cpp launch\app_globals.cpp common\launcher_common.cpp common\i18n.cpp common\themes.cpp common\crash_report.cpp mods\mod_defaults.cpp mods\mod_source.cpp mods\curseforge.cpp mods\manual_downloads.cpp mods\modpack_io.cpp mods\world_io.cpp net\http_client.cpp net\update_check.cpp profiles\profiles.cpp net\html_translate.cpp net\remote_file_server.cpp net\web_relay_server.cpp auth\minecraft_auth.cpp ui\launcher_ui.cpp ui\launcher_mouse.cpp ui\mods_ui_globals.cpp mods\mods_browser.cpp mods\controller_bundle.cpp mods\performance_bundle.cpp launch\runtime_manager.cpp launch\renderer_policy.cpp launch\minecraft_launch.cpp launch\launch_internal.cpp launch\loaders\loader_common.cpp launch\loaders\loader.cpp launch\loaders\fabric.cpp launch\loaders\neoforge.cpp launch\loaders\forge.cpp launch\loaders\cleanroom.cpp telemetry\telemetry.cpp telemetry\crash_fingerprint.cpp telemetry\crash_parse.cpp telemetry\compat_feed.cpp third_party\miniz\miniz.c /std:c++17 /EHsc $CommonClFlags /O2 /GL /Gw /MP /DNDEBUG /D_UNICODE /DUNICODE /D_WIN32_WINNT=0x0A00 /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS /DMINIZ_NO_STDIO /DMINIZ_NO_TIME /I. /Icommon /Inet /Iauth /Iui /Imods /Iprofiles /Ilaunch /Ilaunch\loaders /Itelemetry /I..\mouse_support /Fo"$mcBuildDir\" `
+    & $tools.ClExe App.cpp launch\app_globals.cpp common\launcher_common.cpp common\i18n.cpp common\themes.cpp common\crash_report.cpp mods\mod_defaults.cpp mods\mod_source.cpp mods\curseforge.cpp mods\manual_downloads.cpp mods\modpack_io.cpp mods\world_io.cpp net\http_client.cpp net\update_check.cpp profiles\profiles.cpp net\html_translate.cpp net\remote_file_server.cpp net\web_relay_server.cpp auth\minecraft_auth.cpp ui\launcher_ui.cpp ui\launcher_mouse.cpp ui\mods_ui_globals.cpp mods\mods_browser.cpp mods\controller_bundle.cpp mods\performance_bundle.cpp launch\runtime_manager.cpp launch\minecraft_launch.cpp launch\launch_internal.cpp launch\loaders\loader_common.cpp launch\loaders\loader.cpp launch\loaders\fabric.cpp launch\loaders\neoforge.cpp launch\loaders\forge.cpp launch\loaders\cleanroom.cpp telemetry\telemetry.cpp telemetry\crash_fingerprint.cpp telemetry\crash_parse.cpp telemetry\compat_feed.cpp third_party\miniz\miniz.c /std:c++17 /EHsc $CommonClFlags /O2 /GL /Gw /MP /DNDEBUG /D_UNICODE /DUNICODE /D_WIN32_WINNT=0x0A00 /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS /DMINIZ_NO_STDIO /DMINIZ_NO_TIME /I. /Icommon /Inet /Iauth /Iui /Imods /Iprofiles /Ilaunch /Ilaunch\loaders /Itelemetry /I..\mouse_support /Fo"$mcBuildDir\" `
         /DWINAPI_FAMILY=WINAPI_FAMILY_APP `
         /link /LTCG /SUBSYSTEM:WINDOWS /ENTRY:wWinMainCRTStartup /MACHINE:X64 `
         /OUT:"$mcExe" kernel32.lib shell32.lib runtimeobject.lib windowsapp.lib ole32.lib oleaut32.lib d2d1.lib dwrite.lib d3d11.lib dxgi.lib windowscodecs.lib winhttp.lib bcrypt.lib ws2_32.lib
@@ -432,12 +432,6 @@ if (-not (Test-Path $shimDll)) { throw "GLFW shim DLL missing after build: $shim
 
 Write-Host "=== Building Xbox compatibility mod ==="
 & (Join-Path $root "compat_mod\build_compat_mod.ps1")
-
-Write-Host "=== Building default Fabric controller mod ==="
-& (Join-Path $root "controller_mod\fabric\build_fabric_controller_mod.ps1") `
-    -MinecraftVersion $ProjectConfig.MinecraftVersion `
-    -LoaderVersion $ProjectConfig.FabricLoaderVersion `
-    -OutputDir (Join-Path $gameDir "mods")
 
 Write-Host "=== Assembling PackageContent ==="
 Remove-Item -Recurse -Force $pkg -ErrorAction SilentlyContinue
@@ -613,26 +607,6 @@ $manifestTargets = @(
         Where-Object { $_.loader -and $_.loaderVersion -and $_.loaderVersion -ne "selected" -and $_.loaderVersion -ne "none" }
 )
 $fabricTargets = @($manifestTargets | Where-Object { $_.loader -eq "fabric" })
-$forgeTargets = @($manifestTargets | Where-Object { $_.loader -eq "forge" })
-$neoForgeTargets = @($manifestTargets | Where-Object { $_.loader -eq "neoforge" })
-$cleanroomTargets = @($manifestTargets | Where-Object { $_.loader -eq "cleanroom" })
-function Test-ForgeControllerTarget {
-    param([Parameter(Mandatory = $true)]$Target)
-
-    return $Target.loader -eq "forge" -and $Target.controllerProvider -eq "forge"
-}
-
-function Test-FabricControllerTarget {
-    param([Parameter(Mandatory = $true)]$Target)
-
-    return $Target.loader -eq "fabric" -and $Target.controllerProvider -eq "fabric"
-}
-
-function Test-NeoForgeControllerTarget {
-    param([Parameter(Mandatory = $true)]$Target)
-
-    return $Target.loader -eq "neoforge" -and $Target.controllerProvider -eq "neoforge"
-}
 
 $fabricLoaderVersions = @($ProjectConfig.FabricLoaderVersion) + @($fabricTargets | ForEach-Object { $_.loaderVersion }) |
     Where-Object { $_ } |
@@ -652,7 +626,7 @@ if ($fabricLoaderVersions -contains "0.14.25") {
 }
 # Bundled mods (compat mod, optionally diagnostics) live under runtime\bundled-mods.
 # App.cpp copies them into LocalState\game\mods on launch.
-foreach ($name in @("raggedy-xbox-compat-1.0.0.jar", "raggedy-fabric-controller-1.0.0.jar")) {
+foreach ($name in @("raggedy-xbox-compat-1.0.0.jar")) {
     $source = Join-Path $gameDir "mods\$name"
     if (-not (Test-JarComplete $source)) { throw "Required bundled mod missing or incomplete $source" }
     Copy-Item -LiteralPath $source -Destination (Join-Path $pkg "runtime\bundled-mods\$name") -Force
@@ -751,7 +725,7 @@ $manifestsDir = Join-Path $pkg "runtime\manifests"
 Ensure-Dir $manifestsDir
 $defaultTargetId = "$($ProjectConfig.MinecraftVersion)-fabric-$($ProjectConfig.FabricLoaderVersion)"
 Ensure-Dir (Join-Path $pkg "runtime\version-mods\$defaultTargetId")
-foreach ($name in @("raggedy-xbox-compat-1.0.0.jar", "raggedy-fabric-controller-1.0.0.jar")) {
+foreach ($name in @("raggedy-xbox-compat-1.0.0.jar")) {
     Copy-Item (Join-Path $pkg "runtime\bundled-mods\$name") (Join-Path $pkg "runtime\version-mods\$defaultTargetId\$name") -Force
 }
 Copy-Item -Force $defaultDownloadManifest (Join-Path $manifestsDir "$defaultTargetId.tsv")
@@ -795,83 +769,6 @@ if (-not $SkipVersionCompat) {
                 -OutputDir $outDir
         } catch {
             Add-BuildFailure -Stage "Compat mod" -Target $targetId -Reason $_.Exception.Message
-            if (Test-Path $outDir) { Remove-Item -Recurse -Force $outDir }
-        }
-        if (Test-FabricControllerTarget -Target $row) {
-            Write-Host "Building per-version Fabric controller mod: $targetId"
-            try {
-                & (Join-Path $root "controller_mod\fabric\build_fabric_controller_mod.ps1") `
-                    -MinecraftVersion $row.minecraftVersion `
-                    -LoaderVersion $lv `
-                    -OutputDir $outDir
-            } catch {
-                Add-BuildFailure -Stage "Fabric controller mod" -Target $targetId -Reason $_.Exception.Message
-            }
-        } else {
-            Write-Host "Skipping per-version Fabric controller mod for ${targetId}: no bundled controller provider for this target"
-        }
-    }
-    foreach ($row in $forgeTargets) {
-        $lv = $row.loaderVersion
-        $targetId = "$($row.minecraftVersion)-forge-$lv"
-        if (-not (Test-ForgeControllerTarget -Target $row)) {
-            Write-Host "Skipping per-version forge controller mod for ${targetId}: no bundled controller provider for this target"
-            continue
-        }
-        $outDir = Join-Path $versionModsRoot $targetId
-        Write-Host "Building per-version forge controller mod: $targetId"
-        try {
-            & (Join-Path $root "controller_mod\forge\build_forge_controller_mod.ps1") `
-                -MinecraftVersion $row.minecraftVersion `
-                -ForgeVersion "$($row.minecraftVersion)-$lv" `
-                -OutputDir $outDir
-        } catch {
-            Add-BuildFailure -Stage "Forge controller mod" -Target $targetId -Reason $_.Exception.Message
-            if (Test-Path $outDir) { Remove-Item -Recurse -Force $outDir }
-        }
-    }
-    foreach ($row in $cleanroomTargets) {
-        $lv = $row.loaderVersion
-        $targetId = "$($row.minecraftVersion)-cleanroom-$lv"
-        try {
-            & (Join-Path $root "patch\cleanroom\build_cleanroom_patch.ps1") `
-                -CleanroomVersion $lv `
-                -OutputJar (Join-Path $pkg "cleanroom-uwp-patch.jar")
-        } catch {
-            Add-BuildFailure -Stage "Cleanroom UWP patch" -Target $targetId -Reason $_.Exception.Message
-        }
-        if ($row.controllerProvider -ne "cleanroom") {
-            Write-Host "Skipping per-version Cleanroom controller mod for ${targetId}: no bundled controller provider for this target"
-            continue
-        }
-        $outDir = Join-Path $versionModsRoot $targetId
-        Write-Host "Building per-version Cleanroom controller mod: $targetId"
-        try {
-            & (Join-Path $root "controller_mod\cleanroom\build_cleanroom_controller_mod.ps1") `
-                -MinecraftVersion $row.minecraftVersion `
-                -CleanroomVersion $lv `
-                -OutputDir $outDir
-        } catch {
-            Add-BuildFailure -Stage "Cleanroom controller mod" -Target $targetId -Reason $_.Exception.Message
-            if (Test-Path $outDir) { Remove-Item -Recurse -Force $outDir }
-        }
-    }
-    foreach ($row in $neoForgeTargets) {
-        $lv = $row.loaderVersion
-        $targetId = "$($row.minecraftVersion)-neoforge-$lv"
-        if (-not (Test-NeoForgeControllerTarget -Target $row)) {
-            Write-Host "Skipping per-version NeoForge controller mod for ${targetId}: no bundled controller provider for this target"
-            continue
-        }
-        $outDir = Join-Path $versionModsRoot $targetId
-        Write-Host "Building per-version NeoForge controller mod: $targetId"
-        try {
-            & (Join-Path $root "controller_mod\neoforge\build_neoforge_controller_mod.ps1") `
-                -MinecraftVersion $row.minecraftVersion `
-                -NeoForgeVersion $lv `
-                -OutputDir $outDir
-        } catch {
-            Add-BuildFailure -Stage "NeoForge controller mod" -Target $targetId -Reason $_.Exception.Message
             if (Test-Path $outDir) { Remove-Item -Recurse -Force $outDir }
         }
     }

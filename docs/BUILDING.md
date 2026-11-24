@@ -31,13 +31,13 @@ Default versions live in `scripts/config.ps1`. The multi target catalog lives in
 
 Current defaults:
 
-- Minecraft: `1.21.11`
-- Asset index: `29`
-- Fabric Loader: `0.19.5`
-- Java release: `21`
+- Minecraft: `26.3`
+- Asset index: `34`
+- Fabric Loader: `0.20.1`
+- Java release: `21` for helper patches; the game uses `javaRuntime=current` from the catalog
 - JNA: `5.17.0`
 
-The default target is `1.21.11 + Fabric 0.19.5`. The catalog includes every stable Minecraft version from 1.21 through 26.3 for Fabric and NeoForge. Forge is included for each of those versions except 1.21.2, where no Forge loader was published. These modern targets remain experimental until they have been tested on Xbox hardware.
+The only default and catalog target is `26.3 + Fabric 0.20.1`. It remains experimental until it has been tested end-to-end on Xbox hardware.
 
 Build every configured target and retain staged package contents with:
 
@@ -82,17 +82,19 @@ config\forge-install-profile.json
 
 For adding another playable Forge target, add it to `config\versions.tsv`, extend `launch\loaders\forge.cpp`, and let `build.ps1` generate the manifest plus any `controller_mod` output under `runtime\version-mods\<target-id>\`.
 
-### Minecraft 26.2 and 26.3
+### Minecraft 26.3
 
-`26.2` and `26.3` are calendar versioned targets. Both are cataloged as experimental. Loader versions are recorded in `config/versions.tsv`. Fabric loader is `0.20.1` on `26.3`. Neither `26.3` target ships a bundled Raggedy controller build, so those rows use controller provider `none` and rely on Controlify or user mods where supported. Its Java and mapping requirements differ from earlier targets.
+`26.3` is a calendar versioned experimental target. Loader versions are recorded in `config/versions.tsv`: Fabric `0.20.1`, asset index `34`, and `javaRuntime=current`. The launcher does not manage a controller mod; controller behavior comes from the selected modpack or custom profile.
 
-**It needs JDK 25.** Mojang declares Java 25 for `26.2` and its client classes are class file version 69, which JDK 21 refuses to read. `Resolve-JavaHomeForMinecraft` in `scripts\common.ps1` picks the higher of the version's declared Java major and the `JavaRelease` default, so a JDK 25 has to be installed to compile against this target or to remap for it. The catalog row records `javaRuntime=current`.
+**It needs JDK 25.** Mojang declares Java 25 for `26.3` and its client classes are class file version 69, which JDK 21 refuses to read. `Resolve-JavaHomeForMinecraft` in `scripts\common.ps1` picks the higher of the version's declared Java major and the `JavaRelease` default, so a JDK 25 has to be installed to compile against this target or to remap for it.
 
-**The client ships unobfuscated.** `26.x` carries real class and method names, so Fabric publishes no intermediary mappings for it and never writes a remapped jar. `Resolve-FabricClientJar` falls through to `staging\cache\gameDir\versions\26.2\26.2.jar` and mods for this target compile straight against the client jar. The remapped jar step below does not apply to `26.2`.
+**The client ships unobfuscated.** `26.x` carries real class and method names, so Fabric publishes no intermediary mappings for it and never writes a remapped jar. `Resolve-FabricClientJar` falls through to `staging\cache\gameDir\versions\26.3\26.3.jar` and mods for this target compile straight against the client jar.
 
-**Mixin targets are written in Mojang names.** The `src\main` compatibility mixins target intermediary names such as `net.minecraft.class_4239` and `method_47525`. The `26.2` variants under `compat_mod\src\variants\26.2` target `net.minecraft.util.FileUtil` and `createDirectoriesSafe` instead. A mixin copied between the two will not apply.
+**Mixin targets are written in Mojang names.** The `src\main` compatibility mixins target intermediary names such as `net.minecraft.class_4239` and `method_47525`. The `26.x` variants under `compat_mod\src\variants` target Mojang names such as `net.minecraft.util.FileUtil` and `createDirectoriesSafe` instead. A mixin copied between the two will not apply.
 
-**LWJGL is 3.4.1 and its natives are listed differently.** Mojang lists each platform's LWJGL natives for `26.2` as its own library entry sharing the base artifact's maven key. `Add-LibraryJar` in `scripts\setup.ps1` drops every `-natives-` entry for that reason: without the filter, `natives-linux` sorts first, wins the maven dedupe, and takes LWJGL's classes off the generated classpath.
+**RenderPearl needs the SDL OpenGL hint.** For 26.3, `launch\minecraft_launch.cpp` skips the legacy GLFW override and sets `SDL_OPENGL_LIBRARY` to the packaged Mesa `opengl32.dll`, matching the LWJGL OpenGL library name. This is required because SDL asks for its own GL library before LWJGL loads one.
+
+**LWJGL natives are listed differently.** Mojang lists each platform's LWJGL natives for `26.x` as its own library entry sharing the base artifact's maven key. `Add-LibraryJar` in `scripts\setup.ps1` drops every `-natives-` entry for that reason: without the filter, `natives-linux` sorts first, wins the maven dedupe, and takes LWJGL's classes off the generated classpath.
 
 ## UWP host source layout
 
@@ -160,10 +162,10 @@ It takes several hundred megabytes on a cold cache, which is why `build.ps1` doe
 To prepare a target other than the default:
 
 ```powershell
-.\scripts\setup.ps1 -MinecraftVersion 1.20.1 -FabricLoaderVersion 0.19.5
+.\scripts\setup.ps1 -MinecraftVersion 26.3 -FabricLoaderVersion 0.20.1
 ```
 
-`compat_mod\build_compat_mod.ps1` and `controller_mod\fabric\build_fabric_controller_mod.ps1` both call it themselves when a target's client jar is missing, so per target preparation is usually automatic.
+`compat_mod\build_compat_mod.ps1` calls it itself when the target client jar is missing, so preparation is usually automatic.
 
 If the setup script cannot run, see the manual fallback at the end of this page.
 
@@ -243,33 +245,14 @@ Setup remaps the client with TinyRemapper and waits for a successful process exi
 After setup, these local build cache paths should exist:
 
 ```text
-staging\cache\gameDir\libraries\net\fabricmc\fabric-loader\0.19.5\fabric-loader-0.19.5.jar
-staging\cache\gameDir\.fabric\remappedJars\minecraft-1.21.11-0.19.5\client-intermediary.jar
-staging\cache\natives-1.21.11\
+staging\cache\gameDir\libraries\net\fabricmc\fabric-loader\0.20.1\fabric-loader-0.20.1.jar
+staging\cache\gameDir\versions\26.3\26.3.jar
+staging\cache\natives-26.3\
 ```
 
-If you ran `download-assets.ps1`, `staging\cache\assets\indexes\29.json` should also exist. Runtime assets are still downloaded by the installed app, not copied into the APPX.
+If you ran `download-assets.ps1`, `staging\cache\assets\indexes\34.json` should also exist. Runtime assets are still downloaded by the installed app, not copied into the APPX.
 
 If all of those are there, put launcher owned or explicitly allowed mod jars into `staging\cache\gameDir\mods`. The compatibility mod is generated there automatically by the build.
-
-For non default Fabric targets, `compat_mod\build_compat_mod.ps1` will call `scripts\setup.ps1` for the requested Minecraft and loader version if the matching remapped client jar is missing.
-
-`1.20.1` Fabric controller sources live under `controller_mod\fabric\src\variants\1.20.1\` because that target uses different intermediary mappings than the default controller sources.
-
-Build the Forge controller mod directly with:
-
-```powershell
-.\controller_mod\forge\build_forge_controller_mod.ps1
-```
-
-Or build a specific Forge target into `runtime\version-mods\`:
-
-```powershell
-.\controller_mod\forge\build_forge_controller_mod.ps1 `
-  -MinecraftVersion 1.20.1 `
-  -ForgeVersion 1.20.1-47.4.20 `
-  -OutputDir .\runtime\version-mods\1.20.1-forge-47.4.20
-```
 
 ## Patch Fabric Loader
 
@@ -326,8 +309,8 @@ The build script:
 7. Copies the version catalog.
 8. Copies patched Fabric Loader jars, patched TinyRemapper for legacy Fabric, the securejarhandler patch, bundled mods, log config, natives, `mouse_support.dll`, Mesa/MobileGlues graphics DLLs, and the JREs.
 9. Generates `download_manifest.tsv` for the default official Minecraft/Fabric runtime downloads.
-10. Generates `runtime\manifests\<target-id>.tsv` for cataloged Fabric, Forge, and NeoForge targets.
-11. Builds per target compatibility mod jars and Fabric, Forge, and NeoForge controller mod jars under `runtime\version-mods`.
+10. Generates `runtime\manifests\<target-id>.tsv` for the cataloged Fabric target.
+11. Builds per target compatibility mod jars under `runtime\version-mods`.
 12. Copies the tracked UWP tile and splash assets.
 13. Creates and signs `output\RaggedyLauncher_<appx-version>.appx`.
 14. Deletes `staging\package` unless `-KeepStaging` is set.

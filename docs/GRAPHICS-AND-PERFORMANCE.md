@@ -5,32 +5,25 @@ Sodium-family performance mods, and what is still untested.
 
 ## Graphics API policy
 
-- The default is OpenGL through the packaged Mesa/D3D12 path
-  (`MC.Xbox/launch/renderer_policy.cpp`). The choice is stored per install in
-  `runtime/renderer.txt` (`opengl` or `vulkan-experimental`) and is independent
-  of controller bundles and Xbox compatibility fixes.
-- Vulkan is an explicit opt-in only. `ProbeVulkanBridge` checks the packaged
-  artifacts (`natives/vulkan_dzn.dll`, `natives/vulkan-1.dll`,
-  `natives/SDL3.dll`) and stays fail-closed until a real bridge passes
-  end-to-end validation on Xbox: loader plus Dozen ICD discovery, instance and
-  device negotiation, an SDL3 surface with presentation on Xbox UWP, the shader
-  stack and memory behavior. A packaged DLL is not proof of a working path,
-  and the probe does not claim otherwise.
-- The Settings row shows Vulkan as unavailable while the probe fails, and the
-  request is not offered as a working toggle. A launch that finds a stored
-  Vulkan request with a failing probe falls back to OpenGL and logs the
-  fallback.
-- Every launch logs requested backend, actual backend, Minecraft version and
-  the detected graphics runtime. No secrets are logged.
-- Recovery: pick OpenGL again in Settings. No separate safe mode is needed
-  because Vulkan can never become the launch backend without a passing probe.
-- 26.x note: Mojang's own Graphics API preference (including `Default`) is
+- The launcher no longer offers a graphics-backend choice. The only supported
+  path is OpenGL through the packaged Mesa/D3D12 bridge.
+- For 26.3/Fabric, launch skips the legacy GLFW override and sets both
+  `org.lwjgl.opengl.libname` and the `SDL_OPENGL_LIBRARY` hint to the packaged
+  `graphics/<runtime>/opengl32.dll`. This is required because RenderPearl's SDL
+  backend calls `SDL_GL_LoadLibrary()` before LWJGL uses the OpenGL library.
+- Older targets keep the legacy GLFW and LWJGL OpenGL overrides. `java.library.path`
+  and the extracted LWJGL native directory are unchanged.
+- Vulkan is open work, not an opt-in toggle. There is no `runtime/renderer.txt`,
+  renderer probe, or Vulkan setting. A Vulkan path needs Dozen ICD discovery,
+  instance/device negotiation, an SDL3 surface that presents on Xbox UWP, and
+  end-to-end shader/memory validation before it is exposed. `vulkan-1.dll` is
+  not present in the installed runtime.
+- Every launch logs the Minecraft version, loader, graphics runtime, selected
+  OpenGL library, and any native-path fallback. No secrets are logged.
+- Mojang's in-game Graphics API preference (including `Default`) is
   Minecraft-side configuration. The launcher never reads or rewrites the
-  game's video options; it only keeps its native path on OpenGL and logs that
-  a 26.x target may still offer its own choice in game. Pinning the in-game
-  option to OpenGL explicitly is open work: the exact option key and migration
-  for 26.3 have not been verified on console, and guessing at config keys
-  would risk wiping the player's other video settings.
+  game's video options; pinning the 26.3 option explicitly is open work because
+  the exact key and migration have not been verified on console.
 
 ## Performance renderers
 
@@ -46,8 +39,8 @@ Sodium-family performance mods, and what is still untested.
   (or the gap) and installs nothing. Flipping a target to proven requires an
   on-console test: menus, movement, a save/load cycle, frame times and memory,
   with Legacy4J present where applicable, and exactly one renderer active.
-- Managed files use `perf:<project>` ownership tokens in the same sidecar
-  format as controller bundles: only exact launcher-installed versions are
+- Managed files use `perf:<project>` ownership tokens in the generic managed-mod
+  sidecar format: only exact launcher-installed versions are
   ever removed, colliding user jars are stashed before replacement and
   restored on removal, and shared dependencies survive through refcounts.
   Turning the setting off removes managed files and leaves user mods alone.

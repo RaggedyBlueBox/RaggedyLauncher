@@ -20,6 +20,11 @@ static std::recursive_mutex g_profilesMutex;
 #include <winrt/Windows.Foundation.Collections.h>
 
 const wchar_t kVanillaProfileId[] = L"vanilla";
+const wchar_t kReConsoleProfileId[] = L"reconsole";
+
+static bool IsBuiltinProfileId(const std::wstring& id) {
+    return id == kVanillaProfileId || id == kReConsoleProfileId;
+}
 
 // GetNamedValue throws on a type mismatch, so each of these returns its default
 static std::wstring JsonStringOrEmpty(const winrt::Windows::Data::Json::JsonObject& obj, const wchar_t* key) {
@@ -75,93 +80,8 @@ std::wstring MakeTargetId(const std::wstring& minecraftVersion, const std::wstri
     return minecraftVersion + L"-" + loader + L"-" + (loaderVersion.empty() ? L"none" : loaderVersion);
 }
 
-std::wstring DefaultControllerBundle() { return L"auto"; }
-
-bool IsKnownControllerBundle(const std::wstring& bundle) {
-    const std::wstring b = ToLowerW(bundle);
-    return b == L"auto" || b == L"legacy4j" || b == L"raggedy" ||
-        b == L"controlify" || b == L"none";
-}
-
-std::wstring NormalizeControllerBundle(const std::wstring& bundle) {
-    const std::wstring b = ToLowerW(bundle);
-    return IsKnownControllerBundle(b) ? b : L"auto";
-}
-
-bool ControllerBundleUsesRaggedy(const std::wstring& bundle) {
-    return NormalizeControllerBundle(bundle) == L"raggedy";
-}
-
-static bool Legacy4JHasPublisherBuildFor(const std::wstring& minecraftVersion) {
-    // Verified against the official Modrinth API: Legacy4J publishes no
-    // compatible build for these versions. Everything else is resolved
-    // dynamically at install time, which refuses to download on mismatch.
-    return minecraftVersion != L"26.3" && minecraftVersion != L"26.2" &&
-        minecraftVersion != L"1.12.2";
-}
-
-bool ControllerBundleSupportedForTarget(
-    const std::wstring& bundle, const LaunchTarget& target, std::wstring& reason) {
-    const std::wstring b = NormalizeControllerBundle(bundle);
-    if (b == L"auto" || b == L"none") return true;
-    const std::wstring loader = ToLowerW(target.loader);
-    if (b == L"raggedy") {
-        if (!loader.empty() && loader != L"vanilla" &&
-            ToLowerW(target.controllerProvider) == loader) {
-            return true;
-        }
-        reason = L"No bundled Raggedy controller is shipped for this target";
-        return false;
-    }
-    if (b == L"legacy4j") {
-        if (loader != L"fabric" && loader != L"forge" && loader != L"neoforge") {
-            reason = L"Legacy4J needs a Fabric, Forge or NeoForge profile";
-            return false;
-        }
-        if (!Legacy4JHasPublisherBuildFor(target.minecraftVersion)) {
-            reason = L"Legacy4J has no build for Minecraft " + target.minecraftVersion +
-                L", so it cannot be used on this profile";
-            return false;
-        }
-        return true;
-    }
-    if (b == L"controlify") {
-        if (loader == L"fabric" || loader == L"neoforge") return true;
-        reason = L"Controlify publishes Fabric and NeoForge builds only";
-        return false;
-    }
-    reason.clear();
-    return false;
-}
-
-std::wstring ResolveEffectiveControllerBundle(
-    const std::wstring& bundle, const LaunchTarget& target) {
-    const std::wstring b = NormalizeControllerBundle(bundle);
-    if (b != L"auto") {
-        std::wstring reason;
-        return ControllerBundleSupportedForTarget(b, target, reason) ? b : L"none";
-    }
-    static const wchar_t* kFallbackOrder[] = { L"legacy4j", L"raggedy", L"controlify" };
-    for (const wchar_t* candidate : kFallbackOrder) {
-        std::wstring reason;
-        if (ControllerBundleSupportedForTarget(candidate, target, reason)) return candidate;
-    }
-    return L"none";
-}
-
 std::wstring NormalizePerfRenderer(const std::wstring& mode) {
     return ToLowerW(mode) == L"off" ? L"off" : L"auto";
-}
-
-static std::wstring MigrateControllerBundle(
-    const std::wstring& stored, bool controllerModEnabled) {
-    // Pre-fork profiles stored "bandit"; the bundle is now named "raggedy".
-    if (!stored.empty()) {
-        const std::wstring b = ToLowerW(stored);
-        if (b == L"bandit") return L"raggedy";
-        return NormalizeControllerBundle(stored);
-    }
-    return controllerModEnabled ? L"raggedy" : L"none";
 }
 
 LaunchTarget DefaultLaunchTarget() {
@@ -297,13 +217,16 @@ LaunchTarget ResolveProfileTarget(const std::wstring& runtimeRoot, const Profile
 }
 Profile MakeBuiltinVanillaProfile() {
     const LaunchTarget def = DefaultLaunchTarget();
-    return { kVanillaProfileId, Tr(L"Vanilla"), def.minecraftVersion, def.loader, def.loaderVersion, def.targetId, true,
-        ControllerBundleUsesRaggedy(DefaultControllerBundle()), DefaultControllerBundle(), L"auto" };
+    return { kVanillaProfileId, Tr(L"Simply Legacy"), def.minecraftVersion, def.loader, def.loaderVersion, def.targetId, true, L"auto" };
+}
+
+Profile MakeBuiltinReConsoleProfile() {
+    const LaunchTarget def = DefaultLaunchTarget();
+    return { kReConsoleProfileId, Tr(L"Re-Console"), def.minecraftVersion, def.loader, def.loaderVersion, def.targetId, true, L"auto" };
 }
 
 Profile ProfileWithTarget(const std::wstring& id, const std::wstring& name, const LaunchTarget& target, bool builtin) {
-    return { id, name.empty() ? id : StripNewlines(name), target.minecraftVersion, target.loader, target.loaderVersion, target.targetId, builtin,
-        ControllerBundleUsesRaggedy(DefaultControllerBundle()), DefaultControllerBundle(), L"auto" };
+    return { id, name.empty() ? id : StripNewlines(name), target.minecraftVersion, target.loader, target.loaderVersion, target.targetId, builtin, L"auto" };
 }
 
 std::wstring ReadActiveProfileShim(const std::wstring& runtimeRoot) {
@@ -370,8 +293,6 @@ static bool SaveProfilesJson(const std::wstring& runtimeRoot, const std::vector<
         obj.SetNamedValue(L"loaderVersion", jsonString(p.loaderVersion));
         obj.SetNamedValue(L"targetId", jsonString(p.targetId));
         obj.SetNamedValue(L"builtin", JsonValue::CreateBooleanValue(p.builtin));
-        obj.SetNamedValue(L"controllerModEnabled", JsonValue::CreateBooleanValue(ControllerBundleUsesRaggedy(p.controllerBundle)));
-        obj.SetNamedValue(L"controllerBundle", jsonString(NormalizeControllerBundle(p.controllerBundle)));
         obj.SetNamedValue(L"perfRenderer", jsonString(NormalizePerfRenderer(p.perfRenderer)));
         arr.Append(obj);
     }
@@ -409,13 +330,11 @@ std::vector<Profile> LoadProfiles(const std::wstring& runtimeRoot) {
                     p.loaderVersion = JsonStringOrEmpty(obj, L"loaderVersion");
                     p.targetId = JsonStringOrEmpty(obj, L"targetId");
                     p.builtin = JsonBoolOrFalse(obj, L"builtin");
-                    p.controllerModEnabled = JsonBoolOrDefault(obj, L"controllerModEnabled", true);
-                    p.controllerBundle = MigrateControllerBundle(
-                        JsonStringOrEmpty(obj, L"controllerBundle"), p.controllerModEnabled);
-                    p.controllerModEnabled = ControllerBundleUsesRaggedy(p.controllerBundle);
                     p.perfRenderer = NormalizePerfRenderer(JsonStringOrEmpty(obj, L"perfRenderer"));
                     if (p.id.empty()) continue;
-                    if (p.name.empty()) p.name = p.id;
+                    if (p.id == kVanillaProfileId) p.name = Tr(L"Simply Legacy");
+                    else if (p.id == kReConsoleProfileId) p.name = Tr(L"Re-Console");
+                    else if (p.name.empty()) p.name = p.id;
                     if (p.minecraftVersion.empty()) p.minecraftVersion = def.minecraftVersion;
                     if (p.loader.empty()) p.loader = def.loader;
                     if (p.loaderVersion.empty()) p.loaderVersion = def.loaderVersion;
@@ -427,14 +346,28 @@ std::vector<Profile> LoadProfiles(const std::wstring& runtimeRoot) {
             WriteLogF(L"profiles.json parse failed hr=0x%08X msg=%s",
                 static_cast<unsigned int>(ex.code()), ex.message().c_str());
         }
-        if (std::find_if(out.begin(), out.end(), [](const Profile& p) { return p.id == kVanillaProfileId; }) == out.end()) {
+        const auto vanilla = std::find_if(out.begin(), out.end(), [](const Profile& p) { return p.id == kVanillaProfileId; });
+        if (vanilla == out.end()) {
             out.insert(out.begin(), MakeBuiltinVanillaProfile());
+        } else if (vanilla != out.begin()) {
+            const Profile profile = *vanilla;
+            out.erase(vanilla);
+            out.insert(out.begin(), profile);
+        }
+        const auto reconsole = std::find_if(out.begin(), out.end(), [](const Profile& p) { return p.id == kReConsoleProfileId; });
+        if (reconsole == out.end()) {
+            out.insert(out.begin() + 1, MakeBuiltinReConsoleProfile());
+        } else if (reconsole != out.begin() + 1) {
+            const Profile profile = *reconsole;
+            out.erase(reconsole);
+            out.insert(out.begin() + 1, profile);
         }
         if (out.empty()) out.push_back(MakeBuiltinVanillaProfile());
         return out;
     }
 
     out.push_back(MakeBuiltinVanillaProfile());
+    out.push_back(MakeBuiltinReConsoleProfile());
     std::ifstream f(LegacyProfilesManifestPath(runtimeRoot), std::ios::binary);
     std::string line;
     while (f && std::getline(f, line)) {
@@ -443,7 +376,7 @@ std::vector<Profile> LoadProfiles(const std::wstring& runtimeRoot) {
         const size_t tab = line.find('\t');
         const std::wstring id = a2w((tab == std::string::npos ? line : line.substr(0, tab)).c_str());
         const std::wstring name = tab == std::string::npos ? id : a2w(line.substr(tab + 1).c_str());
-        if (id.empty() || id == kVanillaProfileId) continue;
+        if (id.empty() || id == kVanillaProfileId || id == kReConsoleProfileId) continue;
         out.push_back(ProfileWithTarget(id, name.empty() ? id : name, def, false));
     }
     const std::wstring active = ReadActiveProfileShim(runtimeRoot);
@@ -496,7 +429,7 @@ std::wstring MakeProfileId(const std::wstring& runtimeRoot, const std::wstring& 
     if (base.empty()) base = L"profile";
     std::wstring id = base;
     int n = 2;
-    while (id == kVanillaProfileId || GetFileAttributesW(ProfileDir(runtimeRoot, id).c_str()) != INVALID_FILE_ATTRIBUTES) {
+    while (IsBuiltinProfileId(id) || GetFileAttributesW(ProfileDir(runtimeRoot, id).c_str()) != INVALID_FILE_ATTRIBUTES) {
         id = base + L"-" + std::to_wstring(n++);
     }
     return id;
@@ -557,8 +490,6 @@ static bool WriteProfileBackupMeta(const std::wstring& backupDir, const Profile&
     obj.SetNamedValue(L"loader", jsonString(profile.loader));
     obj.SetNamedValue(L"loaderVersion", jsonString(profile.loaderVersion));
     obj.SetNamedValue(L"targetId", jsonString(profile.targetId));
-    obj.SetNamedValue(L"controllerModEnabled", JsonValue::CreateBooleanValue(ControllerBundleUsesRaggedy(profile.controllerBundle)));
-    obj.SetNamedValue(L"controllerBundle", jsonString(NormalizeControllerBundle(profile.controllerBundle)));
     obj.SetNamedValue(L"perfRenderer", jsonString(NormalizePerfRenderer(profile.perfRenderer)));
     obj.SetNamedValue(L"created", jsonString(CrashTimestampForFileName()));
     return WriteTextFile(backupDir + L"\\profile_backup.json", std::wstring(obj.Stringify().c_str()));
@@ -578,10 +509,6 @@ static bool ReadProfileBackupMeta(const std::wstring& backupDir, Profile& profil
         profile.loader = ToLowerW(JsonStringOrEmpty(obj, L"loader"));
         profile.loaderVersion = JsonStringOrEmpty(obj, L"loaderVersion");
         profile.targetId = JsonStringOrEmpty(obj, L"targetId");
-        profile.controllerModEnabled = JsonBoolOrDefault(obj, L"controllerModEnabled", true);
-        profile.controllerBundle = MigrateControllerBundle(
-            JsonStringOrEmpty(obj, L"controllerBundle"), profile.controllerModEnabled);
-        profile.controllerModEnabled = ControllerBundleUsesRaggedy(profile.controllerBundle);
         profile.perfRenderer = NormalizePerfRenderer(JsonStringOrEmpty(obj, L"perfRenderer"));
         profile.builtin = false;
         if (profile.id.empty()) return false;
@@ -628,7 +555,7 @@ std::wstring ProfileBackupDisplayName(const std::wstring& backupDir) {
 
 bool BackupProfile(const std::wstring& runtimeRoot, const std::wstring& id, std::wstring& backupDir) {
     std::lock_guard<std::recursive_mutex> guard(g_profilesMutex);
-    if (id.empty() || id == kVanillaProfileId) return false;
+    if (id.empty() || IsBuiltinProfileId(id)) return false;
     const Profile profile = GetProfileById(runtimeRoot, id);
     backupDir.clear();
     const std::wstring base = ProfileBackupDir(runtimeRoot, L"manual", id);
@@ -651,7 +578,7 @@ bool BackupProfile(const std::wstring& runtimeRoot, const std::wstring& id, std:
 
 std::wstring UniqueRestoredProfileId(const std::wstring& runtimeRoot, const std::wstring& desiredId, const std::vector<Profile>& profiles) {
     std::wstring base = SafeFileName(desiredId.empty() ? std::wstring(L"profile") : desiredId);
-    if (base == kVanillaProfileId) base += L"-restored";
+    if (IsBuiltinProfileId(base)) base += L"-restored";
     std::wstring id = base;
     int n = 2;
     auto existsInProfiles = [&](const std::wstring& probe) {
@@ -692,7 +619,7 @@ bool DeleteProfilePermanent(const std::wstring& runtimeRoot, const std::wstring&
 
 bool DeleteProfile(const std::wstring& runtimeRoot, const std::wstring& id) {
     std::lock_guard<std::recursive_mutex> guard(g_profilesMutex);
-    if (id.empty() || id == kVanillaProfileId) return false;
+    if (id.empty() || IsBuiltinProfileId(id)) return false;
     const Profile profile = GetProfileById(runtimeRoot, id);
     const std::wstring backupDir = ProfileBackupDir(runtimeRoot, L"deleted", id);
     if (!WriteProfileBackupMeta(backupDir, profile, L"deleted")) return false;
@@ -713,14 +640,10 @@ bool DeleteProfile(const std::wstring& runtimeRoot, const std::wstring& id) {
 
 bool RenameProfile(const std::wstring& runtimeRoot, const std::wstring& id, const std::wstring& newName) {
     std::lock_guard<std::recursive_mutex> guard(g_profilesMutex);
-    if (id.empty() || id == kVanillaProfileId) return false;
+    if (id.empty() || IsBuiltinProfileId(id)) return false;
     std::vector<Profile> profiles = LoadProfiles(runtimeRoot);
     for (auto& p : profiles) if (p.id == id && !p.builtin) p.name = StripNewlines(newName);
     return SaveProfiles(runtimeRoot, profiles);
-}
-
-bool SetProfileControllerModEnabled(const std::wstring& runtimeRoot, const std::wstring& id, bool enabled) {
-    return SetProfileControllerBundle(runtimeRoot, id, enabled ? L"raggedy" : L"none");
 }
 
 bool SetProfilePerfRenderer(const std::wstring& runtimeRoot, const std::wstring& id, const std::wstring& mode) {
@@ -736,25 +659,12 @@ bool SetProfilePerfRenderer(const std::wstring& runtimeRoot, const std::wstring&
     return SaveProfiles(runtimeRoot, profiles);
 }
 
-bool SetProfileControllerBundle(const std::wstring& runtimeRoot, const std::wstring& id, const std::wstring& bundle) {
-    std::lock_guard<std::recursive_mutex> guard(g_profilesMutex);
-    if (id.empty()) return false;
-    if (!IsKnownControllerBundle(bundle)) return false;
-    std::vector<Profile> profiles = LoadProfiles(runtimeRoot);
-    for (auto& p : profiles) {
-        if (p.id == id) {
-            p.controllerBundle = NormalizeControllerBundle(bundle);
-            p.controllerModEnabled = ControllerBundleUsesRaggedy(p.controllerBundle);
-            break;
-        }
-    }
-    return SaveProfiles(runtimeRoot, profiles);
-}
-
 void EnsureProfilesInitialized(const std::wstring& runtimeRoot) {
     std::lock_guard<std::recursive_mutex> guard(g_profilesMutex);
     EnsureDirectoryTree(ProfileModsDir(runtimeRoot, kVanillaProfileId));
     EnsureDirectoryTree(ProfileGameDir(runtimeRoot, kVanillaProfileId));
+    EnsureDirectoryTree(ProfileModsDir(runtimeRoot, kReConsoleProfileId));
+    EnsureDirectoryTree(ProfileGameDir(runtimeRoot, kReConsoleProfileId));
     if (GetFileAttributesW(ProfilesJsonPath(runtimeRoot).c_str()) != INVALID_FILE_ATTRIBUTES) return;
     if (GetFileAttributesW(LegacyProfilesManifestPath(runtimeRoot).c_str()) != INVALID_FILE_ATTRIBUTES) {
         LoadProfiles(runtimeRoot);
@@ -769,6 +679,7 @@ void EnsureProfilesInitialized(const std::wstring& runtimeRoot) {
     std::vector<Profile> profiles;
     const LaunchTarget def = DefaultLaunchTarget();
     profiles.push_back(MakeBuiltinVanillaProfile());
+    profiles.push_back(MakeBuiltinReConsoleProfile());
     if (hasLegacy) {
         const std::wstring id = L"default";
         EnsureDirectoryTree(ProfileModsDir(runtimeRoot, id));

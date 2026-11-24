@@ -23,12 +23,12 @@ or login.
 > This is a **separate install** from Raggedy Launcher, so back up your
 > worlds, saves, and profiles first.
 
-What is in this branch: a five-way controller bundle setting (Auto,
-Legacy4J, Raggedy, Controlify, None), Minecraft 26.3 catalog rows, a
-graphics renderer setting (OpenGL default, Vulkan experimental opt-in), and
-a performance renderer setting backed by a per-version data file. See
-[docs/GRAPHICS-AND-PERFORMANCE.md](docs/GRAPHICS-AND-PERFORMANCE.md) and
-[CHANGELOG.md](CHANGELOG.md).
+What is in this branch: only the Minecraft 26.3 + Fabric 0.20.1 target,
+built-in Simply Legacy and Re-Console profiles that download the latest
+supported modpack on first run, an automatic OpenGL/Mesa path for
+RenderPearl/SDL, and a performance renderer setting backed by a per-version
+data file. See [docs/GRAPHICS-AND-PERFORMANCE.md](docs/GRAPHICS-AND-PERFORMANCE.md)
+and [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
@@ -36,7 +36,7 @@ a performance renderer setting backed by a per-version data file. See
 ![Xbox Series X|S](https://img.shields.io/badge/platform-Xbox%20Series%20X%7CS-107c10)
 ![Minecraft Java Edition](https://img.shields.io/badge/Minecraft-Java%20Edition-62b47a)
 
-Raggedy Launcher runs **Minecraft Java Edition directly on Xbox Series X|S in Developer Mode**, with Fabric, Forge and NeoForge. It signs in through Microsoft, verifies Java Edition ownership and downloads the official game files.
+Raggedy Launcher runs **Minecraft Java Edition directly on Xbox Series X|S in Developer Mode**, with Fabric. It signs in through Microsoft, verifies Java Edition ownership and downloads the official game files.
 
 > **Xbox One, Xbox One S and Xbox One X are not supported.** Both launcher builds are for Xbox Series S and Xbox Series X only.
 
@@ -49,7 +49,7 @@ Raggedy Launcher runs **Minecraft Java Edition directly on Xbox Series X|S in De
 - An internet connection for sign-in and downloads.
 - Free console storage for game files, profiles, mods and worlds.
 
-Java and controller support are included in the launcher package for the targets that use them. No separate Java installation is needed on the console. Raggedy Launcher requires Microsoft authentication and ownership verification. It does not support cracked or offline accounts.
+Java is included in the launcher package for supported targets. No separate Java installation is needed on the console. Raggedy Launcher requires Microsoft authentication and ownership verification. It does not support cracked or offline accounts.
 
 ## Download
 
@@ -76,10 +76,10 @@ Use the **Mods** page to manage profiles and install content. Start **Remote Fil
 
 ## Features
 
-- Separate profiles for different Minecraft versions, loaders and mod setups.
+- Built-in Simply Legacy and Re-Console profiles that seed the latest supported modpack on first run.
+- Custom profiles for separate mod setups on the supported launch target.
 - Modrinth and CurseForge browsing for mods, modpacks, resource packs and shaders.
 - Recommended mods filtered for the selected launch target.
-- Bundled Raggedy Controller support for targets that list a controller provider.
 - Profile backups and restore options, including undoing the last deleted profile.
 - Remote Files for managing profiles and worlds through a browser on the local network.
 - Download repair, current and previous run logs, and crash report ZIPs.
@@ -87,22 +87,13 @@ Use the **Mods** page to manage profiles and install content. Start **Remote Fil
 
 ## Minecraft versions
 
-The default target is **1.21.11 + Fabric 0.19.5**, using Java 21. The catalog also includes these targets.
+The only catalog target is **26.3 + Fabric 0.20.1**, using the Java 25 runtime.
 
-| Minecraft version | Loaders in the catalog | Status |
+| Minecraft version | Loader | Status |
 | --- | --- | --- |
-| `26.1`, `26.1.1`, `26.1.2`, `26.2`, `26.3` | Fabric, Forge, NeoForge | Experimental. Uses the Java 25 runtime. |
-| `1.21` through `1.21.11` | Fabric and NeoForge. Forge on every listed version except `1.21.2`. | Experimental. Uses Java 21. |
-| `1.20.4` | Fabric, NeoForge | Fabric is testing. NeoForge is experimental and has no bundled controller provider. |
-| `1.20.1` | Fabric, Forge | Fabric is testing. Forge is experimental. |
-| `1.19.2` | Fabric | Testing. |
-| `1.18.2` | Forge | Experimental. No bundled controller provider. |
-| `1.16.5` | Fabric | Testing. |
-| `1.12.2` | Forge | Experimental. Forge runs through Cleanroom, and the controller works the same as on newer versions. Vanilla 1.12.2 is not supported. |
+| `26.3` | Fabric 0.20.1 | Experimental. Uses the packaged Mesa/D3D12 OpenGL bridge. |
 
-Fabric uses **0.19.5** on listed targets from `1.20.1` onward, and **0.14.25** on `1.19.2` and `1.16.5`. Exact Forge and NeoForge versions, runtime choices and controller providers are listed in [the version catalog](config/versions.tsv).
-
-A catalog entry is not proof that the game or every mod works on Xbox. A target needs its launch files and bundled support files in the installed package. Experimental targets still need testing, and available targets can differ between builds. Check the installed launcher's target list and the release notes.
+The exact target is listed in [the version catalog](config/versions.tsv). Experimental targets still need testing, and available targets can differ between builds. Check the installed launcher's target list and the release notes.
 
 ## Mods, modpacks and other content
 
@@ -118,9 +109,7 @@ Shader packs need a compatible shader loader such as Iris or Oculus in the same 
 
 ## Controller and mouse
 
-Raggedy Controller is included for the catalog targets that have a controller provider. Press **View/Back** in game to open its settings. Controller availability for each target is listed in [the version catalog](config/versions.tsv).
-
-To use another controller mod, turn **Raggedy Controller** off for that profile before installing it.
+The launcher no longer manages controller mods or offers a controller bundle setting. Controller behavior comes from the selected built-in modpack or custom profile.
 
 - **Main nightly** uses the optional mouse relay. A browser page is available from the launcher. Companion downloads for Windows, Android and iOS are published alongside the mouse relay build.
 - **Native mouse nightly** accepts a USB mouse directly. Launcher Settings has separate menu and game mouse sensitivity controls.

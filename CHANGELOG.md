@@ -2,6 +2,20 @@
 
 Notable changes to Raggedy Launcher. Nightly packages are numbered by build revision rather than by release, so entries here are dated.
 
+## 2026-11-24
+
+### Changed
+
+**The launcher is now focused on 26.3 Fabric.** The catalog contains only `26.3 + Fabric 0.20.1`. The built-in profiles are Simply Legacy and Re-Console; they now download the latest supported modpack on first run. Other profiles are for custom mod setups on that target.
+
+**Controller and graphics-backend customization is gone.** The controller bundle setting, bundled controller jar, renderer setting, Vulkan probe and `renderer_policy` code have been removed from the launcher, build, catalog and validation. Managed-mod sidecars remain generic and are still used by the performance renderer. Settings now has seven rows.
+
+### Fixed
+
+**26.3 now points RenderPearl/SDL at the packaged Mesa OpenGL library.** Launch sets `SDL_OPENGL_LIBRARY` and the LWJGL OpenGL library name to the selected `opengl32.dll`, and skips the legacy GLFW override for 26.3 so SDL can find the bridge before the backend probe runs. Vulkan remains open work rather than a hidden or claimed option.
+
+**Existing profiles migrate into the simplified layout.** Old controller fields are ignored, built-in names are normalized to Simply Legacy and Re-Console, and the two built-ins stay first in the profile list.
+
 ## 2026-11-23
 
 ### Added

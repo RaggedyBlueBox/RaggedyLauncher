@@ -5,6 +5,12 @@ $root = Resolve-RepoRoot
 if (-not $CatalogPath) { $CatalogPath = Join-Path $root $ProjectConfig.VersionCatalog }
 if (-not $PackagePath) { $PackagePath = Get-ConfigPath "PackageContentDir" }
 $targets = @(Import-Csv $CatalogPath -Delimiter "`t" | Where-Object { $_.loaderVersion -and $_.loaderVersion -ne 'selected' -and $_.loaderVersion -ne 'none' })
+if ($targets.Count -ne 1 -or $targets[0].minecraftVersion -ne '26.3' -or $targets[0].loader -ne 'fabric' -or $targets[0].loaderVersion -ne '0.20.1') {
+    throw 'Version catalog must contain only the 26.3 Fabric target'
+}
+if ($ProjectConfig.MinecraftVersion -ne '26.3' -or $ProjectConfig.FabricLoaderVersion -ne '0.20.1' -or $ProjectConfig.MinecraftAssetIndex -ne '34') {
+    throw 'Build defaults must match the 26.3 Fabric target (minecraft 26.3, fabric 0.20.1, asset index 34)'
+}
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = $null
@@ -85,7 +91,12 @@ try {
     Require-Contains $browserSource 'f63ynpri' 'Featured modpack source'
     Require-Contains $browserSource 'PrependCuratedModpacks' 'Featured modpack source'
     $profileSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/profiles/profiles.cpp') -Raw
-    Require-Contains $profileSource 'L"legacy4j", L"raggedy", L"controlify"' 'Legacy4J controller fallback source'
+    Require-Contains $profileSource 'kReConsoleProfileId' 'Built-in profile source'
+    Require-Contains $profileSource 'Simply Legacy' 'Built-in profile source'
+    $appSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/App.cpp') -Raw
+    Require-Contains $appSource 'SDL_OPENGL_LIBRARY' 'SDL OpenGL library hint source'
+    Require-Contains $appSource 'EnsureDefaultModpackInstalled' 'Default modpack bootstrap source'
+    Require-Contains $browserSource 'EnsureDefaultModpackInstalled' 'Default modpack installer source'
     $sdlBuildSource = Get-Content -LiteralPath (Join-Path $root 'sdl3_uwp/build_sdl3.ps1') -Raw
     Require-Contains $sdlBuildSource 'SDL_MainIsReady' 'UWP SDL3 main-ready patch source'
     $manifestSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/Package.appxmanifest') -Raw
@@ -118,9 +129,6 @@ try {
         if ($target.loader -eq 'fabric') {
             Require-Entry "runtime\libraries\net\fabricmc\fabric-loader\$($target.loaderVersion)\fabric-loader-$($target.loaderVersion).jar"
             Require-Entry "runtime\version-mods\$id\raggedy-xbox-compat-1.0.0.jar"
-        }
-        if ($target.controllerProvider -ne 'none') {
-            Require-Entry "runtime\version-mods\$id\raggedy-$($target.controllerProvider)-controller-1.0.0.jar"
         }
         $runtimeDir = switch ($target.javaRuntime) { 'java17' { 'jre17' } 'java21' { 'jre21' } 'legacy' { 'jre8' } default { 'jre' } }
         Require-Entry "$runtimeDir\bin\server\jvm.dll"

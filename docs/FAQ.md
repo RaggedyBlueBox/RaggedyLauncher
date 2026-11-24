@@ -28,7 +28,7 @@ The mouse relay does not lag unless you have a bad computer or *really* bad wifi
 You don't need a Game Pass subscription or anything else to play multiplayer. You can hop on any server you wish (ideally with mouse relay and a keyboard).
 
 ## I tried to add Controlify (or another controller mod) to my instance, and it didn't work. What happened?
-Before adding a different controller mod, click on the profile you're modifying and turn Raggedy Controller off. That will prevent your desired controller mod from deleting itself when the game launches.
+The launcher no longer installs, removes, or toggles controller mods. Use a custom profile for your own controller setup, and resolve conflicts between mods inside that profile. Built-in modpacks are seeded as-is on first run.
 
 ## How can I change the RAM allocation?
 Unfortunately, you can't allocate more than 3-4 GB of RAM, as this is the max achievable by an XBOX in Developer Mode.

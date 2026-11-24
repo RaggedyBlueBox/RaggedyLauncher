@@ -164,115 +164,6 @@ bool CopyDirectoryContentsAlways(const std::wstring& src, const std::wstring& ds
     return CopyDirectoryTree(src, dst);
 }
 
-static bool IsRaggedyControllerJarName(const std::wstring& fileName) {
-    const std::wstring lower = ToLowerW(fileName);
-    if (lower.size() <= 4 || lower.compare(lower.size() - 4, 4, L".jar") != 0) return false;
-    // "banditvault-" names are the pre-fork jars, still cleaned up the same way.
-    return (lower.rfind(L"raggedy-fabric-controller", 0) == 0 ||
-        lower.rfind(L"raggedy-forge-controller", 0) == 0 ||
-        lower.rfind(L"raggedy-neoforge-controller", 0) == 0 ||
-        lower.rfind(L"raggedy-cleanroom-controller", 0) == 0 ||
-        lower.rfind(L"banditvault-fabric-controller", 0) == 0 ||
-        lower.rfind(L"banditvault-forge-controller", 0) == 0 ||
-        lower.rfind(L"banditvault-neoforge-controller", 0) == 0 ||
-        lower.rfind(L"banditvault-cleanroom-controller", 0) == 0);
-}
-
-static bool IsControlifyJarName(const std::wstring& fileName) {
-    const std::wstring lower = ToLowerW(fileName);
-    if (lower.size() <= 4) return false;
-    if (lower.compare(lower.size() - 4, 4, L".jar") != 0) return false;
-    return lower.rfind(L"controlify", 0) == 0 ||
-        lower.rfind(L"lambdacontrols", 0) == 0 ||
-        lower.rfind(L"lambda-controls", 0) == 0 ||
-        lower.rfind(L"midnightcontrols", 0) == 0 ||
-        lower.rfind(L"midnight-controls", 0) == 0;
-}
-
-bool IsRaggedyControllerJarFileName(const std::wstring& fileName) {
-    return IsRaggedyControllerJarName(fileName);
-}
-
-bool IsControlifyJarFileName(const std::wstring& fileName) {
-    return IsControlifyJarName(fileName);
-}
-
-bool IsLegacy4JJarFileName(const std::wstring& fileName) {
-    const std::wstring lower = ToLowerW(fileName);
-    return lower.size() > 4 &&
-        lower.compare(lower.size() - 4, 4, L".jar") == 0 &&
-        lower.rfind(L"legacy4j", 0) == 0;
-}
-
-int DeleteRaggedyControllerModsFromDir(const std::wstring& modsDir) {
-    int removed = 0;
-    WIN32_FIND_DATAW fd;
-    HANDLE h = FindFirstFileW((modsDir + L"\\*.jar").c_str(), &fd);
-    if (h == INVALID_HANDLE_VALUE) return 0;
-
-    do {
-        if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || !IsRaggedyControllerJarName(fd.cFileName)) continue;
-        const std::wstring path = modsDir + L"\\" + fd.cFileName;
-        SetFileAttributesW(path.c_str(), FILE_ATTRIBUTE_NORMAL);
-        if (DeleteFileW(path.c_str())) ++removed;
-    } while (FindNextFileW(h, &fd));
-
-    FindClose(h);
-    return removed;
-}
-
-int DeleteControlifyModsFromDir(const std::wstring& modsDir) {
-    int removed = 0;
-    WIN32_FIND_DATAW fd;
-    HANDLE h = FindFirstFileW((modsDir + L"\\*.jar").c_str(), &fd);
-    if (h == INVALID_HANDLE_VALUE) return 0;
-
-    do {
-        if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || !IsControlifyJarName(fd.cFileName)) continue;
-        const std::wstring path = modsDir + L"\\" + fd.cFileName;
-        SetFileAttributesW(path.c_str(), FILE_ATTRIBUTE_NORMAL);
-        if (DeleteFileW(path.c_str())) ++removed;
-    } while (FindNextFileW(h, &fd));
-
-    FindClose(h);
-    return removed;
-}
-
-static void CopyDirectoryContentsExceptController(const std::wstring& src, const std::wstring& dst) {
-    WIN32_FIND_DATAW fd;
-    HANDLE h = FindFirstFileW((src + L"\\*").c_str(), &fd);
-    if (h == INVALID_HANDLE_VALUE) return;
-
-    EnsureDirectoryTree(dst);
-    do {
-        if (wcscmp(fd.cFileName, L".") == 0 || wcscmp(fd.cFileName, L"..") == 0) continue;
-        const std::wstring srcPath = src + L"\\" + fd.cFileName;
-        const std::wstring dstPath = dst + L"\\" + fd.cFileName;
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-            CopyDirectoryContentsExceptController(srcPath, dstPath);
-        } else if (!IsRaggedyControllerJarName(fd.cFileName)) {
-            CopyFileAlways(srcPath, dstPath);
-        }
-    } while (FindNextFileW(h, &fd));
-
-    FindClose(h);
-}
-
-std::wstring PrepareEffectiveBundledModsDir(
-    const std::wstring& runtimeRoot,
-    const std::wstring& targetId,
-    const std::wstring& bundledModsDir,
-    const std::wstring& controllerBundle) {
-    if (ControllerBundleUsesRaggedy(controllerBundle) || bundledModsDir.empty() || !DirectoryExists(bundledModsDir)) {
-        return bundledModsDir;
-    }
-
-    const std::wstring filteredDir = runtimeRoot + L"\\runtime\\version-mods-no-controller\\" + SafeFileName(targetId);
-    DeleteDirectoryTree(filteredDir);
-    CopyDirectoryContentsExceptController(bundledModsDir, filteredDir);
-    return filteredDir;
-}
-
 bool SeedLocalRuntime(
     const std::wstring& packageDir,
     const std::wstring& localDir,
@@ -1204,7 +1095,7 @@ MinecraftVersionInfo ResolveVersionInfo(const std::wstring& packageDir, const st
         info.bundledModsDir = perVersionMods;
     } else if (isDefault) {
         info.bundledModsDir = packageDir + L"\\runtime\\bundled-mods";
-    } else if (IsLoader(target.loader, LoaderId::Fabric) || target.controllerProvider != L"none") {
+    } else {
         info.missingBundledModsDir = perVersionMods;
         WriteLogF(L"No bundled mods for target %s, expected %s", target.targetId.c_str(), perVersionMods.c_str());
     }

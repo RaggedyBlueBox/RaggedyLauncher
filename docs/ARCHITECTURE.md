@@ -100,9 +100,9 @@ When version JSON needs loader specific fields, `ResolveVersionInfo()` delegates
 `launch/minecraft_launch.cpp` handles the common embed path:
 
 - Locates packaged JREs (`jre`, `jre21`, and `jre17` when packaged for Java 17 targets).
-- Syncs bundled loader mods from `runtime/version-mods/<target-id>/` into the active profile `mods/` folder for Forge and NeoForge launches.
+- Syncs bundled loader mods from `runtime/version-mods/<target-id>/` into the active profile `mods/` folder when a target defines them.
 - Builds the base classpath from resolved version data.
-- Applies UWP native library paths and GLFW shim placement.
+- Applies UWP native library paths. For 26.3, skips the legacy GLFW override and sets `SDL_OPENGL_LIBRARY` to the selected Mesa `opengl32.dll` so RenderPearl/SDL uses the same bridge as LWJGL.
 - Calls loader hooks before adjusting classpath and JVM options.
 - Starts the selected main class in the same UWP process.
 
@@ -199,7 +199,6 @@ Changing the default target requires updating `scripts/config.ps1` and usually `
 | --- | --- |
 | `glfw_shim/` | Replaces desktop `glfw.dll` behavior for UWP windowing, input, and WGL. |
 | `compat_mod/` | Fabric compatibility mod: filesystem, graphics, and sandbox fixes per target. |
-| `controller_mod/` | Shared controller core plus loader-specific controller mods built into `runtime/version-mods/<target-id>/`. |
 | `patch/` | Supplies patched Fabric Loader classes and securejarhandler UWP changes packaged into the APPX. |
 | `mouse_support/` | Standalone DLL that owns relay mouse input; linked into the GLFW shim for in game use and loaded by the launcher for menu use. |
 | `mesa-runtime/` | Series console OpenGL translation runtime packaged under `graphics/`. |
@@ -209,9 +208,7 @@ Changing the default target requires updating `scripts/config.ps1` and usually `
 | Task | Start here |
 | --- | --- |
 | Add a Fabric target | `config/versions.tsv`, `scripts/config.ps1`, `launch/loaders/fabric.cpp`, [BUILDING.md](BUILDING.md) |
-| Add a NeoForge target | `config/versions.tsv`, manifest generation in `scripts/`, `launch/loaders/neoforge.cpp`, `controller_mod/neoforge/` if controller support is needed |
-| Add another Forge target | `launch/loaders/forge.cpp`, `config/versions.tsv`, `controller_mod/forge/` if controller support is needed |
-| Change bundled controller behavior | `controller_mod/`, `glfw_shim/glfw_uwp.cpp`, `mods/mod_defaults.cpp` |
+| Change the 26.3 graphics bridge | `launch/minecraft_launch.cpp`, `App.cpp`, `mesa-runtime/` |
 | Change sign in or ownership checks | `auth/minecraft_auth.cpp` |
 | Change main menu or auth UI | `ui/launcher_ui.cpp`, `ui/auth_screen` |
 | Change downloads or repair behavior | `launch/runtime_manager.cpp` |

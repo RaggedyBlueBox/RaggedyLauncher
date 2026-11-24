@@ -388,7 +388,6 @@ std::vector<Scene> Scenes() {
         state.modsProfileName = L"Survival";
         state.modsProfileTargetText = L"1.21.11 Fabric 0.19.5";
         state.modsProfileFocus = 1;
-        state.modsProfileControllerBundle = L"raggedy";
         state.status = L"Backup saved";
         return state;
     } });
