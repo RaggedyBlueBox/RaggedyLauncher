@@ -129,6 +129,10 @@ jobs:
           "$($hash.Hash.ToLowerInvariant())  RaggedyLauncher-test.appx" | Set-Content -Path dist\RaggedyLauncher-test.sha256 -Encoding ascii
           Write-Host "Test appx: $($appx.Name) -> RaggedyLauncher-test.appx"
 
+      - name: Verify permanent modpack support
+        shell: powershell
+        run: .\scripts\validate-modern-version-matrix.ps1 -AppxPath dist\RaggedyLauncher-test.appx
+
       - name: Upload test artifact
         uses: actions/upload-artifact@v6
         with:
