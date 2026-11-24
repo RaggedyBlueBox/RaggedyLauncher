@@ -16,6 +16,7 @@
 #include <winrt/Windows.Foundation.Collections.h>
 
 #include <algorithm>
+#include <fileapi.h>
 #include <fstream>
 #include <vector>
 #include <memory>
