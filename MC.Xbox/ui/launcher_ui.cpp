@@ -3,6 +3,7 @@
 #include "mod_source.h"
 
 #include "mods_browser.h"
+#include "controller_bundle.h"
 #include "performance_bundle.h"
 #include "mods_ui_globals.h"
 #include "auth_screen.h"
