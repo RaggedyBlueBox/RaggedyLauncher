@@ -1,8 +1,3 @@
-#ifdef WIN32_LEAN_AND_MEAN
-#undef WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-
 #include "modpack_io.h"
 #include "i18n.h"
 
@@ -78,10 +73,8 @@ struct ZipEntryFileState {
 
 static size_t ZipEntryToFileCallback(void* opaque, mz_uint64 offset, const void* data, size_t size) {
     ZipEntryFileState* state = static_cast<ZipEntryFileState*>(opaque);
+    (void)offset;
     if (!state || state->handle == INVALID_HANDLE_VALUE) return 0;
-    LARGE_INTEGER position = {};
-    position.QuadPart = static_cast<LONGLONG>(offset);
-    if (!SetFilePointerEx(state->handle, position, nullptr, FILE_BEGIN)) return 0;
     DWORD written = 0;
     return WriteFile(state->handle, data, static_cast<DWORD>(size), &written, nullptr) && written == size ? size : 0;
 }
@@ -92,8 +85,10 @@ static bool ExtractZipEntryToFile(mz_zip_archive* zip, mz_uint index, const std:
     if (!EnsureDirectoryTree(GetParentDir(target))) return false;
     const std::wstring temporary = target + L".extracting";
     ZipEntryFileState state;
-    state.handle = CreateFileW(temporary.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr,
-        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    CREATEFILE2_EXTENDED_PARAMETERS params = {};
+    params.dwSize = sizeof(params);
+    params.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+    state.handle = CreateFile2(temporary.c_str(), GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS, &params);
     if (state.handle == INVALID_HANDLE_VALUE) return false;
     bool ok = mz_zip_reader_extract_to_callback(zip, index, ZipEntryToFileCallback, &state, 0) != MZ_FALSE;
     if (!CloseHandle(state.handle)) ok = false;

@@ -94,7 +94,7 @@ try {
     Require-Contains $commonSource 'ExtendedPath' 'Extended path support source'
     $modpackSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/mods/modpack_io.cpp') -Raw
     Require-Contains $modpackSource 'ExtendedPath(path)' 'Modpack long path extraction source'
-    Require-Contains $modpackSource 'CreateFileW' 'Modpack long path extraction source'
+    Require-Contains $modpackSource 'CreateFile2' 'Modpack long path extraction source'
     foreach ($inputFile in @(
         @{ Source = $CatalogPath; Relative = 'runtime/version_catalog.tsv' },
         @{ Source = (Join-Path $root 'config/recommended-mods.json'); Relative = 'runtime/recommended-mods.json' },
