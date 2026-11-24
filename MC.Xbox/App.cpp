@@ -546,7 +546,9 @@ public:
             SetEnvironmentVariableW(L"SDL_OPENGL_LIBRARY", sdlOpenGlLibrary.c_str());
             WriteLogF(L"SDL OpenGL library hint: %s", sdlOpenGlLibrary.c_str());
         }
-        SetEnvironmentVariableW(L"mesa_glthread", L"true");
+        SetEnvironmentVariableW(L"mesa_glthread", L"false");
+        SetEnvironmentVariableW(L"SDL_JOYSTICK_WGI", L"1");
+        SetEnvironmentVariableW(L"SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", L"1");
         const std::wstring mesaCacheDir = exeDir + L"\\mesa_cache";
         if (EnsureDirectoryTree(mesaCacheDir)) {
             // UWP has no XDG_CACHE_HOME or HOME so mesa disables its shader disk cache unless the dir is set explicitly
@@ -554,7 +556,7 @@ public:
             SetEnvironmentVariableW(L"MESA_SHADER_CACHE_MAX_SIZE", L"1G");
             WriteLogF(L"mesa shader cache dir=%s", mesaCacheDir.c_str());
         }
-        WriteLog(L"mesa_glthread enabled");
+        WriteLog(L"mesa_glthread disabled by default for SDL3/WinRT stability; mesa_env.txt may override");
         // here and not in SetWindow, Run starts the log afresh
         DetectDisplayScale(g_authWindow.Get());
         ApplyMesaEnvOverrides(exeDir);

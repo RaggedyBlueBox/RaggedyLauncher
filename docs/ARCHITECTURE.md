@@ -102,7 +102,7 @@ When version JSON needs loader specific fields, `ResolveVersionInfo()` delegates
 - Locates packaged JREs (`jre`, `jre21`, and `jre17` when packaged for Java 17 targets).
 - Syncs bundled loader mods from `runtime/version-mods/<target-id>/` into the active profile `mods/` folder when a target defines them.
 - Builds the base classpath from resolved version data.
-- Applies UWP native library paths. For 26.3, skips the legacy GLFW override, points LWJGL at the absolute Mesa `opengl32.dll`, and sets `SDL_OPENGL_LIBRARY` to the package-relative `graphics/<runtime>/opengl32.dll`. The patched WinRT SDL build prefers WGL over EGL and ignores absolute caller paths rejected by `LoadPackagedLibrary`.
+- Applies UWP native library paths. For 26.3, skips the legacy GLFW override, points LWJGL at the packaged UWP `SDL3.dll` and absolute Mesa `opengl32.dll`, sets `SDL_OPENGL_LIBRARY` to the package-relative `graphics/<runtime>/opengl32.dll`, forces the WinRT video driver, and preloads the Mesa support stack before the JVM. The pinned SDL fork is built with WGL enabled, EGL disabled, the WinRT-aware loader, absolute Mesa path normalization, and the V7/V8/V9/V12 RenderPearl lifecycle patches.
 - Calls loader hooks before adjusting classpath and JVM options.
 - Starts the selected main class in the same UWP process.
 

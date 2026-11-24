@@ -566,6 +566,53 @@ bool PublishCoreWindowProperty(ICoreWindow* window) {
     return true;
 }
 
+static std::vector<HMODULE> g_sdlMesaPreloadModules;
+
+static bool PreloadMesaGraphicsStackForSdl() {
+    if (!g_sdlMesaPreloadModules.empty()) {
+        WriteLog(L"SDL3 Mesa support stack already preloaded");
+        return true;
+    }
+
+    struct MesaModule {
+        const wchar_t* relativePath;
+        const wchar_t* label;
+        bool required;
+    };
+
+    const MesaModule modules[] = {
+        { L"dxil.dll", L"dxil.dll", true },
+        { L"z-1.dll", L"z-1.dll", true },
+        { L"spirv_to_dxil.dll", L"spirv_to_dxil.dll", true },
+        { L"vulkan_dzn.dll", L"vulkan_dzn.dll", false },
+        { L"libgallium_wgl.dll", L"libgallium_wgl.dll", true },
+        { L"graphics\\mesa\\opengl32.dll", L"opengl32.dll", true },
+    };
+
+    for (const MesaModule& module : modules) {
+        HMODULE handle = LoadPackagedLibrary(module.relativePath, 0);
+        if (!handle) {
+            const DWORD err = GetLastError();
+            WriteLogF(L"SDL3 Mesa preload %s failed path=%s err=%u%s",
+                module.label, module.relativePath, err,
+                module.required ? L" [required]" : L" [optional]");
+            if (module.required) {
+                for (auto it = g_sdlMesaPreloadModules.rbegin(); it != g_sdlMesaPreloadModules.rend(); ++it) {
+                    FreeLibrary(*it);
+                }
+                g_sdlMesaPreloadModules.clear();
+                return false;
+            }
+            continue;
+        }
+        g_sdlMesaPreloadModules.push_back(handle);
+        WriteLogF(L"SDL3 Mesa preload %s => %p", module.label, (void*)handle);
+    }
+
+    WriteLog(L"SDL3 Mesa preload complete before JVM/LWJGL");
+    return true;
+}
+
 static bool PreloadJvm(
     const std::wstring& exeDir,
     const std::wstring& jreDir,
@@ -898,6 +945,7 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
         suppliedNativesReady ? nativesDir :
         (packagedNativesReady ? packagedNativesDir : nativesDir);
     const std::wstring lwjglGlfwDll = lwjglNativeDir + L"\\glfw.dll";
+    const std::wstring lwjglSdlDll = lwjglNativeDir + L"\\SDL3.dll";
     const std::wstring logConfigPath = exeDir + L"\\game\\log_configs\\client-uwp.xml";
     const std::wstring fabricLogPath = gameDir + L"\\logs\\fabric-loader.log";
     const std::wstring forgeLogPath = gameDir + L"\\logs\\forge-loader.log";
@@ -1095,10 +1143,17 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
     }
     vmOptionStorage.push_back("-Dorg.lwjgl.system.SharedLibraryExtractDirectory=" + w2a(fwd(lwjglTmpDir)));
     WriteLogF(L"LWJGL native directory: %s", lwjglNativeDir.c_str());
-    if (CompareVersionNumbers(w2a(minecraftVersion), "26.3") < 0) {
+    const bool usesSdlWindowBackend = CompareVersionNumbers(w2a(minecraftVersion), "26.3") >= 0;
+    if (!usesSdlWindowBackend) {
         vmOptionStorage.push_back("-Dorg.lwjgl.glfw.libname=" + w2a(fwd(lwjglGlfwDll)));
         WriteLogF(L"LWJGL GLFW library forced: %s", lwjglGlfwDll.c_str());
     } else {
+        if (GetFileAttributesW(lwjglSdlDll.c_str()) == INVALID_FILE_ATTRIBUTES) {
+            WriteLogF(L"SDL3 target launch aborted: packaged UWP SDL3.dll missing from %s", lwjglSdlDll.c_str());
+            return false;
+        }
+        vmOptionStorage.push_back("-Dorg.lwjgl.sdl.libname=" + w2a(fwd(lwjglSdlDll)));
+        WriteLogF(L"LWJGL SDL3 library forced: %s", lwjglSdlDll.c_str());
         WriteLogF(L"Skipping legacy GLFW override for RenderPearl target %s", minecraftVersion.c_str());
     }
     std::wstring graphicsRuntime = GetEnvVarString(L"MC_GRAPHICS_RUNTIME");
@@ -1114,11 +1169,23 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
     const std::wstring sdlOpenGlLibrary = L"graphics\\" + graphicsRuntime + L"\\opengl32.dll";
     if (GetFileAttributesW(selectedOpenGl.c_str()) != INVALID_FILE_ATTRIBUTES) {
         vmOptionStorage.push_back("-Dorg.lwjgl.opengl.libname=" + w2a(fwd(selectedOpenGl)));
-        SetEnvironmentVariableW(L"SDL_OPENGL_LIBRARY", sdlOpenGlLibrary.c_str());
+        if (usesSdlWindowBackend) {
+            SetEnvironmentVariableW(L"SDL_VIDEO_DRIVER", L"winrt");
+            SetEnvironmentVariableW(L"SDL_VIDEODRIVER", L"winrt");
+            SetEnvironmentVariableW(L"SDL_JOYSTICK_WGI", L"1");
+            SetEnvironmentVariableW(L"SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", L"1");
+            SetEnvironmentVariableW(L"SDL_LOGGING", L"video=debug,input=info,error=debug");
+            SetEnvironmentVariableW(L"SDL_OPENGL_LIBRARY", sdlOpenGlLibrary.c_str());
+            WriteLogF(L"SDL3 WinRT/OpenGL environment: driver=winrt OpenGL=%s (LWJGL=%s)", sdlOpenGlLibrary.c_str(), selectedOpenGl.c_str());
+        }
         WriteLogF(L"LWJGL OpenGL library forced: %s", selectedOpenGl.c_str());
         WriteLogF(L"SDL OpenGL library hint: %s", sdlOpenGlLibrary.c_str());
     } else {
         WriteLogF(L"LWJGL OpenGL library override missing: %s", selectedOpenGl.c_str());
+        if (usesSdlWindowBackend) {
+            WriteLog(L"SDL3 target launch aborted: packaged Mesa OpenGL runtime is required for SDL WinRT context creation");
+            return false;
+        }
     }
     WriteLogF(L"Log4j configuration: %s", FileUriFromPath(logConfigPath).c_str());
     vmOptionStorage.push_back("-Djava.class.path=" + w2a(effectiveClassPath));
@@ -1242,6 +1309,16 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
     }
     fclose(af);
     WriteLog(L"Embedded JVM options written");
+    if (usesSdlWindowBackend) {
+        reportProgress(
+            L"Starting graphics runtime",
+            L"Preloading the Xbox Mesa/D3D12 support stack.",
+            0.22f);
+        if (!PreloadMesaGraphicsStackForSdl()) {
+            WriteLog(L"SDL3 target launch aborted: Mesa support stack preload failed");
+            return false;
+        }
+    }
     reportProgress(
         Tr(L"Starting Java runtime"),
         Tr(L"Loading the embedded JVM."),

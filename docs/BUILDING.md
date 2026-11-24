@@ -92,7 +92,8 @@ For adding another playable Forge target, add it to `config\versions.tsv`, exten
 
 **Mixin targets are written in Mojang names.** The `src\main` compatibility mixins target intermediary names such as `net.minecraft.class_4239` and `method_47525`. The `26.x` variants under `compat_mod\src\variants` target Mojang names such as `net.minecraft.util.FileUtil` and `createDirectoriesSafe` instead. A mixin copied between the two will not apply.
 
-**RenderPearl needs the SDL OpenGL hint.** For 26.3, `launch\minecraft_launch.cpp` skips the legacy GLFW override, sets LWJGL to the absolute packaged Mesa `opengl32.dll`, and sets `SDL_OPENGL_LIBRARY` to the package-relative `graphics\<runtime>\opengl32.dll`. `sdl3_uwp\build_sdl3.ps1` patches WinRT SDL to prefer WGL over EGL and to ignore absolute GL paths passed by callers, because `LoadPackagedLibrary` rejects them.
+**RenderPearl needs the Bandit-proven SDL/WGL stack.** For 26.3, `launch\minecraft_launch.cpp` skips the legacy GLFW override, points LWJGL at the packaged UWP `SDL3.dll` and absolute packaged Mesa `opengl32.dll`, sets `SDL_OPENGL_LIBRARY` to the package-relative `graphics\<runtime>\opengl32.dll`, forces the WinRT video driver, and preloads the Mesa/D3D12 support stack before the JVM.
+ `scripts\prepare-sdl3-uwp.ps1` builds the pinned SDL fork with desktop OpenGL enabled and EGL disabled, applies the external-host patch so the WinRT loader is compiled and absolute packaged Mesa paths are normalized for `LoadPackagedLibrary`, then applies the V7 WGL lifecycle, V8 provider-parity, V9 stability and V12 RenderPearl patches.
 
 **LWJGL natives are listed differently.** Mojang lists each platform's LWJGL natives for `26.x` as its own library entry sharing the base artifact's maven key. `Add-LibraryJar` in `scripts\setup.ps1` drops every `-natives-` entry for that reason: without the filter, `natives-linux` sorts first, wins the maven dedupe, and takes LWJGL's classes off the generated classpath.
 

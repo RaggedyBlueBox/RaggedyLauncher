@@ -98,14 +98,28 @@ try {
     Require-Contains $appSource 'L"graphics\\" + graphicsRuntime + L"\\opengl32.dll"' 'Package-relative SDL OpenGL hint source'
     $launchSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/launch/minecraft_launch.cpp') -Raw
     Require-Contains $launchSource 'org.lwjgl.opengl.libname' 'LWJGL OpenGL library source'
+    Require-Contains $launchSource 'org.lwjgl.sdl.libname' 'LWJGL SDL3 library source'
     Require-Contains $launchSource 'L"graphics\\" + graphicsRuntime + L"\\opengl32.dll"' 'Package-relative SDL OpenGL hint source'
     Require-Contains $appSource 'EnsureDefaultModpackInstalled' 'Default modpack bootstrap source'
     Require-Contains $browserSource 'EnsureDefaultModpackInstalled' 'Default modpack installer source'
-    $sdlBuildSource = Get-Content -LiteralPath (Join-Path $root 'sdl3_uwp/build_sdl3.ps1') -Raw
-    Require-Contains $sdlBuildSource 'SDL_MainIsReady' 'UWP SDL3 main-ready patch source'
-    Require-Contains $sdlBuildSource 'device->GL_LoadLibrary = WIN_GL_LoadLibrary;' 'UWP SDL3 WGL dispatch patch source'
-    Require-Contains $sdlBuildSource 'SDL_strchr(path, '':'')' 'UWP SDL3 WGL loader patch source'
-    Require-Contains $sdlBuildSource 'mainready|wgl' 'UWP SDL3 WGL build stamp'
+    $sdlPrepareSource = Get-Content -LiteralPath (Join-Path $root 'scripts/prepare-sdl3-uwp.ps1') -Raw
+    $sdlPatchSource = Get-Content -LiteralPath (Join-Path $root 'patches/sdl3-uwp-external-host.patch') -Raw
+    Require-Contains $sdlPrepareSource 'b3852a0076c358f65ee19765e85ef9eded6e50df' 'Pinned UWP SDL3 source'
+    Require-Contains $sdlPrepareSource '-DSDL_OPENGL=ON' 'UWP SDL3 desktop OpenGL config'
+    Require-Contains $sdlPrepareSource '-DSDL_OPENGLES=OFF' 'UWP SDL3 EGL disable config'
+    Require-Contains $sdlPatchSource 'src/loadso/windows/SDL_sysloadso.c' 'UWP SDL3 WinRT-aware shared-object loader source'
+    Require-Contains $sdlPatchSource 'src/video/windows/SDL_windowsopengl.c' 'UWP SDL3 WGL source inclusion'
+    Require-Contains $sdlPatchSource 'BanditSDL_WinRTAbsoluteLoadFixV1' 'UWP SDL3 absolute Mesa path normalization'
+    foreach ($patchScript in @(
+        'apply-sdl3-v7-wgl.ps1',
+        'apply-sdl3-v8-provider-parity.ps1',
+        'apply-sdl3-v9-stability.ps1',
+        'apply-sdl3-v12-renderpearl-contract.ps1')) {
+        Require-Contains (Get-Content -LiteralPath (Join-Path $root "scripts/$patchScript") -Raw) 'SourceRoot' "UWP SDL3 $patchScript"
+    }
+    Require-Contains $launchSource 'PreloadMesaGraphicsStackForSdl' 'Mesa support stack preload source'
+    Require-Contains $launchSource 'SDL_VIDEO_DRIVER' 'SDL WinRT video driver source'
+    Require-Contains $appSource 'L"mesa_glthread", L"false"' 'Mesa threading stability default'
     $manifestSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/Package.appxmanifest') -Raw
     Require-Contains $manifestSource 'ws2:longPathAware' 'Long path manifest'
     $commonSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/common/launcher_common.cpp') -Raw
