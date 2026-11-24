@@ -19,6 +19,7 @@ bool VerboseLoggingEnabled();
 std::string w2a(const std::wstring& w);
 std::wstring a2w(const char* utf8);
 
+std::wstring ExtendedPath(const std::wstring& path);
 bool EnsureDirectoryTree(const std::wstring& path);
 bool DirectoryExists(const std::wstring& path);
 std::wstring GetParentDir(const std::wstring& path);

@@ -26,6 +26,8 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 **Modpack compatibility is now build-enforced.** Package validation fails if the UWP SDL3 runtime, Fabric 0.20.1 file system ABI patch, featured Re-Console/Simply Legacy entries, or Legacy4J controller fallback are missing.
 
+**Deep modpack paths no longer stop installation.** Simply Legacy bundles resource pack files whose full Xbox paths exceed the Win32 260-character limit, so installing stopped with a generic failure. Pack extraction now uses extended-length paths and the app is marked long-path aware, letting those files install.
+
 ## 2026-11-13
 
 ### Added

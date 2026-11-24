@@ -66,21 +66,32 @@ static std::wstring ModrinthDependencyLoaderKey(const std::wstring& loader) {
 
 static size_t ZipReadFileCallback(void* opaque, mz_uint64 offset, void* data, size_t size);
 
+struct ZipEntryFileState {
+    HANDLE handle = INVALID_HANDLE_VALUE;
+};
+
 static size_t ZipEntryToFileCallback(void* opaque, mz_uint64 offset, const void* data, size_t size) {
-    FILE* file = static_cast<FILE*>(opaque);
-    if (_fseeki64(file, static_cast<__int64>(offset), SEEK_SET) != 0) return 0;
-    return fwrite(data, 1, size, file) == size ? size : 0;
+    ZipEntryFileState* state = static_cast<ZipEntryFileState*>(opaque);
+    if (!state || state->handle == INVALID_HANDLE_VALUE) return 0;
+    LARGE_INTEGER position = {};
+    position.QuadPart = static_cast<LONGLONG>(offset);
+    if (!SetFilePointerEx(state->handle, position, nullptr, FILE_BEGIN)) return 0;
+    DWORD written = 0;
+    return WriteFile(state->handle, data, static_cast<DWORD>(size), &written, nullptr) && written == size ? size : 0;
 }
 
 // streamed so a large pack file never has to fit in memory
 static bool ExtractZipEntryToFile(mz_zip_archive* zip, mz_uint index, const std::wstring& path) {
-    if (!EnsureDirectoryTree(GetParentDir(path))) return false;
-    const std::wstring temporary = path + L".extracting";
-    FILE* file = nullptr;
-    if (_wfopen_s(&file, temporary.c_str(), L"wb") != 0 || !file) return false;
-    bool ok = mz_zip_reader_extract_to_callback(zip, index, ZipEntryToFileCallback, file, 0) != MZ_FALSE;
-    if (fclose(file) != 0) ok = false;
-    if (ok) ok = MoveFileExW(temporary.c_str(), path.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != FALSE;
+    const std::wstring target = ExtendedPath(path);
+    if (!EnsureDirectoryTree(GetParentDir(target))) return false;
+    const std::wstring temporary = target + L".extracting";
+    ZipEntryFileState state;
+    state.handle = CreateFileW(temporary.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr,
+        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (state.handle == INVALID_HANDLE_VALUE) return false;
+    bool ok = mz_zip_reader_extract_to_callback(zip, index, ZipEntryToFileCallback, &state, 0) != MZ_FALSE;
+    if (!CloseHandle(state.handle)) ok = false;
+    if (ok) ok = MoveFileExW(temporary.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != FALSE;
     if (!ok) DeleteFileW(temporary.c_str());
     return ok;
 }
@@ -443,6 +454,7 @@ bool InstallModpackFromFile(
             continue;
         }
         if (!ExtractZipEntryToFile(&zip, i, dest)) {
+            WriteLogF(L"Could not extract pack override %s err=%u", rel.c_str(), GetLastError());
             if (firstError.empty()) firstError = TrFormat(L"Could not extract pack override {0}", { rel });
             continue;
         }

@@ -165,23 +165,34 @@ std::wstring a2w(const char* utf8) {
     return w;
 }
 
+std::wstring ExtendedPath(const std::wstring& path) {
+    std::wstring result = path;
+    std::replace(result.begin(), result.end(), L'/', L'\\');
+    if (result.rfind(L"\\\\?\\", 0) == 0) return result;
+    if (result.size() >= 2 && result[1] == L':') return L"\\\\?\\" + result;
+    return result;
+}
+
 bool EnsureDirectoryTree(const std::wstring& path) {
     if (path.empty()) return false;
-    const DWORD existing = GetFileAttributesW(path.c_str());
+    const std::wstring target = ExtendedPath(path);
+    const DWORD existing = GetFileAttributesW(target.c_str());
     if (existing != INVALID_FILE_ATTRIBUTES) return (existing & FILE_ATTRIBUTE_DIRECTORY) != 0;
 
     std::wstring current;
     size_t start = 0;
-    if (path.size() >= 2 && path[1] == L':') {
-        current = path.substr(0, 2);
-        start = 2;
+    const size_t prefix = target.rfind(L"\\\\?\\", 0) == 0 ? 4 : 0;
+    const size_t colon = target.find(L':', prefix);
+    if (colon != std::wstring::npos && (prefix == 4 || colon == 1)) {
+        current = target.substr(0, colon + 1);
+        start = colon + 1;
     }
 
-    while (start < path.size()) {
-        size_t next = path.find_first_of(L"\\/", start);
-        std::wstring part = path.substr(
+    while (start < target.size()) {
+        size_t next = target.find(L'\\', start);
+        std::wstring part = target.substr(
             start,
-            next == std::wstring::npos ? path.size() - start : next - start);
+            next == std::wstring::npos ? target.size() - start : next - start);
         if (!part.empty()) {
             if (!current.empty() && current.back() != L'\\') current += L'\\';
             current += part;
@@ -196,12 +207,12 @@ bool EnsureDirectoryTree(const std::wstring& path) {
         start = next + 1;
     }
 
-    const DWORD created = GetFileAttributesW(path.c_str());
+    const DWORD created = GetFileAttributesW(target.c_str());
     return created != INVALID_FILE_ATTRIBUTES && (created & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
 bool DirectoryExists(const std::wstring& path) {
-    const DWORD attrs = GetFileAttributesW(path.c_str());
+    const DWORD attrs = GetFileAttributesW(ExtendedPath(path).c_str());
     return attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY);
 }
 

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<Package IgnorableNamespaces="uap mp rescap build"
+<Package IgnorableNamespaces="uap mp rescap build asmv3"
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  xmlns:build="http://schemas.microsoft.com/developer/appx/2015/build">
+  xmlns:build="http://schemas.microsoft.com/developer/appx/2015/build"
+  xmlns:asmv3="urn:schemas-microsoft-com:asm.v3">
 
   <Identity Name="RaggedyLauncher" Publisher="CN=RaggedyBlueBox" Version="1.0.0.0" ProcessorArchitecture="x64"/>
   <mp:PhoneIdentity PhoneProductId="af61ef29-17c0-41c0-83d7-a81ffe91bd02" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
@@ -14,6 +15,12 @@
     <PublisherDisplayName>RaggedyBlueBox</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
+
+  <asmv3:application>
+    <asmv3:windowsSettings xmlns:ws2="http://schemas.microsoft.com/SMI/2016/WindowsSettings">
+      <ws2:longPathAware>true</ws2:longPathAware>
+    </asmv3:windowsSettings>
+  </asmv3:application>
 
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.15063.0" MaxVersionTested="10.0.26100.0"/>

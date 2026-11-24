@@ -88,6 +88,13 @@ try {
     Require-Contains $profileSource 'L"legacy4j", L"raggedy", L"controlify"' 'Legacy4J controller fallback source'
     $sdlBuildSource = Get-Content -LiteralPath (Join-Path $root 'sdl3_uwp/build_sdl3.ps1') -Raw
     Require-Contains $sdlBuildSource 'SDL_MainIsReady' 'UWP SDL3 main-ready patch source'
+    $manifestSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/Package.appxmanifest') -Raw
+    Require-Contains $manifestSource 'ws2:longPathAware' 'Long path manifest'
+    $commonSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/common/launcher_common.cpp') -Raw
+    Require-Contains $commonSource 'ExtendedPath' 'Extended path support source'
+    $modpackSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/mods/modpack_io.cpp') -Raw
+    Require-Contains $modpackSource 'ExtendedPath(path)' 'Modpack long path extraction source'
+    Require-Contains $modpackSource 'CreateFileW' 'Modpack long path extraction source'
     foreach ($inputFile in @(
         @{ Source = $CatalogPath; Relative = 'runtime/version_catalog.tsv' },
         @{ Source = (Join-Path $root 'config/recommended-mods.json'); Relative = 'runtime/recommended-mods.json' },
