@@ -49,10 +49,9 @@ if ($head -ne $commit) {
 
 $sdlCPath = Join-Path $sourceDir 'src\SDL.c'
 $sdlCSource = [IO.File]::ReadAllText($sdlCPath)
-$mainReadyPattern = '(?m)^#ifdef SDL_MAIN_NEEDED\r?\nstatic bool SDL_MainIsReady = false;\r?\n#else\r?\nstatic bool SDL_MainIsReady = true;\r?\n#endif$'
-if ([regex]::IsMatch($sdlCSource, $mainReadyPattern)) {
+if ($sdlCSource.Contains('static bool SDL_MainIsReady = false;')) {
     Write-Host "Patching SDL3-UWP main-ready behavior..."
-    $sdlCSource = [regex]::Replace($sdlCSource, $mainReadyPattern, 'static bool SDL_MainIsReady = true;')
+    $sdlCSource = $sdlCSource.Replace('static bool SDL_MainIsReady = false;', 'static bool SDL_MainIsReady = true;')
     [IO.File]::WriteAllText($sdlCPath, $sdlCSource)
 } elseif (-not $sdlCSource.Contains('static bool SDL_MainIsReady = true;')) {
     throw "Could not apply SDL3-UWP main-ready patch."
