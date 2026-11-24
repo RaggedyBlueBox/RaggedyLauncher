@@ -56,7 +56,7 @@ Remove-Item -Recurse -Force $buildDir,$installDir -ErrorAction SilentlyContinue
 Ensure-Dir $buildDir
 Ensure-Dir $installDir
 
-& $cmake.Source -S $sourceDir -B $buildDir -A "x64,version=$sdkVersion" -DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0 -DWINDOWS_STORE=ON -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_EXAMPLES=OFF -DSDL_INSTALL=ON
+& $cmake.Source -S $sourceDir -B $buildDir -G "Visual Studio 18 2026" -A "x64,version=$sdkVersion" "-DCMAKE_SYSTEM_NAME=WindowsStore" "-DCMAKE_SYSTEM_VERSION=10.0" "-DWINDOWS_STORE=ON" "-DSDL_SHARED=ON" "-DSDL_STATIC=OFF" "-DSDL_TESTS=OFF" "-DSDL_TEST_LIBRARY=OFF" "-DSDL_EXAMPLES=OFF" "-DSDL_INSTALL=ON"
 if ($LASTEXITCODE -ne 0) { throw "SDL3-UWP CMake configuration failed." }
 
 & $cmake.Source --build $buildDir --config Release
