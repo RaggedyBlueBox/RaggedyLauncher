@@ -13,7 +13,7 @@ $sourceDir = Join-Path $cacheRoot "src"
 $buildDir = Join-Path $cacheRoot "build"
 $installDir = Join-Path $cacheRoot "install"
 $stampPath = Join-Path $cacheRoot "build.stamp"
-$stamp = "SDL3-UWP|$commit|x64|WindowsStore|10.0|mainready"
+$stamp = "SDL3-UWP|$commit|x64|WindowsStore|10.0|mainready|wgl"
 
 if (-not $OutputDir) {
     $OutputDir = Join-Path (Get-ConfigPath "BuildDir") "sdl3-uwp"
@@ -55,6 +55,70 @@ if ($sdlCSource.Contains('static bool SDL_MainIsReady = false;')) {
     [IO.File]::WriteAllText($sdlCPath, $sdlCSource)
 } elseif (-not $sdlCSource.Contains('static bool SDL_MainIsReady = true;')) {
     throw "Could not apply SDL3-UWP main-ready patch."
+}
+
+$winrtVideoPath = Join-Path $sourceDir 'src\video\winrt\SDL_winrtvideo.cpp'
+$winrtVideoLines = [IO.File]::ReadAllLines($winrtVideoPath)
+$glStart = -1
+for ($i = 0; $i -lt ($winrtVideoLines.Length - 1); $i++) {
+    if ($winrtVideoLines[$i] -eq '#ifdef SDL_VIDEO_OPENGL_EGL' -and
+        $winrtVideoLines[$i + 1] -match 'WIN(RT_GLES|GL)_LoadLibrary') {
+        $glStart = $i
+        break
+    }
+}
+if ($glStart -lt 0) { throw "Could not locate WinRT SDL OpenGL dispatch." }
+if ($winrtVideoLines[$glStart + 1] -match 'WINRT_GLES_LoadLibrary') {
+    Write-Host "Patching SDL3-UWP WinRT GL dispatch to WGL..."
+    $glEnd = $glStart
+    while ($glEnd -lt $winrtVideoLines.Length -and $winrtVideoLines[$glEnd] -ne '#endif') { $glEnd++ }
+    if ($glEnd -ge $winrtVideoLines.Length) { throw "Could not locate WinRT SDL OpenGL dispatch end." }
+    $wglDispatch = @(
+        '#ifdef SDL_VIDEO_OPENGL_WGL',
+        '    device->GL_LoadLibrary = WIN_GL_LoadLibrary;',
+        '    device->GL_GetProcAddress = WIN_GL_GetProcAddress;',
+        '    device->GL_UnloadLibrary = WIN_GL_UnloadLibrary;',
+        '    device->GL_CreateContext = WIN_GL_CreateContext;',
+        '    device->GL_MakeCurrent = WIN_GL_MakeCurrent;',
+        '    device->GL_SetSwapInterval = WIN_GL_SetSwapInterval;',
+        '    device->GL_GetSwapInterval = WIN_GL_GetSwapInterval;',
+        '    device->GL_SwapWindow = WIN_GL_SwapWindow;',
+        '    device->GL_DestroyContext = WIN_GL_DestroyContext;',
+        '#elif SDL_VIDEO_OPENGL_EGL',
+        '    device->GL_LoadLibrary = WINRT_GLES_LoadLibrary;',
+        '    device->GL_GetProcAddress = WINRT_GLES_GetProcAddress;',
+        '    device->GL_UnloadLibrary = WINRT_GLES_UnloadLibrary;',
+        '    device->GL_CreateContext = WINRT_GLES_CreateContext;',
+        '    device->GL_MakeCurrent = WINRT_GLES_MakeCurrent;',
+        '    device->GL_SetSwapInterval = WINRT_GLES_SetSwapInterval;',
+        '    device->GL_GetSwapInterval = WINRT_GLES_GetSwapInterval;',
+        '    device->GL_SwapWindow = WINRT_GLES_SwapWindow;',
+        '    device->GL_DestroyContext = WINRT_GLES_DestroyContext;',
+        '#endif'
+    )
+    $beforeDispatch = @($winrtVideoLines[0..($glStart - 1)])
+    $afterDispatch = if ($glEnd + 1 -lt $winrtVideoLines.Length) { @($winrtVideoLines[($glEnd + 1)..($winrtVideoLines.Length - 1)]) } else { @() }
+    $winrtVideoLines = $beforeDispatch + $wglDispatch + $afterDispatch
+    [IO.File]::WriteAllLines($winrtVideoPath, $winrtVideoLines)
+} elseif ($winrtVideoLines[$glStart + 1] -notmatch 'WIN_GL_LoadLibrary') {
+    throw "Could not apply SDL3-UWP WGL dispatch patch."
+}
+
+$windowsGlPath = Join-Path $sourceDir 'src\video\windows\SDL_windowsopengl.c'
+$windowsGlLines = [IO.File]::ReadAllLines($windowsGlPath)
+if (-not ($windowsGlLines | Where-Object { $_.Contains("SDL_strchr(path, ':')") })) {
+    $glLoadLine = -1
+    for ($i = 0; $i -lt ($windowsGlLines.Length - 4); $i++) {
+        if ($windowsGlLines[$i] -eq 'bool WIN_GL_LoadLibrary(SDL_VideoDevice *_this, const char *path)' -and
+            $windowsGlLines[$i + 4] -eq '    if (path == NULL) {') {
+            $glLoadLine = $i + 4
+            break
+        }
+    }
+    if ($glLoadLine -lt 0) { throw "Could not apply SDL3-UWP WGL loader patch." }
+    Write-Host "Patching SDL3-UWP WGL loader to use the package-relative OpenGL hint..."
+    $windowsGlLines[$glLoadLine] = '    if ((path == NULL) || (SDL_strchr(path, '':'') != NULL)) {'
+    [IO.File]::WriteAllLines($windowsGlPath, $windowsGlLines)
 }
 
 if ((Test-Path $dllPath) -and (Test-Path $stampPath) -and ([IO.File]::ReadAllText($stampPath).Trim() -eq $stamp)) {

@@ -103,6 +103,9 @@ try {
     Require-Contains $browserSource 'EnsureDefaultModpackInstalled' 'Default modpack installer source'
     $sdlBuildSource = Get-Content -LiteralPath (Join-Path $root 'sdl3_uwp/build_sdl3.ps1') -Raw
     Require-Contains $sdlBuildSource 'SDL_MainIsReady' 'UWP SDL3 main-ready patch source'
+    Require-Contains $sdlBuildSource 'device->GL_LoadLibrary = WIN_GL_LoadLibrary;' 'UWP SDL3 WGL dispatch patch source'
+    Require-Contains $sdlBuildSource 'SDL_strchr(path, '':'')' 'UWP SDL3 WGL loader patch source'
+    Require-Contains $sdlBuildSource 'mainready|wgl' 'UWP SDL3 WGL build stamp'
     $manifestSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/Package.appxmanifest') -Raw
     Require-Contains $manifestSource 'ws2:longPathAware' 'Long path manifest'
     $commonSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/common/launcher_common.cpp') -Raw

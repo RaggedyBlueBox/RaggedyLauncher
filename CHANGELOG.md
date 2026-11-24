@@ -12,7 +12,7 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 ### Fixed
 
-**26.3 now points RenderPearl/SDL at the packaged Mesa OpenGL library.** LWJGL gets the absolute `opengl32.dll` path, while SDL gets the package-relative `graphics/<runtime>/opengl32.dll` hint required by UWP `LoadPackagedLibrary`; the legacy GLFW override is skipped for 26.3. Vulkan remains open work rather than a hidden or claimed option.
+**26.3 now uses the packaged Mesa WGL bridge.** LWJGL gets the absolute `opengl32.dll` path, SDL gets the package-relative `graphics/<runtime>/opengl32.dll` hint, and the SDL UWP build prefers WGL over EGL and ignores absolute caller paths rejected by `LoadPackagedLibrary`. Vulkan remains open work rather than a hidden or claimed option.
 
 **Existing profiles migrate into the simplified layout.** Old controller fields are ignored, built-in names are normalized to Simply Legacy and Re-Console, and the two built-ins stay first in the profile list.
 
