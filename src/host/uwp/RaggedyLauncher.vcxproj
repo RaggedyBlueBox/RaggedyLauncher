@@ -39,9 +39,6 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CPP.targets" />
-  </ImportGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -70,6 +67,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <CompileAsWinRT>false</CompileAsWinRT>
       <AdditionalIncludeDirectories>$(ProjectDir);..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;WIN32_LEAN_AND_MEAN;WINRT_LEAN_AND_MEAN;WINAPI_FAMILY=WINAPI_FAMILY_APP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/bigobj /await /permissive- %(AdditionalOptions)</AdditionalOptions>
@@ -86,6 +84,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <CompileAsWinRT>false</CompileAsWinRT>
       <AdditionalIncludeDirectories>$(ProjectDir);..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;WIN32_LEAN_AND_MEAN;WINRT_LEAN_AND_MEAN;WINAPI_FAMILY=WINAPI_FAMILY_APP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/bigobj /await /permissive- %(AdditionalOptions)</AdditionalOptions>
@@ -128,9 +127,13 @@
     <ClCompile Include="..\..\src\mods\mod_source.cpp" />
     <ClCompile Include="..\..\src\mods\safety.cpp" />
     <ClCompile Include="..\..\src\performance\options.cpp" />
-    <ClCompile Include="..\..\src\remote\session.cpp" />
+    <ClCompile Include="..\..\src\remote\session.cpp">
+      <ObjectFileName>$(IntDir)remote_session.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\src\runtime\launch_plan_builder.cpp" />
-    <ClCompile Include="..\..\src\runtime\session.cpp" />
+    <ClCompile Include="..\..\src\runtime\session.cpp">
+      <ObjectFileName>$(IntDir)runtime_session.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\src\storage\profile_store.cpp" />
     <ClCompile Include="..\..\src\storage\settings.cpp" />
     <ClCompile Include="..\..\src\ui\device_code_view.cpp" />
