@@ -50,3 +50,15 @@ Follow the steps in `docs/AUTH-STRATEGY.md`. Use **Personal Microsoft accounts o
 The launcher verifies ownership before any target manifest is read or download is queued. The process bridge receives JSON with an `arguments` array and must return JSON with `exit_code` and `output` fields. Tokens and account identifiers are never logged.
 
 The sign-in page uses the portable device-code view model and draws a QR matrix for the Microsoft link page.
+
+## Automated release and Xbox deploy
+
+`RaggedyLauncher.sln` and `RaggedyLauncher.vcxproj` build only this independent source tree. The `independent-xbox-release` workflow restores C++/WinRT, builds `Release|x64`, signs the APPX with a generated certificate, writes a SHA-256 hash, creates a GitHub release, and deploys through Xbox Device Portal.
+
+Add these repository secrets before running the workflow:
+
+- `XDP_HOST`: Device Portal host and port, such as `192.168.1.10:11443`.
+- `XDP_USER`: Device Portal username.
+- `XDP_PASS`: Device Portal password.
+
+Manual runs use the `independent-xbox-release` workflow with release and deploy enabled by default. Pushing a `v*` tag also releases and deploys.

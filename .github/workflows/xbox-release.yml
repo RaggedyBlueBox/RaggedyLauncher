@@ -1,0 +1,127 @@
+name: independent-xbox-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: Create a GitHub release
+        type: boolean
+        default: true
+      deploy:
+        description: Deploy to Xbox Device Portal
+        type: boolean
+        default: true
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release-deploy:
+    runs-on: windows-2022
+    env:
+      CERT_PASSWORD: raggedy-independent-signing
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: '[17.0,18.0)'
+
+      - name: Restore C++/WinRT
+        shell: pwsh
+        run: nuget restore src/host/uwp/packages.config -PackagesDirectory packages
+
+      - name: Create signing certificate
+        shell: pwsh
+        run: |
+          $artifacts = Join-Path $env:GITHUB_WORKSPACE 'artifacts'
+          New-Item -ItemType Directory -Force -Path $artifacts | Out-Null
+          $password = ConvertTo-SecureString -String $env:CERT_PASSWORD -AsPlainText -Force
+          $cert = New-SelfSignedCertificate -Type Custom -Subject 'CN=Yaro' -KeyUsage DigitalSignature -FriendlyName 'Raggedy Launcher Independent' -CertStoreLocation 'Cert:\CurrentUser\My' -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
+          Export-PfxCertificate -Cert $cert -FilePath 'src/host/uwp/RaggedyLauncher_TemporaryKey.pfx' -Password $password | Out-Null
+          Export-Certificate -Cert $cert -FilePath (Join-Path $artifacts 'RaggedyLauncher.cer') -Type CERT | Out-Null
+
+      - name: Build APPX
+        shell: pwsh
+        run: |
+          $artifacts = Join-Path $env:GITHUB_WORKSPACE 'artifacts'
+          & msbuild 'src/host/uwp/RaggedyLauncher.vcxproj' /m /p:Configuration=Release /p:Platform=x64 /p:AppxBundle=Never /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false "/p:AppxPackageDir=$artifacts\"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $appx = Get-ChildItem -Path $artifacts -Filter '*.appx' -Recurse | Select-Object -First 1
+          if (-not $appx) { throw 'APPX was not produced.' }
+          "APPX_PATH=$($appx.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Sign APPX and write hash
+        shell: pwsh
+        run: |
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' | Sort-Object { [version]$_.Directory.Name } -Descending | Select-Object -First 1
+          if (-not $signtool) { throw 'signtool.exe was not found.' }
+          & $signtool.FullName sign /fd SHA256 /f 'src/host/uwp/RaggedyLauncher_TemporaryKey.pfx' /p $env:CERT_PASSWORD $env:APPX_PATH
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $hash = Get-FileHash -Algorithm SHA256 -Path $env:APPX_PATH
+          "$($hash.Hash.ToLower())  $([IO.Path]::GetFileName($env:APPX_PATH))" | Set-Content "$($env:APPX_PATH).sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: independent-appx
+          path: |
+            artifacts/**/*.appx
+            artifacts/**/*.appx.sha256
+            artifacts/**/*.cer
+          if-no-files-found: error
+
+      - name: Create release
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.ref_type == 'tag' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v0.1.{0}', github.run_number) }}
+          name: Raggedy Launcher Independent ${{ github.ref_type == 'tag' && github.ref_name || format('v0.1.{0}', github.run_number) }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/**/*.appx
+            artifacts/**/*.appx.sha256
+            artifacts/**/*.cer
+
+      - name: Deploy to Xbox
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy) || github.ref_type == 'tag' }}
+        shell: pwsh
+        env:
+          XDP_HOST: ${{ secrets.XDP_HOST }}
+          XDP_USER: ${{ secrets.XDP_USER }}
+          XDP_PASS: ${{ secrets.XDP_PASS }}
+        run: |
+          if (-not $env:XDP_HOST -or -not $env:XDP_USER -or -not $env:XDP_PASS) { throw 'Xbox Device Portal secrets are missing.' }
+          $base = "https://$($env:XDP_HOST)"
+          function Invoke-Xdp {
+            param([string[]]$Arguments)
+            $raw = & curl.exe -k -sS -u "$($env:XDP_USER):$($env:XDP_PASS)" @Arguments -w "`n%{http_code}"
+            $code = [int](($raw | Select-Object -Last 1))
+            $body = (($raw | Select-Object -SkipLast 1) -join "`n")
+            return [pscustomobject]@{ Code = $code; Body = $body }
+          }
+          $cer = Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'artifacts') -Filter '*.cer' -Recurse | Select-Object -First 1
+          if ($cer) { $null = Invoke-Xdp @('-F', "certificate=@$($cer.FullName)", "$base/api/app/packagemanager/certificate") }
+          $appxName = [IO.Path]::GetFileName($env:APPX_PATH)
+          $install = Invoke-Xdp @('-F', "package=@$($env:APPX_PATH)", "$base/api/app/packagemanager/package?package=$appxName")
+          if ($install.Code -lt 200 -or $install.Code -ge 300) { throw "Install request failed: $($install.Code) $($install.Body)" }
+          $done = $false
+          for ($i = 0; $i -lt 90; $i++) {
+            $state = Invoke-Xdp @("$base/api/app/packagemanager/state")
+            if ($state.Code -eq 200) { $done = $true; break }
+            if ($state.Code -ne 204 -and $state.Code -ne 404) { throw "Install state failed: $($state.Code) $($state.Body)" }
+            Start-Sleep -Seconds 5
+          }
+          if (-not $done) { throw 'Install did not finish in time.' }
+          $packagesRaw = & curl.exe -k -sS -u "$($env:XDP_USER):$($env:XDP_PASS)" "$base/api/app/packagemanager/packages"
+          $packages = $packagesRaw | ConvertFrom-Json
+          $target = $packages.InstalledPackages | Where-Object { $_.PackageFullName -like '*RaggedyLauncher*' -or $_.PackageFamilyName -like '*RaggedyLauncher*' } | Select-Object -First 1
+          if (-not $target) { throw 'Independent Raggedy Launcher was not found after install.' }
+          $aumid = [uri]::EscapeDataString([Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($target.PackageRelativeId)))
+          $package = [uri]::EscapeDataString([Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($target.PackageFullName)))
+          $launch = Invoke-Xdp @('-X', 'POST', "$base/api/taskmanager/app?appid=$aumid&package=$package")
+          if ($launch.Code -lt 200 -or $launch.Code -ge 300) { throw "Launch failed: $($launch.Code) $($launch.Body)" }
+          $target | Format-List Name, PackageFullName, PackageFamilyName, Version

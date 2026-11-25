@@ -32,3 +32,4 @@ Ideas and general behavior are allowed. Copied expression is not.
 - 2026-11-25: completed the portable graphics layer with window, context, resource, capability, extension, and translation validation.
 - 2026-11-25: added mod source sanitization, `.mrpack` validation, and reversible performance options.
 - 2026-11-25: set personal Microsoft accounts to the `consumers` tenant and documented app registration setup.
+- 2026-11-25: added an original UWP solution, C++/WinRT project, signed APPX release, and Xbox Device Portal deploy workflow.
