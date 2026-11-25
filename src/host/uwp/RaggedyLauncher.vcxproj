@@ -19,7 +19,6 @@
     <ApplicationType>Windows Store</ApplicationType>
     <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
     <AppContainerApplication>true</AppContainerApplication>
-    <CppWinRTEnabled>true</CppWinRTEnabled>
     <DefaultLanguage>en-US</DefaultLanguage>
     <EntryPointProjectUniqueName>RaggedyLauncher.vcxproj</EntryPointProjectUniqueName>
   </PropertyGroup>
