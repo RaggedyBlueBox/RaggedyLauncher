@@ -11,6 +11,7 @@ add_library(raggedy_core
     src/core/version.cpp
     src/core/profile.cpp
     src/core/json.cpp
+    src/core/paths.cpp
     src/catalog/catalog.cpp
     src/catalog/built_in.cpp
     src/auth/device_code.cpp
@@ -18,6 +19,10 @@ add_library(raggedy_core
     src/runtime/launch_plan_builder.cpp
     src/runtime/session.cpp
     src/mods/mod_plan.cpp
+    src/mods/safety.cpp
+    src/mods/mod_source.cpp
+    src/mods/mod_pack.cpp
+    src/performance/options.cpp
     src/controller/navigation.cpp
     src/graphics/translation.cpp
     src/graphics/layer.cpp

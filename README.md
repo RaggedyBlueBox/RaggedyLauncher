@@ -17,6 +17,8 @@ Independent implementation phase:
 - Original device-code view model with a scannable QR matrix and copyable user code.
 - Original UWP host with a TV-friendly sign-in page, main menu, version screen, and generated app assets.
 - UWP services for HTTP, local state files, SHA-256, a steady clock, and redacted debug logging.
+- Mod source result parsing, filtering, sanitization, and `.mrpack` import/export validation.
+- Performance options with explicit overwrite, conflict reporting, managed-file tracking, and restore paths.
 - Target manifests with SHA-256 hashes drive downloads and launch arguments; no URLs or hashes are fabricated by the launcher.
 - Game launch uses a configured loopback process bridge with an explicit request and response schema.
 - Portable graphics layer that validates window, context, resource, capability, and OpenGL/Vulkan-to-Direct3D translation plans; native backends remain host work.

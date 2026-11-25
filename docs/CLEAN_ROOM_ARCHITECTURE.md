@@ -625,4 +625,7 @@ Before each commit:
 - The original UWP host has a device-code page, main menu, version screen, and platform services for HTTP, local state files, SHA-256, clock, and redacted logging.
 - Game launch uses a configured loopback process bridge; no process escape or hidden launch path exists.
 - The portable graphics layer validates window, context, resource, capability, extension, and translation plans without claiming native backend support.
+- Mod source results are sanitized, filtered by game version and loader, and converted into managed selections; unsafe file names and URLs are rejected.
+- `.mrpack` import and export use relative paths, HTTPS URLs, and SHA-256 hashes with optional files kept separate.
+- Performance options use explicit overwrite, report foreign-owner conflicts, and restore only files owned by this feature.
 - Focused tests and fresh CI cover the portable codebase.

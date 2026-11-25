@@ -30,3 +30,4 @@ Ideas and general behavior are allowed. Copied expression is not.
 - 2026-11-25: added independent version, profile, catalog, device-code, UI view, QR, and graphics translation modules.
 - 2026-11-25: added original UWP host skeleton, TV-friendly sign-in page, generated app assets, and portable-core CI.
 - 2026-11-25: completed the portable graphics layer with window, context, resource, capability, extension, and translation validation.
+- 2026-11-25: added mod source sanitization, `.mrpack` validation, and reversible performance options.

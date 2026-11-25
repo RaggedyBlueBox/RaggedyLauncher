@@ -6,7 +6,10 @@
 #include "raggedy/diagnostics/report.hpp"
 #include "raggedy/download/queue.hpp"
 #include "raggedy/graphics/layer.hpp"
+#include "raggedy/mods/mod_pack.hpp"
 #include "raggedy/mods/mod_plan.hpp"
+#include "raggedy/mods/mod_source.hpp"
+#include "raggedy/performance/options.hpp"
 #include "raggedy/platform/interfaces.hpp"
 #include "raggedy/remote/session.hpp"
 #include "raggedy/runtime/launch_plan_builder.hpp"
@@ -15,6 +18,7 @@
 #include "raggedy/storage/settings.hpp"
 #include "raggedy/ui/screen_models.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <map>
@@ -447,6 +451,79 @@ int main()
     context.source = raggedy::graphics::ApiFamily::opengl;
     context.extensions.push_back("GL_TEST_extension");
     assert(!raggedy::graphics::valid_context_config(context, graphics_error));
+
+    const std::string mod_hash = "1111111111111111111111111111111111111111111111111111111111111111";
+    const std::string mod_json = R"({"hits":[{"id":"mod-one","name":"<Example> Mod","summary":"A test mod","icon_url":"https://example.invalid/icon.png","file_name":"mod-one.jar","version_id":"1.0","game_version":"1.21","loader":"fabric","download_url":"https://example.invalid/mod.jar","sha256":")" + mod_hash + R"(","optional":false,"manual_download":false},{"id":"unsafe","name":"Unsafe","file_name":"../escape.jar","version_id":"1.0","game_version":"1.21","loader":"fabric"}]})";
+    raggedy::core::JsonValue mod_payload;
+    std::string mod_error;
+    assert(raggedy::core::parse_json(mod_json, mod_payload));
+    const auto mod_results = raggedy::mods::parse_source_results(mod_payload, mod_error);
+    assert(mod_results.size() == 1);
+    assert(mod_results.front().name.find("Example") != std::string::npos);
+    assert(raggedy::mods::filter_results(mod_results, "1.21", "fabric").size() == 1);
+    assert(raggedy::mods::filter_results(mod_results, "1.21", "forge").empty());
+    assert(raggedy::mods::result_labels(mod_results).front().find(L"fabric") != std::wstring::npos);
+    assert(raggedy::mods::to_selections(mod_results).front().source == raggedy::mods::ModSource::modrinth);
+    raggedy::mods::ModResult unsafe_result;
+    unsafe_result.id = "unsafe";
+    unsafe_result.name = "Unsafe";
+    unsafe_result.version_id = "1";
+    unsafe_result.file_name = "../escape.jar";
+    assert(!raggedy::mods::valid_result(unsafe_result, mod_error));
+
+    const std::string pack_hash = "2222222222222222222222222222222222222222222222222222222222222222";
+    const std::string pack_json = R"({"name":"Test Pack","version_id":"1","summary":"A test pack","files":[{"path":"mods/mod-one.jar","url":"https://example.invalid/mod.jar","sha256":")" + pack_hash + R"(","size":12,"optional":false},{"path":"config/settings.txt","url":"https://example.invalid/settings.txt","sha256":")" + mod_hash + R"(","size":3,"optional":true}]})";
+    raggedy::mods::ModPack mod_pack;
+    std::string pack_error;
+    assert(raggedy::mods::parse_mod_pack(pack_json, mod_pack, pack_error));
+    assert(mod_pack.files.size() == 2);
+    assert(raggedy::mods::valid_mod_pack(mod_pack, pack_error));
+    assert(raggedy::mods::mod_pack_paths(mod_pack).size() == 2);
+    assert(raggedy::mods::required_mod_pack_files(mod_pack).size() == 1);
+    const std::string pack_text = raggedy::mods::write_mod_pack(mod_pack);
+    raggedy::mods::ModPack roundtrip_pack;
+    assert(raggedy::mods::parse_mod_pack(pack_text, roundtrip_pack, pack_error));
+    assert(roundtrip_pack.name == "Test Pack");
+    mod_pack.files.front().path = "../escape.jar";
+    assert(!raggedy::mods::valid_mod_pack(mod_pack, pack_error));
+
+    const auto current_options = raggedy::performance::parse_options("maxFps:30\nrenderDistance:4\nvsync:true\n");
+    assert(current_options.size() == 3);
+    const auto kept_plan = raggedy::performance::apply_performance_options(current_options, "balanced", false);
+    assert(kept_plan.valid);
+    const auto kept_max_fps = std::find_if(kept_plan.entries.begin(), kept_plan.entries.end(), [](const auto& entry)
+    {
+        return entry.key == "maxFps";
+    });
+    assert(kept_max_fps != kept_plan.entries.end() && kept_max_fps->value == "30");
+
+    const auto overwrite_plan = raggedy::performance::apply_performance_options(current_options, "balanced", true);
+    assert(overwrite_plan.valid);
+    const auto overwritten_max_fps = std::find_if(overwrite_plan.entries.begin(), overwrite_plan.entries.end(), [](const auto& entry)
+    {
+        return entry.key == "maxFps";
+    });
+    assert(overwritten_max_fps != overwrite_plan.entries.end() && overwritten_max_fps->value == "120");
+    assert(overwritten_max_fps->owner == raggedy::performance::feature_owner());
+    assert(raggedy::performance::render_options(overwrite_plan.entries).find("maxFps:120") != std::string::npos);
+
+    std::vector<raggedy::performance::OptionEntry> foreign_options;
+    foreign_options.push_back({"maxFps", "30", "other"});
+    assert(!raggedy::performance::apply_performance_options(foreign_options, "balanced", true).valid);
+    assert(!raggedy::performance::apply_performance_options(current_options, "unknown", true).valid);
+
+    const std::vector<raggedy::performance::ManagedFile> managed_files{
+        {"options.txt", std::string{raggedy::performance::feature_owner()}},
+        {"shaders/owned.txt", std::string{raggedy::performance::feature_owner()}},
+        {"foreign.txt", "other"}
+    };
+    std::vector<std::string> restore_paths;
+    std::string performance_error;
+    assert(raggedy::performance::restore_defaults(managed_files, raggedy::performance::feature_owner(), restore_paths, performance_error));
+    assert(restore_paths.size() == 2);
+    std::vector<raggedy::performance::ManagedFile> unsafe_files = managed_files;
+    unsafe_files.push_back({"../escape.txt", std::string{raggedy::performance::feature_owner()}});
+    assert(!raggedy::performance::restore_defaults(unsafe_files, raggedy::performance::feature_owner(), restore_paths, performance_error));
 
     return 0;
 }
