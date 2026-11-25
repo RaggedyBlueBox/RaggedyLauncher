@@ -1071,7 +1071,7 @@ function Build-JavaDesktopUwpAwtPatch {
     $desktopPatchSrcDir = Join-Path $desktopPatchDir "src"
     $desktopPatchClassesDir = Join-Path $desktopPatchDir "classes"
     Remove-Item -Recurse -Force $desktopPatchDir -ErrorAction SilentlyContinue
-    Ensure-Dir (Join-Path $desktopPatchSrcDir "sun\awt\windows"), $desktopPatchClassesDir
+    Ensure-Dir (Join-Path $desktopPatchSrcDir "sun\awt\windows"), (Join-Path $desktopPatchSrcDir "java\awt"), $desktopPatchClassesDir
 
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $srcArchive = [System.IO.Compression.ZipFile]::OpenRead($srcZip)
@@ -1083,6 +1083,14 @@ function Build-JavaDesktopUwpAwtPatch {
             $desktopSource = $reader.ReadToEnd()
         } finally {
             $reader.Dispose()
+        }
+        $graphicsEntry = $srcArchive.Entries | Where-Object { $_.FullName -eq "java.desktop/java/awt/GraphicsEnvironment.java" } | Select-Object -First 1
+        if (-not $graphicsEntry) { throw "GraphicsEnvironment.java not found inside $srcZip" }
+        $graphicsReader = [System.IO.StreamReader]::new($graphicsEntry.Open())
+        try {
+            $graphicsSource = $graphicsReader.ReadToEnd()
+        } finally {
+            $graphicsReader.Dispose()
         }
     } finally {
         $srcArchive.Dispose()
@@ -1099,9 +1107,27 @@ function Build-JavaDesktopUwpAwtPatch {
     }
     $desktopSource = $desktopSource.Replace($oldDesktopCall, $newDesktopCall)
 
+    $oldGraphicsCreate = "            GraphicsEnvironment ge = PlatformGraphicsInfo.createGE();"
+    $newGraphicsCreate = @'
+            if (isHeadless()) {
+                return new HeadlessGraphicsEnvironment(new SunGraphicsEnvironment() {
+                    @Override protected int getNumScreens() { return 0; }
+                    @Override protected GraphicsDevice makeScreenDevice(int screennum) { return null; }
+                    @Override public boolean isDisplayLocal() { return true; }
+                });
+            }
+            GraphicsEnvironment ge = PlatformGraphicsInfo.createGE();
+'@
+    if (-not $graphicsSource.Contains($oldGraphicsCreate)) {
+        throw "GraphicsEnvironment.java local graphics environment call target not found for $JavaHome."
+    }
+    $graphicsSource = $graphicsSource.Replace($oldGraphicsCreate, $newGraphicsCreate)
+
     $desktopSourcePath = Join-Path $desktopPatchSrcDir "sun\awt\windows\WDesktopProperties.java"
+    $graphicsSourcePath = Join-Path $desktopPatchSrcDir "java\awt\GraphicsEnvironment.java"
     [System.IO.File]::WriteAllText($desktopSourcePath, $desktopSource)
-    & $javacExe --patch-module "java.desktop=$desktopPatchSrcDir" -d $desktopPatchClassesDir $desktopSourcePath
+    [System.IO.File]::WriteAllText($graphicsSourcePath, $graphicsSource)
+    & $javacExe --patch-module "java.desktop=$desktopPatchSrcDir" -d $desktopPatchClassesDir $desktopSourcePath $graphicsSourcePath
     if ($LASTEXITCODE -ne 0) { throw "Java desktop UWP AWT patch compile failed" }
     Push-Location $desktopPatchClassesDir
     & $runtimeJarExe cf $cacheJar .

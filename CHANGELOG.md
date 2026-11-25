@@ -16,6 +16,8 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 **Simply Legacy is now the permanent default profile.** The launcher restores it as the active profile on every start and seeds its latest modpack automatically, including controller support, without a keyboard or a separate controller bundle toggle. Re-Console remains selectable.
 
+**Headless AWT image drawing no longer crashes modpacks.** Java 21+ initializes the native Win32 graphics environment before honoring `-Djava.awt.headless=true`. The packaged `java.desktop` patch now returns a headless graphics environment first, so skin and resource mods such as BedrockSkins can draw `BufferedImage`s without querying display devices that UWP does not expose.
+
 **Existing profiles migrate into the simplified layout.** Old controller fields are ignored, built-in names are normalized to Simply Legacy and Re-Console, and the two built-ins stay first in the profile list.
 
 ## 2026-11-23

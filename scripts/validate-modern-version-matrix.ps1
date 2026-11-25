@@ -101,6 +101,7 @@ try {
     Require-Contains $launchSource 'org.lwjgl.sdl.libname' 'LWJGL SDL3 library source'
     Require-Contains $launchSource 'org.lwjgl.system.SharedLibraryExtractPath' 'LWJGL shared library extract path source'
     Require-Contains $launchSource '-XX:StackShadowPages=32' '26.3 OpenGL stack shadow pages source'
+    Require-Contains $launchSource '-Djava.awt.headless=true' 'Headless AWT launch source'
     Require-Contains $launchSource 'L"graphics\\" + graphicsRuntime + L"\\opengl32.dll"' 'Package-relative SDL OpenGL hint source'
     Require-Contains $appSource 'SetActiveProfileId(exeDir, kVanillaProfileId)' 'Simply Legacy default profile source'
     Require-Contains $appSource 'EnsureDefaultModpackInstalled' 'Default modpack bootstrap source'
@@ -133,6 +134,8 @@ try {
     $buildSource = Get-Content -LiteralPath (Join-Path $root 'build.ps1') -Raw
     Require-Contains $buildSource 'SDL3-WinRTResources.rc' 'WinRT cursor resource build'
     Require-Contains $buildSource '"$mcResourceRes"' 'WinRT cursor resource link'
+    Require-Contains $buildSource 'java.desktop/java/awt/GraphicsEnvironment.java' 'Headless AWT graphics environment patch build'
+    Require-Contains $buildSource 'HeadlessGraphicsEnvironment(new SunGraphicsEnvironment()' 'Headless AWT graphics environment patch build'
     Require-Contains $launchSource 'PreloadMesaGraphicsStackForSdl' 'Mesa support stack preload source'
     Require-Contains $launchSource 'SDL_VIDEO_DRIVER' 'SDL WinRT video driver source'
     Require-Contains $appSource 'L"mesa_glthread", L"false"' 'Mesa threading stability default'
