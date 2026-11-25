@@ -157,7 +157,7 @@ namespace raggedy::remote
             return true;
         }
 
-        if (value.size() > 6 && value.ends_with(".local"))
+        if (value.size() > 6 && value.compare(value.size() - 6, 6, ".local") == 0)
         {
             const std::string prefix = value.substr(0, value.size() - 6);
             const bool valid_prefix = std::all_of(prefix.begin(), prefix.end(), [](unsigned char c)
