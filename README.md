@@ -12,13 +12,17 @@ Independent implementation phase:
 
 - MIT license for original work.
 - Provenance rules, dependency tracking, architecture, and behavior requirements.
-- Portable C++ core for versions, profiles, catalog filtering, device-code state, and launch planning.
+- Portable C++ core for versions, profiles, catalog filtering, device-code auth, entitlement checks, downloads, launch planning, mod plans, controller navigation, diagnostics, and remote sessions.
+- Official Microsoft device-code request and polling, followed by Xbox Live, XSTS, Minecraft sign-in, and Java Edition ownership verification.
 - Original device-code view model with a scannable QR matrix and copyable user code.
-- Original UWP host skeleton with a TV-friendly sign-in page and generated app assets.
+- Original UWP host with a TV-friendly sign-in page, main menu, version screen, and generated app assets.
+- UWP services for HTTP, local state files, SHA-256, a steady clock, and redacted debug logging.
+- Target manifests with SHA-256 hashes drive downloads and launch arguments; no URLs or hashes are fabricated by the launcher.
+- Game launch uses a configured loopback process bridge with an explicit request and response schema.
 - Graphics translation planning layer for OpenGL or Vulkan concepts mapped to Direct3D.
 - Core tests and CI for the portable code.
 
-The UWP host is a skeleton. Full authentication requests, entitlement verification, downloads, game launch, mod management, and graphics runtime work are not implemented yet.
+An approved Microsoft application ID, target manifests, and a loopback process bridge are required for a live Minecraft session. Diagnostics and telemetry stay off unless enabled by the user.
 
 ## Build and test the core
 
@@ -33,8 +37,8 @@ ctest --test-dir build --output-on-failure
 Without CMake:
 
 ```sh
-g++ -std=c++20 -Iinclude tests/core/test_core.cpp src/core/target.cpp src/core/launch_plan.cpp -o test_core
-./test_core
+clang++ -std=c++20 -Iinclude tests/core/test_full.cpp $(find src -name '*.cpp' -not -path 'src/host/*' -print) -o test_full
+./test_full
 ```
 
 ## Rules

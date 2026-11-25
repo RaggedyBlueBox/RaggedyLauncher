@@ -616,10 +616,12 @@ Before each commit:
 - Which telemetry provider, if any.
 - Whether to add a contributor license agreement, or rely on the MIT license in each contribution.
 
-## Current implementation work
+## Current implementation state
 
-- Expand the portable core with authored catalog, profile, version, and launch-plan modules.
-- Add identity, authentication state, and device-code view models with original UI text.
-- Add platform interfaces for files, processes, HTTP, logging, and graphics.
-- Add an original UWP host skeleton with a device-code sign-in screen.
-- Add focused tests and fresh CI for the independent codebase.
+- Portable catalog, profile, version, launch-plan, download, mod-plan, controller, diagnostics, and remote modules are implemented.
+- Official Microsoft device-code request and polling are implemented with Xbox Live, XSTS, Minecraft sign-in, and Java Edition ownership checks.
+- Downloads use SHA-256 verification and binary writes; target manifests supply every URL, destination, hash, and launch argument.
+- The launcher coordinator gates manifest reads, downloads, and process launch on verified entitlement.
+- The original UWP host has a device-code page, main menu, version screen, and platform services for HTTP, local state files, SHA-256, clock, and redacted logging.
+- Game launch uses a configured loopback process bridge; no process escape or hidden launch path exists.
+- Focused tests and fresh CI cover the portable codebase.
