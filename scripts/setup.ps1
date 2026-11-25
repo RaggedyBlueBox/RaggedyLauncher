@@ -6,11 +6,16 @@ param(
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-if ($MinecraftVersion) { $env:MC_VERSION = $MinecraftVersion }
-if ($FabricLoaderVersion) { $env:FABRIC_LOADER_VERSION = $FabricLoaderVersion }
-if ($AssetIndex) { $env:MC_ASSET_INDEX = $AssetIndex }
+$inheritedMcVersion = $env:MC_VERSION
+$inheritedFabricLoaderVersion = $env:FABRIC_LOADER_VERSION
+$inheritedAssetIndex = $env:MC_ASSET_INDEX
 
-. (Join-Path $PSScriptRoot "common.ps1")
+try {
+    if ($MinecraftVersion) { $env:MC_VERSION = $MinecraftVersion }
+    if ($FabricLoaderVersion) { $env:FABRIC_LOADER_VERSION = $FabricLoaderVersion }
+    if ($AssetIndex) { $env:MC_ASSET_INDEX = $AssetIndex }
+
+    . (Join-Path $PSScriptRoot "common.ps1")
 
 $root = Resolve-RepoRoot
 $gameDir = Get-ConfigPath "GameDir"
@@ -325,4 +330,9 @@ if (-not (Test-JarComplete $remappedJar "net/minecraft/class_310.class")) {
         else { [IO.File]::Move($temp, $remappedJar) }
     } finally { Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue }
 }
-Write-Host "Fabric remapped client ready $remappedJar"
+    Write-Host "Fabric remapped client ready $remappedJar"
+} finally {
+    $env:MC_VERSION = $inheritedMcVersion
+    $env:FABRIC_LOADER_VERSION = $inheritedFabricLoaderVersion
+    $env:MC_ASSET_INDEX = $inheritedAssetIndex
+}
