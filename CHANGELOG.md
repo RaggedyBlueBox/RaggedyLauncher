@@ -12,13 +12,16 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 ### Fixed
 
-**26.3 now uses Bandit's proven Mesa/WGL launch path.** LWJGL gets the absolute `opengl32.dll` path and `org.lwjgl.system.SharedLibraryExtractPath`, SDL gets the package-relative `graphics/<runtime>/opengl32.dll` hint, the Mesa support stack is preloaded before the JVM, and the pinned SDL UWP fork is built with WGL enabled, EGL disabled, the WinRT-aware loader, absolute Mesa path normalization, and the full V7/V8/V9/V12/V13/V14/V15/V16/V17 RenderPearl, input and cursor lifecycle patches. The JVM also gets `-XX:StackShadowPages=32`, matching the official launcher and preventing 26.3's OpenGL resource-reload access violation after unifont loading. Vulkan remains open work rather than a hidden or claimed option.
+**26.3 now uses Bandit's proven Mesa/WGL launch path.** LWJGL gets the absolute `opengl32.dll` path and `org.lwjgl.system.SharedLibraryExtractPath`, SDL gets the package-relative `graphics/<runtime>/opengl32.dll` hint, the Mesa support stack is preloaded before the JVM, and the pinned SDL UWP fork is built with WGL enabled, EGL disabled, the WinRT-aware loader, absolute Mesa path normalization, and the full V7/V8/V9/V12/V13/V14/V15/V16/V17/V18 RenderPearl, input and cursor lifecycle patches.
+ The JVM also gets `-XX:StackShadowPages=32`, matching the official launcher and preventing 26.3's OpenGL resource-reload access violation after unifont loading. Vulkan remains open work rather than a hidden or claimed option.
 
 **Simply Legacy is now the permanent default profile.** The launcher restores it as the active profile on every start and seeds its latest modpack automatically, including controller support, without a keyboard or a separate controller bundle toggle. Re-Console remains selectable.
 
 **Headless AWT image drawing no longer crashes modpacks.** Java 21+ initializes the native Win32 graphics environment before honoring `-Djava.awt.headless=true`. The packaged `java.desktop` patch now returns a headless graphics environment first, so skin and resource mods such as BedrockSkins can draw `BufferedImage`s without querying display devices that UWP does not expose.
 
 **First-boot modpack setup now shows live progress.** Simply Legacy downloads dozens of files, including large texture packs, so a silent progress bar could look stuck. The preparation screen now updates with the current file, byte count, and overall percentage while the pack installs.
+
+**Xbox B no longer flips Minecraft into keyboard input.** UWP delivered controller B to SDL as a synthetic `AC_BACK` keyboard press, which controller mods could mistake for physical keyboard and mouse activity. SDL now leaves shell navigation to the launcher and gamepad B to the controller mod, while real keyboard and mouse input still works normally.
 
 **Existing profiles migrate into the simplified layout.** Old controller fields are ignored, built-in names are normalized to Simply Legacy and Re-Console, and the two built-ins stay first in the profile list.
 

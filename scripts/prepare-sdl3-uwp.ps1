@@ -28,6 +28,7 @@ $inputBridgePatchScript = Join-Path $root "scripts\apply-sdl3-v14-input.ps1"
 $inputContractPatchScript = Join-Path $root "scripts\apply-sdl3-v15-input-contract.ps1"
 $launcherCursorPatchScript = Join-Path $root "scripts\apply-sdl3-v16-launcher-cursor.ps1"
 $softwareCursorPatchScript = Join-Path $root "scripts\apply-sdl3-v17-software-cursor.ps1"
+$backKeyPatchScript = Join-Path $root "scripts\apply-sdl3-v18-back-key.ps1"
 if (-not (Test-Path -LiteralPath $patchPath)) {
     throw "SDL external-host patch is missing: $patchPath"
 }
@@ -57,6 +58,9 @@ if (-not (Test-Path -LiteralPath $launcherCursorPatchScript)) {
 }
 if (-not (Test-Path -LiteralPath $softwareCursorPatchScript)) {
     throw "SDL V17 software-cursor patcher is missing: $softwareCursorPatchScript"
+}
+if (-not (Test-Path -LiteralPath $backKeyPatchScript)) {
+    throw "SDL V18 back-key patcher is missing: $backKeyPatchScript"
 }
 
 # The cache identity is content-addressed. A patch edit, script edit, source commit
@@ -89,6 +93,7 @@ $hashInputs = @(
     "inputContractPatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $inputContractPatchScript).Hash)",
     "launcherCursorPatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $launcherCursorPatchScript).Hash)",
     "softwareCursorPatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $softwareCursorPatchScript).Hash)",
+    "backKeyPatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $backKeyPatchScript).Hash)",
     "script=$((Get-FileHash -Algorithm SHA256 -LiteralPath $PSCommandPath).Hash)"
 ) -join "`n"
 $sha = [System.Security.Cryptography.SHA256]::Create()
@@ -156,6 +161,7 @@ function Assert-SdlRuntimeCompatibility {
         'BanditSDL_WinRTInputContractV15',
         'BanditSDL_WinRTLauncherCursorV16',
         'BanditSDL_WinRTSoftwareCursorV17',
+        'BanditSDL_WinRTBackKeyContractV18',
         'BanditSDL_WinRTAbsoluteLoadFixV1',
         'BanditSDL_WinRTWGLBackendV1',
         'BanditSDL_WinRTSafeWGLInitV1',
@@ -343,12 +349,17 @@ function Patch-ExternalHostSupport {
         if (-not $?) {
             throw "Failed to apply SDL V17 software-cursor patch: $softwareCursorPatchScript"
         }
+
+        & $backKeyPatchScript -SourceRoot $sourceRoot | Out-Host
+        if (-not $?) {
+            throw "Failed to apply SDL V18 back-key patch: $backKeyPatchScript"
+        }
     } finally {
         Pop-Location
     }
 
     [System.IO.File]::WriteAllText($patchStamp, $expectedStamp, (New-Object System.Text.UTF8Encoding($false)))
-    Write-Host "Patched SDL WinRT backend for external CoreWindow hosting + V7 lifecycle/multiwindow + V8 provider parity + V9 stability + V12 RenderPearl + V13/V14/V15 input contract + V16/V17 cursor contract (cache key $cacheKey)."
+    Write-Host "Patched SDL WinRT backend for external CoreWindow hosting + V7 lifecycle/multiwindow + V8 provider parity + V9 stability + V12 RenderPearl + V13/V14/V15 input contract + V16/V17 cursor contract + V18 back-key contract (cache key $cacheKey)."
 }
 
 function Build-SdlRuntime {
