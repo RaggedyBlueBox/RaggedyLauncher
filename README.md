@@ -27,11 +27,11 @@ version, and no silent surprises with your mods, worlds, or login.
 
 What is in this build: a **Version** page in place of Mods, a version list
 limited to the Minecraft versions supported by Simply Legacy and Re-Console,
-automatic download of the newest compatible modpack when you change version,
-and persistent built-in profile selection. Controller look sensitivity is
-fixed at 115%, the performance renderer is always on in lightweight `auto`
-mode, the launcher UI is capped at 30 FPS, and menus use a single-image
-backdrop. See [docs/GRAPHICS-AND-PERFORMANCE.md](docs/GRAPHICS-AND-PERFORMANCE.md)
+selection-only version changes, and persistent built-in profile selection.
+Downloads start when you press **Play**. A performance overwrite applies
+lightweight in-game options and the matched renderer, the launcher UI is capped
+at 30 FPS, and menus use a single-image backdrop. See
+[docs/GRAPHICS-AND-PERFORMANCE.md](docs/GRAPHICS-AND-PERFORMANCE.md)
 and [CHANGELOG.md](CHANGELOG.md).
 
 ---
@@ -73,22 +73,23 @@ APPX packages keep their own local data. Export important worlds through Remote 
 2. Open **Raggedy Launcher**.
 3. When the Microsoft device code appears, open [microsoft.com/link](https://www.microsoft.com/link) on another device. Enter the code and sign in with the account that has Java Edition.
 4. Wait for the launcher to verify the account and Minecraft entitlement.
-5. Open **Version** on the main menu. Simply Legacy is the initial built-in profile; use left/right to switch to Re-Console if you want it. Up/down picks a supported Minecraft version, and **A** applies it. Your built-in profile selection is kept for next time.
-6. Press **Play**. The first launch downloads the game, libraries, assets and loader files for that target. Allow time for this to finish.
+5. Open **Version** on the main menu. Simply Legacy is the initial built-in profile; use left/right to switch to Re-Console if you want it. Up/down picks a supported Minecraft version, and **A** selects it and returns to the menu. Your selection is kept for next time.
+6. Press **Play**. The launcher downloads the game, libraries, assets, loader files and newest compatible modpack for that target. Allow time for this to finish.
 
-Changing the version on the **Version** page downloads the newest compatible modpack for the selected built-in profile. Use **Remote Files** to upload worlds, edit configs, import modpacks or download logs from another device.
+The **Version** page only saves your choice. Use **Remote Files** to upload worlds, edit configs, import modpacks or download logs from another device.
 
 ## Features
 
 - Built-in Simply Legacy and Re-Console profiles whose active selection persists across restarts.
 - A Version page filtered to the Minecraft versions each built-in modpack supports.
-- Newest compatible modpack pulled automatically whenever the version changes.
+- Dynamic stick navigation: holding a direction repeats after a short delay, with keyboard, D-pad and left stick handled the same way.
+- Newest compatible modpack pulled when you press **Play**, not while browsing versions.
 - Custom profiles for separate mod setups on supported catalog targets.
 - Remote Files for managing profiles, worlds and modpack imports through a browser on the local network.
 - Profile backups and restore options, including undoing the last deleted profile.
 - Download repair, current and previous run logs, and crash report ZIPs.
 - Optional crash and usage reporting, and a Credits page, in launcher Settings.
-- Lightweight always-on defaults: 30 FPS launcher UI, single-image menu backdrop and an always-on performance renderer.
+- Lightweight always-on defaults: 30 FPS launcher UI, single-image menu backdrop, performance options overwrite and an always-on renderer.
 
 ## Minecraft versions
 
@@ -103,9 +104,9 @@ Only Fabric 0.20.1 versions supported by the two built-in modpacks are cataloged
 
 ## Mods, modpacks and other content
 
-Choose the built-in profile and launch target on the **Version** page before installing content. Changing the version replaces that profile's managed mods with the newest compatible modpack. Mods must match both the Minecraft version and loader, and must work inside the Xbox UWP sandbox.
+Choose the built-in profile and launch target on the **Version** page before installing content. Pressing **Play** replaces that profile's managed mods with the newest compatible modpack. Mods must match both the Minecraft version and loader, and must work inside the Xbox UWP sandbox.
 
-The launcher keeps lightweight defaults for modpacks: the performance renderer is always applied in `auto` mode, and untested candidates are reported rather than installed. Custom profiles are still available for your own mod setups. Remote Files accepts Modrinth `.mrpack` and CurseForge `.zip` modpacks.
+The launcher applies lightweight performance defaults: matched renderers are installed in overwrite mode and a small set of in-game video options is overwritten for predictable frame times. Metadata matches without on-console testing are labelled as overwrite candidates. Custom profiles are still available for your own mod setups. Remote Files accepts Modrinth `.mrpack` and CurseForge `.zip` modpacks.
 
 **CurseForge needs a personal API key.** Start Remote Files and add it under **Settings**, then select CurseForge in the launcher. Modrinth does not need a key.
 
@@ -115,9 +116,9 @@ Shader packs need a compatible shader loader such as Iris or Oculus in the same 
 
 ## Controller and mouse
 
-Simply Legacy is seeded as the initial built-in profile on first run and gets its controller support from the newest compatible modpack, so play is ready without a keyboard. After that, your selection persists: Re-Console stays active if you choose it. The launcher no longer offers a controller bundle or look sensitivity setting; right-stick sensitivity is permanently 115% and is reseeded on every launch.
+Simply Legacy is seeded as the initial built-in profile on first run and gets its controller support from the newest compatible modpack, so play is ready without a keyboard. After that, your selection persists: Re-Console stays active if you choose it. The launcher no longer offers a controller bundle or look sensitivity setting; controller sensitivity stays at the mod and game defaults and can be changed in the in-game controller settings where available.
 
-Raggedy Launcher accepts a USB mouse directly and also offers an optional browser mouse relay. A relay page is available from the launcher, with companion apps for Windows, Android and iOS. The launcher UI is capped at 30 FPS and uses one backdrop image at a time; in-game framerate is not capped by the launcher. Settings has no menu or game mouse sensitivity rows.
+Raggedy Launcher accepts a USB mouse directly and also offers an optional browser mouse relay. A relay page is available from the launcher, with companion apps for Windows, Android and iOS. The launcher UI is capped at 30 FPS and uses one backdrop image at a time; in-game framerate is not capped by the launcher itself, but the performance overwrite writes a 60 FPS in-game cap. Settings has no menu or game mouse sensitivity rows.
 
 ## Remote Files
 

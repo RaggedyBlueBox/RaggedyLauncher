@@ -30,22 +30,25 @@ The mouse relay does not lag unless you have a bad computer or *really* bad wifi
 You don't need a Game Pass subscription or anything else to play multiplayer. You can hop on any server you wish (ideally with mouse relay and a keyboard).
 
 ## Where do I choose a version?
-Open **Version** from the main menu; it replaces the old Mods entry. Left/right switches between Simply Legacy and Re-Console, up/down picks a version that modpack supports, **A** applies it, and **B** returns. Applying a version downloads the newest compatible modpack for that built-in profile.
+Open **Version** from the main menu; it replaces the old Mods entry. Left/right switches between Simply Legacy and Re-Console, up/down picks a version that modpack supports, and **A** selects it and returns. **B** returns without changing anything. The page never downloads; pressing **Play** downloads the newest compatible modpack for the selected target.
 
 ## Why does the launcher open on Simply Legacy?
 Simply Legacy is seeded as the initial built-in profile on first run only. After that, your built-in profile selection is kept across restarts, so Re-Console stays active once you choose it.
 
 ## Can I change right-stick sensitivity?
-No. Look sensitivity is permanently 115% and the launcher reseeds the controller config at that value on every launch. There is no controller bundle or sensitivity setting in the launcher; use a custom profile if you need your own controller setup and resolve conflicts between mods inside that profile.
+The launcher no longer forces a look-speed value. Controller sensitivity stays at the mod and game defaults; change it in the in-game controller settings where available, or use a custom profile if you need your own controller setup.
 
 ## Can I turn the performance renderer off?
-No. It is always on in lightweight `auto` mode and Settings reports **Always on**. On Xbox, only candidates marked proven are installed; unsupported targets are reported instead of getting untested files.
+No. It is always on in lightweight `auto` mode and Settings reports **Always on**. Matched candidates are installed in overwrite mode, including metadata-only matches that are labelled untested; unsupported targets are reported instead of getting fake entries.
 
 ## How can I change the RAM allocation?
 Unfortunately, you can't allocate more than 3-4 GB of RAM, as this is the max achievable by an XBOX in Developer Mode.
 
+## How does stick navigation work?
+Holding a direction on the D-pad or left stick repeats after a short delay, then keeps moving at a steady rate. A and B still act once per press.
+
 ## Why does the launcher menu look so still?
-The launcher UI is capped at 30 FPS and shows a single backdrop image at a time with no cross-fade. That keeps menu drawing light on console; it does not cap Minecraft's framerate.
+The launcher UI is capped at 30 FPS and shows a single backdrop image at a time with no cross-fade. That keeps menu drawing light on console; the launcher itself does not cap Minecraft's framerate, but the performance overwrite writes a 60 FPS in-game cap.
 
 ## How do I upload worlds?
 Open Raggedy Launcher, start Remote Files, and go to that link and upload your world to the portal.

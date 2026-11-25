@@ -636,7 +636,7 @@ public final class RaggedyControllerSettingsScreen extends class_437 {
         settings.invertY = false;
         settings.showGuides = true;
         settings.keyboardMovement = false;
-        settings.lookSpeed = 115.0f;
+        settings.lookSpeed = 135.0f;
         settings.cursorSpeed = 14.0;
         settings.scrollAmount = 1.0;
         settings.moveDeadzone = 0.35f;
@@ -1131,7 +1131,7 @@ public final class RaggedyControllerSettingsScreen extends class_437 {
         }
     }
 
-    private static final Option LOOK_SPEED = new Option("Look Sensitivity", s -> s.lookSpeed, (s, v) -> s.lookSpeed = (float)v, 30.0, 300.0, 5.0, false);
+    private static final Option LOOK_SPEED = new Option("Look Sensitivity", s -> s.lookSpeed, (s, v) -> s.lookSpeed = (float)v, 30.0, 300.0, 15.0, false);
     private static final Option SNEAK_MODE = new Option("Sneak", s -> s.toggleCrouch ? 1.0 : 0.0, (s, v) -> s.toggleCrouch = v != 0.0);
     private static final Option SPRINT_MODE = new Option("Sprint", s -> s.toggleSprint ? 1.0 : 0.0, (s, v) -> s.toggleSprint = v != 0.0);
 

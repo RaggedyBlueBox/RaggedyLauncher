@@ -34,16 +34,16 @@ Sodium-family performance mods, and what is still untested.
   shader/memory validation before it is exposed.
 - Every launch logs the Minecraft version, loader, graphics runtime, selected
   OpenGL library, and any native-path fallback. No secrets are logged.
-- Mojang's in-game Graphics API preference (including `Default`) is
-  Minecraft-side configuration. The launcher never reads or rewrites the
-  game's video options; pinning the 26.3 option explicitly is open work because
-  the exact key and migration have not been verified on console.
+- Mojang's in-game Graphics API preference (including `Default`) is still
+  Minecraft-side configuration and is not pinned by the launcher. The launcher
+  does overwrite a narrow set of in-game performance options such as frame
+  rate, render distance, graphics mode, clouds and ambient occlusion.
 
 ## Performance renderers
 
 The performance renderer is always on in lightweight `auto` mode. Settings
 shows **Always on** and has no off switch; the launcher applies the policy on
-every launch and immediately after a version change.
+every launch, before Minecraft starts.
 
 - `config/performance-mods.json` names at most one candidate per exact
   Minecraft version and loader, chosen from publisher metadata
@@ -52,11 +52,11 @@ every launch and immediately after a version change.
   instead of a fake entry. The file is packaged as
   `runtime/performance-mods.json` and covered by
   `scripts/validate-modern-version-matrix.ps1`.
-- `auto` installs the candidate only when the matrix marks it `proven` on
-  Xbox. No target is marked proven yet, so today it reports the candidate
-  (or the gap) and installs nothing. Flipping a target to proven requires an
-  on-console test: menus, movement, a save/load cycle, frame times and memory,
-  with Legacy4J present where applicable, and exactly one renderer active.
+- `auto` installs the matched candidate in overwrite mode, including entries
+  that are not marked `proven` on Xbox. Unproven entries are metadata-only
+  matches and are labelled that way; they still need an on-console test with
+  menus, movement, a save/load cycle, frame times and memory, with Legacy4J
+  present where applicable, and exactly one renderer active.
 - Managed files use `perf:<project>` ownership tokens in the generic managed-mod
   sidecar format: only exact launcher-installed versions are
   ever removed, colliding user jars are stashed before replacement and
@@ -70,8 +70,8 @@ every launch and immediately after a version change.
   RenderLib) resolve dynamically at install time. Cleanroom and Xbox
   graphics-stack compatibility are untested.
 - Sodium's publisher notes that OpenGL translation layers are unsupported and
-  may not work. Metadata matches are therefore install candidates only; the
-  `proven` flag is the claim that matters, and it is set only by testing.
+  may not work. Metadata matches are applied in overwrite mode but are not
+  claimed as Xbox-tested; the `proven` flag remains the tested-only claim.
 
 ## Launcher UI cost
 

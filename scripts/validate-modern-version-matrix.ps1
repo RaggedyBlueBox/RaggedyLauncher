@@ -73,6 +73,9 @@ try {
     function Require-Contains([string]$Text, [string]$Needle, [string]$Context) {
         if (-not $Text.Contains($Needle)) { throw "$Context is missing $Needle" }
     }
+    function Require-NotContains([string]$Text, [string]$Needle, [string]$Context) {
+        if ($Text.Contains($Needle)) { throw "$Context must not contain $Needle" }
+    }
     Require-Entry "runtime\version_catalog.tsv"
     Require-Entry "runtime\recommended-mods.json"
     Require-Entry "runtime\performance-mods.json"
@@ -122,11 +125,16 @@ try {
     $controllerSettingsSource = Get-Content -LiteralPath (Join-Path $root 'controller_mod/core/src/main/java/raggedy/controllercore/ControllerSettingsStore.java') -Raw
     Require-Contains $launcherUiSource 'ShowVersionPage' 'Version page source'
     Require-Contains $launcherUiSource 'ShowCreditsPage' 'Credits page source'
+    Require-Contains $launcherUiSource 'Downloads start when you press Play' 'Version page selection-only source'
+    Require-Contains $launcherUiSource 'MenuRepeat' 'Dynamic stick repeat source'
+    Require-NotContains $launcherUiSource 'EnsureDefaultModpackInstalled' 'Version page must not install modpacks'
+    Require-NotContains $launcherUiSource 'ApplyPerformanceMode' 'Version page must not install performance mods'
     Require-Contains $launcherUiSource 'The Raggedy performance renderer is always on' 'Always-on performance renderer UI source'
     Require-Contains $uiStateSource 'showVersionPage' 'Version page state source'
     Require-Contains $uiStateSource 'showCredits' 'Credits page state source'
-    Require-Contains $modDefaultsSource 'lookSpeed=115.0' 'Permanent controller look speed source'
-    Require-Contains $controllerSettingsSource 'public float lookSpeed = 115.0f' 'Permanent controller look speed default'
+    Require-Contains $modDefaultsSource 'ApplyPerformanceOptionsOverwrite' 'Performance options overwrite source'
+    $performanceSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/mods/performance_bundle.cpp') -Raw
+    Require-Contains $performanceSource 'overwrite mode' 'Performance renderer overwrite source'
     $sdlPrepareSource = Get-Content -LiteralPath (Join-Path $root 'scripts/prepare-sdl3-uwp.ps1') -Raw
     $sdlPatchSource = Get-Content -LiteralPath (Join-Path $root 'patches/sdl3-uwp-external-host.patch') -Raw
     Require-Contains $sdlPrepareSource 'b3852a0076c358f65ee19765e85ef9eded6e50df' 'Pinned UWP SDL3 source'

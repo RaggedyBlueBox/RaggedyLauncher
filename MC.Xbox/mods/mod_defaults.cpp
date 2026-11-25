@@ -686,9 +686,24 @@ static bool DirectoryHasRaggedyController(const std::wstring& modsDir) {
             controllerJar);
 }
 
-static void SeedRaggedyControllerLookSpeed(const std::wstring& gameDir) {
-    const std::wstring path = gameDir + L"\\config\\raggedy-controller.properties";
-    EnsureDirectoryTree(GetParentDir(path));
+static void ApplyPerformanceOptionsOverwrite(const std::wstring& gameDir) {
+    const std::wstring path = gameDir + L"\\options.txt";
+    struct OptionOverride {
+        const wchar_t* key;
+        const wchar_t* value;
+    };
+    static const OptionOverride overrides[] = {
+        { L"maxFps", L"60" },
+        { L"vsync", L"false" },
+        { L"renderDistance", L"8" },
+        { L"simulationDistance", L"8" },
+        { L"entityDistance", L"50.0" },
+        { L"graphicsMode", L"fast" },
+        { L"fancyGraphics", L"false" },
+        { L"ao", L"0" },
+        { L"clouds", L"0" },
+        { L"guiScale", L"0" },
+    };
     std::wstring body;
     std::vector<std::wstring> lines;
     if (ReadTextFile(path, body)) {
@@ -702,20 +717,28 @@ static void SeedRaggedyControllerLookSpeed(const std::wstring& gameDir) {
             start = end + 1;
         }
     }
-    bool found = false;
-    for (std::wstring& line : lines) {
-        if (line.rfind(L"lookSpeed=", 0) == 0) {
-            line = L"lookSpeed=115.0";
-            found = true;
+    for (const OptionOverride& option : overrides) {
+        const std::wstring prefix = std::wstring(option.key) + L":";
+        bool found = false;
+        for (std::wstring& line : lines) {
+            if (line.rfind(prefix, 0) == 0) {
+                line = prefix + option.value;
+                found = true;
+                break;
+            }
         }
+        if (!found) lines.push_back(prefix + option.value);
     }
-    if (!found) lines.push_back(L"lookSpeed=115.0");
     std::wstring output;
     for (const std::wstring& line : lines) {
         output += line;
         output += L'\n';
     }
-    WriteTextFile(path, output);
+    if (WriteTextFile(path, output)) {
+        WriteLogF(L"Performance options overwrite applied: %s", path.c_str());
+    } else {
+        WriteLogF(L"Performance options overwrite failed: %s err=%u", path.c_str(), GetLastError());
+    }
 }
 
 void ConfigureKnownModDefaults(
@@ -723,7 +746,7 @@ void ConfigureKnownModDefaults(
     const std::wstring& userModsDir,
     const std::wstring& minecraftVersion,
     const std::wstring& bundledModsDir) {
-    SeedRaggedyControllerLookSpeed(gameDir);
+    ApplyPerformanceOptionsOverwrite(gameDir);
     PatchMoonlightPoiMixin(gameDir, userModsDir, minecraftVersion);
     ConfigureSodiumDefaults(gameDir, userModsDir, minecraftVersion);
     ConfigureDistantHorizonsDefaults(gameDir, userModsDir);

@@ -232,6 +232,33 @@ static void WaitForMenuKeysReleased(ICoreWindow* window, AuthScreenRenderer* ren
     }
 }
 
+namespace {
+class MenuRepeat {
+public:
+    bool Pressed(bool down) {
+        const ULONGLONG now = GetTickCount64();
+        const bool edge = down && !wasDown_;
+        bool repeat = false;
+        if (down) {
+            if (edge) {
+                nextRepeat_ = now + 300;
+            } else if (now >= nextRepeat_) {
+                repeat = true;
+                nextRepeat_ = now + 100;
+            }
+        } else {
+            nextRepeat_ = 0;
+        }
+        wasDown_ = down;
+        return edge || repeat;
+    }
+
+private:
+    bool wasDown_ = false;
+    ULONGLONG nextRepeat_ = 0;
+};
+}  // namespace
+
 static std::wstring CrashHeadline(const telemetry::CrashRecord& record) {
     if (record.repeatCount >= 3) {
         return TrFormat(L"Minecraft has crashed {0} launches in a row", { std::to_wstring(record.repeatCount) });
@@ -633,42 +660,22 @@ static void ShowCreditsPage(ICoreWindow* window, AuthScreenRenderer* renderer, A
     state.showSettings = returnToSettings;
 }
 
-static void ApplySelectedVersion(AuthScreenRenderer* renderer, AuthUiState& state, const std::wstring& runtimeRoot) {
+static void ApplySelectedVersion(AuthUiState& state, const std::wstring& runtimeRoot) {
     if (state.versionTargets.empty()) return;
     const int selectedRow = state.versionSelected < 0 ? 0 : state.versionSelected;
     const LaunchTarget& target = state.versionTargets[static_cast<size_t>(selectedRow)];
     const std::wstring profileId = state.versionPackSelected == 1
         ? std::wstring(kReConsoleProfileId)
         : std::wstring(kVanillaProfileId);
-    state.status = TrFormat(L"Preparing {0}", { TargetProfileText(target) });
-    state.detail = Tr(L"Downloading the newest compatible modpack");
     state.isError = false;
-    RenderAuth(renderer, state);
     if (!SetActiveProfileId(runtimeRoot, profileId) || !SetProfileTarget(runtimeRoot, profileId, target)) {
         state.status = Tr(L"Version could not be saved");
         state.detail.clear();
         state.isError = true;
         return;
     }
-    std::wstring error;
-    if (!EnsureDefaultModpackInstalled(runtimeRoot, profileId, target, error,
-        [&](const std::wstring& status, double fraction) {
-            state.status = TrFormat(L"Preparing {0}", { TargetProfileText(target) });
-            state.detail = status;
-            (void)fraction;
-            RenderAuth(renderer, state);
-        })) {
-        state.status = Tr(L"Modpack setup failed");
-        state.detail = error;
-        state.isError = true;
-        return;
-    }
-    SetProfilePerfRenderer(runtimeRoot, profileId, L"auto");
-    std::wstring perfStatus;
-    bool perfError = false;
-    ApplyPerformanceMode(runtimeRoot, profileId, L"auto", perfStatus, perfError);
-    state.status = TrFormat(L"{0} ready", { TargetProfileText(target) });
-    state.detail = Tr(L"Press A on Play to start Minecraft");
+    state.status = TrFormat(L"{0} selected", { TargetProfileText(target) });
+    state.detail = Tr(L"Downloads start when you press Play");
     state.isError = false;
 }
 
@@ -676,6 +683,10 @@ static void ShowVersionPage(ICoreWindow* window, AuthScreenRenderer* renderer, A
     const std::wstring& runtimeRoot) {
     state.showMainMenu = false;
     state.showVersionPage = true;
+    state.status.clear();
+    state.detail.clear();
+    state.isError = false;
+    WaitForMenuKeysReleased(window, renderer, state);
     const std::wstring activeProfileId = GetActiveProfileId(runtimeRoot);
     state.versionPackSelected = activeProfileId == kReConsoleProfileId ? 1 : 0;
     std::wstring packProfileId = state.versionPackSelected == 1
@@ -693,10 +704,10 @@ static void ShowVersionPage(ICoreWindow* window, AuthScreenRenderer* renderer, A
         }
     }
 
-    bool upWas = false;
-    bool downWas = false;
-    bool leftWas = false;
-    bool rightWas = false;
+    MenuRepeat upRepeat;
+    MenuRepeat downRepeat;
+    MenuRepeat leftRepeat;
+    MenuRepeat rightRepeat;
     bool selectWas = false;
     bool backWas = false;
     while (true) {
@@ -746,7 +757,11 @@ static void ShowVersionPage(ICoreWindow* window, AuthScreenRenderer* renderer, A
             ABI::Windows::System::VirtualKey_GamepadB
         });
 
-        const bool togglePack = (leftDown && !leftWas) || (rightDown && !rightWas) ||
+        const bool leftPressed = leftRepeat.Pressed(leftDown);
+        const bool rightPressed = rightRepeat.Pressed(rightDown);
+        const bool upPressed = upRepeat.Pressed(upDown);
+        const bool downPressed = downRepeat.Pressed(downDown);
+        const bool togglePack = leftPressed || rightPressed ||
             clicked == 1000 || clicked == 1001;
         if (togglePack && !state.versionTargets.empty()) {
             if (clicked >= 1000) state.versionPackSelected = clicked - 1000;
@@ -760,10 +775,10 @@ static void ShowVersionPage(ICoreWindow* window, AuthScreenRenderer* renderer, A
                 runtimeRoot, GetProfileById(runtimeRoot, packProfileId)).targetId;
         }
         const int rowCount = static_cast<int>(state.versionTargets.size());
-        if (upDown && !upWas && rowCount > 0) {
+        if (upPressed && rowCount > 0) {
             state.versionSelected = (state.versionSelected + rowCount - 1) % rowCount;
         }
-        if (downDown && !downWas && rowCount > 0) {
+        if (downPressed && rowCount > 0) {
             state.versionSelected = (state.versionSelected + 1) % rowCount;
         }
         if ((backDown && !backWas) || clickedBack) break;
@@ -773,14 +788,10 @@ static void ShowVersionPage(ICoreWindow* window, AuthScreenRenderer* renderer, A
             : ((selectDown && !selectWas) ? state.versionSelected : -1);
         if (pressed >= 0 && pressed < rowCount) {
             state.versionSelected = pressed;
-            ApplySelectedVersion(renderer, state, runtimeRoot);
+            ApplySelectedVersion(state, runtimeRoot);
             break;
         }
 
-        upWas = upDown;
-        downWas = downDown;
-        leftWas = leftDown;
-        rightWas = rightDown;
         selectWas = selectDown;
         backWas = backDown;
         std::this_thread::sleep_for(std::chrono::milliseconds(16));
@@ -806,7 +817,7 @@ static void RefreshSettingsPerfNote(AuthUiState& state, const std::wstring& runt
         runtimeRoot, activeId, PerfOwnerToken(selection.candidate.project));
     state.settingsPerfNote = TrFormat(L"{0}{1}{2}",
         { selection.candidate.project,
-            selection.candidate.proven ? std::wstring(L"") : std::wstring(Tr(L" (untested)")),
+            selection.candidate.proven ? std::wstring(L"") : std::wstring(Tr(L" (overwrite)")),
             installed ? std::wstring(Tr(L" installed")) : std::wstring(Tr(L" not installed")) });
 }
 
@@ -836,9 +847,10 @@ static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, 
     themes::Reload();
     state.settingsThemeName = themes::CurrentName();
     RefreshSettingsPerfNote(state, runtimeRoot);
+    WaitForMenuKeysReleased(window, renderer, state);
 
-    bool upWas = false;
-    bool downWas = false;
+    MenuRepeat upRepeat;
+    MenuRepeat downRepeat;
     bool selectWas = false;
     bool backWas = false;
 
@@ -877,10 +889,10 @@ static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, 
             ABI::Windows::System::VirtualKey_GamepadB
         });
 
-        if (upDown && !upWas) {
+        if (upRepeat.Pressed(upDown)) {
             state.settingsSelected = (state.settingsSelected + kSettingsRows - 1) % kSettingsRows;
         }
-        if (downDown && !downWas) {
+        if (downRepeat.Pressed(downDown)) {
             state.settingsSelected = (state.settingsSelected + 1) % kSettingsRows;
         }
 
@@ -983,8 +995,6 @@ static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, 
             }
         }
 
-        upWas = upDown;
-        downWas = downDown;
         selectWas = selectDown;
         backWas = backDown;
         std::this_thread::sleep_for(std::chrono::milliseconds(16));
@@ -1023,8 +1033,8 @@ MainMenuAction ShowMainMenu(ICoreWindow* window, const LaunchAuthConfig& authCon
     }
 
     int selected = 0;
-    bool upWasDown = false;
-    bool downWasDown = false;
+    MenuRepeat upRepeat;
+    MenuRepeat downRepeat;
     bool selectWasDown = false;
 
     ShowCrashScreen(window, renderer, state);
@@ -1082,11 +1092,11 @@ MainMenuAction ShowMainMenu(ICoreWindow* window, const LaunchAuthConfig& authCon
             ABI::Windows::System::VirtualKey_GamepadA
         });
 
-        if (upDown && !upWasDown) {
+        if (upRepeat.Pressed(upDown)) {
             selected = (selected + kMainMenuItems - 1) % kMainMenuItems;
             state.detail = L"";
         }
-        if (downDown && !downWasDown) {
+        if (downRepeat.Pressed(downDown)) {
             selected = (selected + 1) % kMainMenuItems;
             state.detail = L"";
         }
@@ -1131,8 +1141,6 @@ MainMenuAction ShowMainMenu(ICoreWindow* window, const LaunchAuthConfig& authCon
             }
         }
 
-        upWasDown = upDown;
-        downWasDown = downDown;
         selectWasDown = selectDown;
         std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }

@@ -72,7 +72,7 @@ public final class ForgeControllerSettingsScreen extends Screen {
                 rebuildButtons();
             }));
 
-            addStepper(rightX, rightY, rightWidth, "Look", Math.round(settings.lookSpeed), -5.0, 5.0, 30.0, 300.0, value -> settings.lookSpeed = (float) value);
+            addStepper(rightX, rightY, rightWidth, "Look", Math.round(settings.lookSpeed), -15.0, 15.0, 30.0, 300.0, value -> settings.lookSpeed = (float) value);
             rightY += row;
             addStepper(rightX, rightY, rightWidth, "Cursor", settings.cursorSpeed, -2.0, 2.0, 4.0, 40.0, value -> settings.cursorSpeed = value);
             rightY += row;
@@ -94,7 +94,7 @@ public final class ForgeControllerSettingsScreen extends Screen {
             y += row;
             addToggle(x, y, panelWidth, movementLabel(settings), () -> settings.keyboardMovement = !settings.keyboardMovement);
             y += row + 4;
-            addStepper(x, y, panelWidth, "Look", Math.round(settings.lookSpeed), -5.0, 5.0, 30.0, 300.0, value -> settings.lookSpeed = (float) value);
+            addStepper(x, y, panelWidth, "Look", Math.round(settings.lookSpeed), -15.0, 15.0, 30.0, 300.0, value -> settings.lookSpeed = (float) value);
             y += row;
             addStepper(x, y, panelWidth, "Cursor", settings.cursorSpeed, -2.0, 2.0, 4.0, 40.0, value -> settings.cursorSpeed = value);
             y += row;
@@ -152,7 +152,7 @@ public final class ForgeControllerSettingsScreen extends Screen {
         settings.toggleSprint = false;
         settings.invertY = false;
         settings.keyboardMovement = false;
-        settings.lookSpeed = 115.0f;
+        settings.lookSpeed = 135.0f;
         settings.cursorSpeed = 14.0;
         settings.scrollAmount = 1.0;
         settings.moveDeadzone = 0.35f;

@@ -6,17 +6,18 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 ### Added
 
-- **Version replaces Mods on the main menu.** The new page lets you pick Simply Legacy or Re-Console with left/right, choose a Minecraft version with the D-pad or left stick, press A to apply it, and press B to return.
+- **Version replaces Mods on the main menu.** The new page lets you pick Simply Legacy or Re-Console with left/right, choose a Minecraft version with the D-pad or left stick, press A to select it and return, and press B to leave without changing anything.
 - **A new Credits page opens from Settings.** Press B or Back on the footer to leave it; the rest of Settings is unchanged apart from the always-on renderer note below.
 
 ### Changed
 
 - **The version list is filtered to versions supported by the built-in modpacks.** Simply Legacy and Re-Console each show only catalog versions they support, so unsupported targets no longer appear.
-- **Changing the version pulls the newest compatible modpack automatically.** The selected built-in profile's managed mods are replaced and the latest supported pack is downloaded before the menu returns.
+- **The Version page is selection-only.** It saves the built-in profile and target without downloading or installing anything; pressing Play downloads the newest compatible modpack for the selected target.
+- **Stick navigation is dynamic.** Holding a direction repeats after a short delay instead of requiring a fresh flick for every step.
 - **Built-in profile selection persists.** Simply Legacy is seeded only on first run; after that the last selected built-in profile stays active across restarts instead of being reset every launch.
-- **Right-stick look sensitivity is permanently 115%.** The launcher reseeds the controller config at 115% on every launch, and separate controller bundle and sensitivity settings are no longer offered.
-- **The performance renderer is always on.** Settings shows **Always on** with no off switch; the lightweight `auto` policy still installs only candidates proven on Xbox and reports gaps without forcing untested files.
-- **The launcher UI is capped at 30 FPS.** This keeps menu input and drawing light on console; in-game framerate is unaffected.
+- **Controller sensitivity defaults were restored.** The launcher no longer forces a look-speed value; controller sensitivity stays at the mod and game defaults.
+- **Performance work is now an overwrite.** Settings shows **Always on** with no off switch; the matched renderer is applied in overwrite mode and a small set of in-game video options is overwritten for stable frame times. Metadata-only candidates are labelled as untested rather than hidden.
+- **The launcher UI is capped at 30 FPS.** This keeps menu input and drawing light on console; the launcher itself does not cap Minecraft, but the performance overwrite writes a 60 FPS in-game cap.
 - **Menus use a single-image backdrop.** One image is shown at a time with no cross-fade, replacing the old rotating fade.
 - **Branding is Raggedy-only.** Raggedy Launcher is a derivative of the upstream JavaUWP/BanditVault launcher by veroxsity / BanditVault, completely readapted into a new controller-first launcher, not a fork. Required upstream credit stays in LICENSE, LEGAL, the README legal section, and the publish-release note.
 

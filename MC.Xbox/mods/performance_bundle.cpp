@@ -154,15 +154,17 @@ bool ApplyPerformanceMode(const std::wstring& runtimeRoot, const std::wstring& p
         return true;
     }
     const std::wstring token = PerfOwnerToken(selection.candidate.project);
-    if (!selection.candidate.proven) {
-        SetProfilePerfRenderer(runtimeRoot, profileId, want);
-        status = TrFormat(L"{0} matches this target but is untested on Xbox, so it was not auto-installed. Install it from Mods if you want to try it.",
-            { selection.candidate.project });
-        return true;
+    const bool overwriteMode = !selection.candidate.proven;
+    const std::wstring modeSuffix = overwriteMode
+        ? std::wstring(L" in overwrite mode")
+        : std::wstring(L"");
+    if (overwriteMode) {
+        WriteLogF(L"Applying performance renderer %s in overwrite mode for %s", selection.candidate.project.c_str(), target.targetId.c_str());
     }
     if (ManagedFilesPresent(runtimeRoot, profileId, token)) {
         SetProfilePerfRenderer(runtimeRoot, profileId, want);
-        status = TrFormat(L"Performance renderer {0} is already installed.", { selection.candidate.project });
+        status = TrFormat(L"Performance renderer {0} is already installed{1}.",
+            { selection.candidate.project, modeSuffix });
         return true;
     }
     std::vector<std::wstring> installed;
@@ -178,8 +180,11 @@ bool ApplyPerformanceMode(const std::wstring& runtimeRoot, const std::wstring& p
         isError = true;
         return false;
     }
-    status = TrFormat(L"Performance renderer {0} installed ({1} file(s)).",
-        { selection.candidate.project, std::to_wstring(installed.size()) });
+    status = TrFormat(L"Performance renderer {0} installed ({1} file(s)){2}.",
+        { selection.candidate.project, std::to_wstring(installed.size()), modeSuffix });
+    if (overwriteMode) {
+        status += L" " + Tr(L"Target metadata matched; Xbox compatibility is still untested.");
+    }
     const std::vector<std::wstring> conflicts = FindPerfConflicts(runtimeRoot, profileId, selection.candidate.project);
     if (!conflicts.empty()) {
         status += L" " + TrFormat(L"Unmanaged {0} is also installed; keep only one renderer to avoid conflicts.",

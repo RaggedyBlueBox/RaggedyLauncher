@@ -538,7 +538,7 @@ private:
             RegisterHit(launchhit::kVersionRowBase + static_cast<int>(i), r);
             y += 54.0f;
         }
-        DrawFooter(Tr(L"A selects a version. Left or right changes the modpack. B returns."));
+        DrawFooter(Tr(L"A selects a version and returns. Left or right changes the modpack. Downloads start on Play. B returns."));
     }
 
     void DrawCredits(const AuthUiState& state) {
