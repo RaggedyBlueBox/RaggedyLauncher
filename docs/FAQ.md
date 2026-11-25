@@ -27,8 +27,11 @@ The mouse relay does not lag unless you have a bad computer or *really* bad wifi
 ## How does multiplayer work?
 You don't need a Game Pass subscription or anything else to play multiplayer. You can hop on any server you wish (ideally with mouse relay and a keyboard).
 
+## Why does the launcher open on Simply Legacy?
+Simply Legacy is restored as the active profile at every launcher start and its latest supported modpack is seeded automatically. That makes controller play available immediately; Re-Console remains selectable when you want it.
+
 ## I tried to add Controlify (or another controller mod) to my instance, and it didn't work. What happened?
-The launcher no longer installs, removes, or toggles controller mods. Use a custom profile for your own controller setup, and resolve conflicts between mods inside that profile. Built-in modpacks are seeded as-is on first run.
+The launcher no longer offers a controller bundle toggle. Built-in profiles receive their controller support from the seeded modpack; use a custom profile for your own controller setup and resolve conflicts between mods inside that profile.
 
 ## How can I change the RAM allocation?
 Unfortunately, you can't allocate more than 3-4 GB of RAM, as this is the max achievable by an XBOX in Developer Mode.

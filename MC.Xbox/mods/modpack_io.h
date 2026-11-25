@@ -22,4 +22,5 @@ bool InstallModpackFromFile(
     const std::wstring& profileId,
     std::wstring& error,
     std::wstring* skippedNote = nullptr,
-    const ModpackProgressFactory& progressFor = nullptr);
+    const ModpackProgressFactory& progressFor = nullptr,
+    bool allowBuiltinProfile = false);

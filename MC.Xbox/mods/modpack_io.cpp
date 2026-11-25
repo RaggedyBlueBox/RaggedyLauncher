@@ -111,10 +111,11 @@ bool InstallModpackFromFile(
     const std::wstring& profileId,
     std::wstring& error,
     std::wstring* skippedNote,
-    const ModpackProgressFactory& progressFor) {
+    const ModpackProgressFactory& progressFor,
+    bool allowBuiltinProfile) {
     error.clear();
     if (skippedNote) skippedNote->clear();
-    if (profileId == kVanillaProfileId) {
+    if (profileId == kVanillaProfileId && !allowBuiltinProfile) {
         error = Tr(L"Vanilla is read-only. Pick or create a profile first.");
         return false;
     }

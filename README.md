@@ -109,7 +109,7 @@ Shader packs need a compatible shader loader such as Iris or Oculus in the same 
 
 ## Controller and mouse
 
-The launcher no longer manages controller mods or offers a controller bundle setting. Controller behavior comes from the selected built-in modpack or custom profile.
+Simply Legacy is reset as the active profile every time the launcher starts and is seeded automatically from its latest supported modpack, so controller support is ready without a keyboard. Re-Console stays selectable. The launcher no longer offers a separate controller bundle setting.
 
 - **Main nightly** uses the optional mouse relay. A browser page is available from the launcher. Companion downloads for Windows, Android and iOS are published alongside the mouse relay build.
 - **Native mouse nightly** accepts a USB mouse directly. Launcher Settings has separate menu and game mouse sensitivity controls.

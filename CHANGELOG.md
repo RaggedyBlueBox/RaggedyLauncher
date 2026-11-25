@@ -14,6 +14,8 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 **26.3 now uses Bandit's proven Mesa/WGL launch path.** LWJGL gets the absolute `opengl32.dll` path and `org.lwjgl.system.SharedLibraryExtractPath`, SDL gets the package-relative `graphics/<runtime>/opengl32.dll` hint, the Mesa support stack is preloaded before the JVM, and the pinned SDL UWP fork is built with WGL enabled, EGL disabled, the WinRT-aware loader, absolute Mesa path normalization, and the full V7/V8/V9/V12/V13/V14/V15/V16/V17 RenderPearl, input and cursor lifecycle patches. The JVM also gets `-XX:StackShadowPages=32`, matching the official launcher and preventing 26.3's OpenGL resource-reload access violation after unifont loading. Vulkan remains open work rather than a hidden or claimed option.
 
+**Simply Legacy is now the permanent default profile.** The launcher restores it as the active profile on every start and seeds its latest modpack automatically, including controller support, without a keyboard or a separate controller bundle toggle. Re-Console remains selectable.
+
 **Existing profiles migrate into the simplified layout.** Old controller fields are ignored, built-in names are normalized to Simply Legacy and Re-Console, and the two built-ins stay first in the profile list.
 
 ## 2026-11-23

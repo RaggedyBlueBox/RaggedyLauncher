@@ -102,8 +102,10 @@ try {
     Require-Contains $launchSource 'org.lwjgl.system.SharedLibraryExtractPath' 'LWJGL shared library extract path source'
     Require-Contains $launchSource '-XX:StackShadowPages=32' '26.3 OpenGL stack shadow pages source'
     Require-Contains $launchSource 'L"graphics\\" + graphicsRuntime + L"\\opengl32.dll"' 'Package-relative SDL OpenGL hint source'
+    Require-Contains $appSource 'SetActiveProfileId(exeDir, kVanillaProfileId)' 'Simply Legacy default profile source'
     Require-Contains $appSource 'EnsureDefaultModpackInstalled' 'Default modpack bootstrap source'
     Require-Contains $browserSource 'EnsureDefaultModpackInstalled' 'Default modpack installer source'
+    Require-Contains $browserSource '"fabric", true' 'Built-in profile default modpack seeding source'
     $sdlPrepareSource = Get-Content -LiteralPath (Join-Path $root 'scripts/prepare-sdl3-uwp.ps1') -Raw
     $sdlPatchSource = Get-Content -LiteralPath (Join-Path $root 'patches/sdl3-uwp-external-host.patch') -Raw
     Require-Contains $sdlPrepareSource 'b3852a0076c358f65ee19765e85ef9eded6e50df' 'Pinned UWP SDL3 source'
@@ -141,6 +143,7 @@ try {
     $modpackSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/mods/modpack_io.cpp') -Raw
     Require-Contains $modpackSource 'ExtendedPath(path)' 'Modpack long path extraction source'
     Require-Contains $modpackSource 'CreateFile2' 'Modpack long path extraction source'
+    Require-Contains $modpackSource 'allowBuiltinProfile' 'Built-in profile default modpack install source'
     foreach ($inputFile in @(
         @{ Source = $CatalogPath; Relative = 'runtime/version_catalog.tsv' },
         @{ Source = (Join-Path $root 'config/recommended-mods.json'); Relative = 'runtime/recommended-mods.json' },

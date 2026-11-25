@@ -1338,7 +1338,7 @@ static bool ResolveModrinthProjectFile(const std::wstring& idOrSlug, const wchar
     }
 }
 
-static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot, const std::wstring& profileId, std::wstring& error, const std::string& gameVersion, const std::string& loaderId) {
+static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot, const std::wstring& profileId, std::wstring& error, const std::string& gameVersion, const std::string& loaderId, bool allowBuiltinProfile = false) {
     const std::wstring idOrSlug = !card.projectId.empty() ? card.projectId : card.slug;
 
     SetInstallStatus(TrFormat(L"Resolving {0}...", { card.title }));
@@ -1381,7 +1381,7 @@ static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot,
 
     SetInstallStatus(TrFormat(L"Installing {0}...", { card.title }));
     std::wstring skippedNote;
-    const bool ok = InstallModpackFromFile(mrPath, runtimeRoot, profileId, error, &skippedNote, MakeInstallProgress);
+    const bool ok = InstallModpackFromFile(mrPath, runtimeRoot, profileId, error, &skippedNote, MakeInstallProgress, allowBuiltinProfile);
     DeleteFileW(mrPath.c_str());
     if (ok && !skippedNote.empty()) error = skippedNote;
     return ok;
@@ -1390,6 +1390,7 @@ static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot,
 bool EnsureDefaultModpackInstalled(
     const std::wstring& runtimeRoot, const std::wstring& profileId, std::wstring& error) {
     const std::wstring marker = ProfileDir(runtimeRoot, profileId) + L"\\.raggedy\\default-modpack.txt";
+    EnsureDirectoryTree(GetParentDir(marker));
     if (GetFileAttributesW(marker.c_str()) != INVALID_FILE_ATTRIBUTES) return true;
     if (profileId != kVanillaProfileId && profileId != kReConsoleProfileId) {
         return WriteTextFile(marker, L"custom-profile\n");
@@ -1406,7 +1407,8 @@ bool EnsureDefaultModpackInstalled(
     pack.projectId = reConsole ? L"g9O0WaGR" : L"f63ynpri";
     pack.slug = reConsole ? L"legacy-minecraft" : L"simply-legacy";
     pack.title = reConsole ? L"Re-Console" : L"Simply Legacy";
-    if (!InstallModpack(pack, runtimeRoot, profileId, error, "26.3", "fabric")) return false;
+    if (!InstallModpack(pack, runtimeRoot, profileId, error, "26.3", "fabric", true)) return false;
+    WriteLogF(L"Default modpack installed: %s profile=%s", pack.title.c_str(), profileId.c_str());
     return WriteTextFile(marker, reConsole ? L"g9O0WaGR\n" : L"f63ynpri\n");
 }
 

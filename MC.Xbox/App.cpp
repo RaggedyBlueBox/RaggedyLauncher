@@ -579,6 +579,13 @@ public:
             }
         }
 
+        EnsureProfilesInitialized(exeDir);
+        if (!SetActiveProfileId(exeDir, kVanillaProfileId)) {
+            WriteLog(L"Could not reset active profile to Simply Legacy");
+        } else {
+            WriteLog(L"Default profile reset to Simply Legacy");
+        }
+
         LaunchAuthConfig authConfig;
         bool authConfigReady = false;
         for (;;) {
