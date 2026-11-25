@@ -13,6 +13,7 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 - **The version list is filtered to versions supported by the built-in modpacks.** Simply Legacy and Re-Console each show only catalog versions they support, so unsupported targets no longer appear.
 - **The Version page is selection-only.** It saves the built-in profile and target without downloading or installing anything; pressing Play downloads the newest compatible modpack for the selected target.
+- **Version navigation is split.** Left and right switch the horizontal modpack tabs at the top; down moves into the version list, and up/down scrolls versions there.
 - **Stick navigation is dynamic.** Holding a direction repeats after a short delay instead of requiring a fresh flick for every step.
 - **Built-in profile selection persists.** Simply Legacy is seeded only on first run; after that the last selected built-in profile stays active across restarts instead of being reset every launch.
 - **Controller sensitivity defaults were restored.** The launcher no longer forces a look-speed value; controller sensitivity stays at the mod and game defaults.

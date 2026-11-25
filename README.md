@@ -81,7 +81,7 @@ The **Version** page only saves your choice. Use **Remote Files** to upload worl
 ## Features
 
 - Built-in Simply Legacy and Re-Console profiles whose active selection persists across restarts.
-- A Version page filtered to the Minecraft versions each built-in modpack supports.
+- A Version page filtered to the Minecraft versions each built-in modpack supports, with horizontal modpack tabs and a separate version list.
 - Dynamic stick navigation: holding a direction repeats after a short delay, with keyboard, D-pad and left stick handled the same way.
 - Newest compatible modpack pulled when you press **Play**, not while browsing versions.
 - Custom profiles for separate mod setups on supported catalog targets.

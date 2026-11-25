@@ -689,6 +689,7 @@ static void ShowVersionPage(ICoreWindow* window, AuthScreenRenderer* renderer, A
     WaitForMenuKeysReleased(window, renderer, state);
     const std::wstring activeProfileId = GetActiveProfileId(runtimeRoot);
     state.versionPackSelected = activeProfileId == kReConsoleProfileId ? 1 : 0;
+    state.versionPackFocused = true;
     std::wstring packProfileId = state.versionPackSelected == 1
         ? std::wstring(kReConsoleProfileId)
         : std::wstring(kVanillaProfileId);
@@ -761,9 +762,9 @@ static void ShowVersionPage(ICoreWindow* window, AuthScreenRenderer* renderer, A
         const bool rightPressed = rightRepeat.Pressed(rightDown);
         const bool upPressed = upRepeat.Pressed(upDown);
         const bool downPressed = downRepeat.Pressed(downDown);
-        const bool togglePack = leftPressed || rightPressed ||
-            clicked == 1000 || clicked == 1001;
-        if (togglePack && !state.versionTargets.empty()) {
+        const bool togglePack = (clicked == 1000 || clicked == 1001) ||
+            (state.versionPackFocused && (leftPressed || rightPressed));
+        if (togglePack) {
             if (clicked >= 1000) state.versionPackSelected = clicked - 1000;
             else state.versionPackSelected = 1 - state.versionPackSelected;
             packProfileId = state.versionPackSelected == 1
@@ -773,23 +774,35 @@ static void ShowVersionPage(ICoreWindow* window, AuthScreenRenderer* renderer, A
             state.versionSelected = 0;
             state.versionProfileId = ResolveProfileTarget(
                 runtimeRoot, GetProfileById(runtimeRoot, packProfileId)).targetId;
+            state.versionPackFocused = true;
         }
+        if (clicked >= 0 && clicked < 1000) state.versionPackFocused = false;
         const int rowCount = static_cast<int>(state.versionTargets.size());
-        if (upPressed && rowCount > 0) {
-            state.versionSelected = (state.versionSelected + rowCount - 1) % rowCount;
-        }
-        if (downPressed && rowCount > 0) {
-            state.versionSelected = (state.versionSelected + 1) % rowCount;
+        if (state.versionPackFocused) {
+            if (downPressed && rowCount > 0) state.versionPackFocused = false;
+        } else if (rowCount > 0) {
+            if (upPressed && state.versionSelected <= 0) {
+                state.versionPackFocused = true;
+            } else if (upPressed) {
+                state.versionSelected--;
+            }
+            if (downPressed) {
+                state.versionSelected = (state.versionSelected + 1) % rowCount;
+            }
         }
         if ((backDown && !backWas) || clickedBack) break;
 
-        const int pressed = clicked >= 0 && clicked < 1000
-            ? clicked
-            : ((selectDown && !selectWas) ? state.versionSelected : -1);
-        if (pressed >= 0 && pressed < rowCount) {
-            state.versionSelected = pressed;
-            ApplySelectedVersion(state, runtimeRoot);
-            break;
+        if (state.versionPackFocused && selectDown && !selectWas) {
+            state.versionPackFocused = false;
+        } else {
+            const int pressed = clicked >= 0 && clicked < 1000
+                ? clicked
+                : ((selectDown && !selectWas && !state.versionPackFocused) ? state.versionSelected : -1);
+            if (pressed >= 0 && pressed < rowCount) {
+                state.versionSelected = pressed;
+                ApplySelectedVersion(state, runtimeRoot);
+                break;
+            }
         }
 
         selectWas = selectDown;

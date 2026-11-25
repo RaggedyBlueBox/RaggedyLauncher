@@ -121,16 +121,20 @@ try {
     Require-Contains $browserSource 'DefaultPackSupportsVersion' 'Modpack-supported version filter source'
     $launcherUiSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/ui/launcher_ui.cpp') -Raw
     $uiStateSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/ui/auth_ui_state.h') -Raw
+    $authScreenSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/ui/auth_screen.h') -Raw
     $modDefaultsSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/mods/mod_defaults.cpp') -Raw
     $controllerSettingsSource = Get-Content -LiteralPath (Join-Path $root 'controller_mod/core/src/main/java/raggedy/controllercore/ControllerSettingsStore.java') -Raw
     Require-Contains $launcherUiSource 'ShowVersionPage' 'Version page source'
     Require-Contains $launcherUiSource 'ShowCreditsPage' 'Credits page source'
     Require-Contains $launcherUiSource 'Downloads start when you press Play' 'Version page selection-only source'
     Require-Contains $launcherUiSource 'MenuRepeat' 'Dynamic stick repeat source'
+    Require-Contains $launcherUiSource 'versionPackFocused' 'Horizontal modpack focus source'
     Require-NotContains $launcherUiSource 'EnsureDefaultModpackInstalled' 'Version page must not install modpacks'
     Require-NotContains $launcherUiSource 'ApplyPerformanceMode' 'Version page must not install performance mods'
     Require-Contains $launcherUiSource 'The Raggedy performance renderer is always on' 'Always-on performance renderer UI source'
     Require-Contains $uiStateSource 'showVersionPage' 'Version page state source'
+    Require-Contains $uiStateSource 'versionPackFocused' 'Version page focus state source'
+    Require-Contains $authScreenSource 'tabWidth' 'Horizontal modpack tab layout source'
     Require-Contains $uiStateSource 'showCredits' 'Credits page state source'
     Require-Contains $modDefaultsSource 'ApplyPerformanceOptionsOverwrite' 'Performance options overwrite source'
     $performanceSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/mods/performance_bundle.cpp') -Raw

@@ -509,11 +509,14 @@ private:
         }
 
         const wchar_t* packs[] = { L"Simply Legacy", L"Re-Console" };
+        const float tabGap = 12.0f;
+        const float tabWidth = (R_ - L_ - tabGap) * 0.5f;
         for (int i = 0; i < 2; ++i) {
-            const D2D1_RECT_F r = D2D1::RectF(L_, T_ + 128.0f + i * 60.0f, R_, T_ + 178.0f + i * 60.0f);
+            const float tabLeft = L_ + static_cast<float>(i) * (tabWidth + tabGap);
+            const D2D1_RECT_F r = D2D1::RectF(tabLeft, T_ + 128.0f, tabLeft + tabWidth, T_ + 178.0f);
             const bool selected = i == state.versionPackSelected;
             FillRound(r, selected ? raised_ : MakeBrush(pal_.shade, 0.45f), 12.0f);
-            if (selected) FocusRing(r, 12.0f);
+            if (selected && state.versionPackFocused) FocusRing(r, 12.0f);
             DrawText(packs[i], rowStrongFormat_.Get(),
                 D2D1::RectF(r.left + 24.0f, r.top, r.right - 24.0f, r.bottom), selected ? accent_ : text_);
             RegisterHit(launchhit::kVersionPackBase + i, r);
@@ -532,13 +535,13 @@ private:
             const LaunchTarget& target = state.versionTargets[i];
             if (y > B_ - 118.0f) break;
             const D2D1_RECT_F r = D2D1::RectF(L_, y, R_, y + 50.0f);
-            const bool focused = static_cast<int>(i) == state.versionSelected;
+            const bool focused = !state.versionPackFocused && static_cast<int>(i) == state.versionSelected;
             const bool active = target.targetId == state.versionProfileId;
             DrawRow(r, L"\uE7B8", TargetProfileText(target).c_str(), focused, active, false);
             RegisterHit(launchhit::kVersionRowBase + static_cast<int>(i), r);
             y += 54.0f;
         }
-        DrawFooter(Tr(L"A selects a version and returns. Left or right changes the modpack. Downloads start on Play. B returns."));
+        DrawFooter(Tr(L"Left/right switches the modpack at the top. Down moves to versions. A confirms. B returns. Downloads start on Play."));
     }
 
     void DrawCredits(const AuthUiState& state) {

@@ -31,6 +31,7 @@ struct AuthUiState {
     std::vector<LaunchTarget> versionTargets;
     int versionSelected = 0;
     int versionPackSelected = 0;
+    bool versionPackFocused = true;
     int selectedMenuIndex = 0;
     int selectedModsTab = 0;
     ModSource modsSource = ModSource::Modrinth;
