@@ -124,6 +124,7 @@ try {
         Require-Contains (Get-Content -LiteralPath (Join-Path $root "scripts/$patchScript") -Raw) 'SourceRoot' "UWP SDL3 $patchScript"
         Require-Contains $sdlPrepareSource $patchScript "UWP SDL3 $patchScript wired into preparer"
     }
+    Require-Contains (Get-Content -LiteralPath (Join-Path $root 'scripts/apply-sdl3-v14-input.ps1') -Raw) 'SDL_winrtevents_c.h' 'V14 raw-mouse declaration for app source'
     Require-Contains (Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/SDL3-WinRTResources.rc') -Raw) '5000 CURSOR' 'Transparent WinRT cursor resource'
     Require-Contains (Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/SDL3-WinRTResources.rc') -Raw) '5001 CURSOR' 'Launcher WinRT cursor resource'
     $buildSource = Get-Content -LiteralPath (Join-Path $root 'build.ps1') -Raw

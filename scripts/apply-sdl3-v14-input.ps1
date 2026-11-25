@@ -25,16 +25,18 @@ function Replace-Once {
 $videoPath = Join-Path $SourceRoot "src\video\winrt\SDL_winrtvideo.cpp"
 $mousePath = Join-Path $SourceRoot "src\video\winrt\SDL_winrtmouse.cpp"
 $mouseHeaderPath = Join-Path $SourceRoot "src\video\winrt\SDL_winrtmouse_c.h"
+$eventsHeaderPath = Join-Path $SourceRoot "src\video\winrt\SDL_winrtevents_c.h"
 $pointerPath = Join-Path $SourceRoot "src\video\winrt\SDL_winrtpointerinput.cpp"
 $appPath = Join-Path $SourceRoot "src\core\winrt\SDL_winrtapp_direct3d.cpp"
 $wgiPath = Join-Path $SourceRoot "src\joystick\windows\SDL_windows_gaming_input.c"
-foreach ($path in @($videoPath, $mousePath, $mouseHeaderPath, $pointerPath, $appPath, $wgiPath)) {
+foreach ($path in @($videoPath, $mousePath, $mouseHeaderPath, $eventsHeaderPath, $pointerPath, $appPath, $wgiPath)) {
     if (-not (Test-Path -LiteralPath $path)) { throw "Missing SDL source for V14 input patch: $path" }
 }
 
 $video = Read-NormalizedText $videoPath
 $mouse = Read-NormalizedText $mousePath
 $mouseHeader = Read-NormalizedText $mouseHeaderPath
+$eventsHeader = Read-NormalizedText $eventsHeaderPath
 $pointer = Read-NormalizedText $pointerPath
 $app = Read-NormalizedText $appPath
 $wgi = Read-NormalizedText $wgiPath
@@ -167,6 +169,20 @@ extern bool WINRT_BanditHasRawMouseDevice;
 $mouseHeader = Replace-Once $mouseHeader $old $new "raw MouseDevice availability declaration"
 
 $old = @'
+#ifdef __cplusplus_winrt
+
+// Pointers (Mice, Touch, etc.)
+'@
+$new = @'
+#ifdef __cplusplus_winrt
+
+extern "C" bool WINRT_BanditHasRawMouseDevice;
+
+// Pointers (Mice, Touch, etc.)
+'@
+$eventsHeader = Replace-Once $eventsHeader $old $new "raw MouseDevice availability declaration for app source"
+
+$old = @'
     if (!window || WINRT_UsingRelativeMouseMode) {
         return;
     }
@@ -237,6 +253,7 @@ $app = Replace-Once $app $old $new "raw MouseDevice availability handoff"
 Write-NormalizedText $videoPath $video
 Write-NormalizedText $mousePath $mouse
 Write-NormalizedText $mouseHeaderPath $mouseHeader
+Write-NormalizedText $eventsHeaderPath $eventsHeader
 Write-NormalizedText $pointerPath $pointer
 Write-NormalizedText $appPath $app
 Write-NormalizedText $wgiPath $wgi
