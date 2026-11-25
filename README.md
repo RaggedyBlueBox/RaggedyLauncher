@@ -19,7 +19,7 @@ Independent implementation phase:
 - UWP services for HTTP, local state files, SHA-256, a steady clock, and redacted debug logging.
 - Target manifests with SHA-256 hashes drive downloads and launch arguments; no URLs or hashes are fabricated by the launcher.
 - Game launch uses a configured loopback process bridge with an explicit request and response schema.
-- Graphics translation planning layer for OpenGL or Vulkan concepts mapped to Direct3D.
+- Portable graphics layer that validates window, context, resource, capability, and OpenGL/Vulkan-to-Direct3D translation plans; native backends remain host work.
 - Core tests and CI for the portable code.
 
 An approved Microsoft application ID, target manifests, and a loopback process bridge are required for a live Minecraft session. Diagnostics and telemetry stay off unless enabled by the user.

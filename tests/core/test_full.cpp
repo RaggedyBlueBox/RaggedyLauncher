@@ -5,6 +5,7 @@
 #include "raggedy/core/json.hpp"
 #include "raggedy/diagnostics/report.hpp"
 #include "raggedy/download/queue.hpp"
+#include "raggedy/graphics/layer.hpp"
 #include "raggedy/mods/mod_plan.hpp"
 #include "raggedy/platform/interfaces.hpp"
 #include "raggedy/remote/session.hpp"
@@ -405,6 +406,47 @@ int main()
         assert(message.find("ms-access") == std::string::npos);
         assert(message.find("mc-access") == std::string::npos);
     }
+
+    raggedy::graphics::WindowConfig window;
+    window.width = 1920;
+    window.height = 1080;
+    window.mode = raggedy::graphics::WindowMode::fullscreen;
+    raggedy::graphics::ContextConfig context;
+    context.source = raggedy::graphics::ApiFamily::opengl;
+    context.target = raggedy::graphics::ApiFamily::direct3d12;
+    context.major = 4;
+    context.minor = 5;
+    context.extensions = {"GL_TEST_extension"};
+    raggedy::graphics::ResourcePaths paths;
+    raggedy::graphics::GraphicsLayerPlan graphics_plan;
+    std::string graphics_error;
+    assert(raggedy::graphics::build_graphics_layer_plan(window, context, paths, graphics_plan, graphics_error));
+    assert(graphics_plan.translation.size() == 8);
+    assert(graphics_plan.validation_steps.size() == 6);
+    const auto graphics_report = raggedy::graphics::graphics_layer_report(graphics_plan);
+    assert(graphics_report.back() == "Native backend validation is still required.");
+
+    raggedy::graphics::CapabilitySet capabilities;
+    capabilities.max_texture_size = 8192;
+    capabilities.max_render_target_size = 8192;
+    capabilities.can_present = true;
+    capabilities.extensions = {"GL_TEST_extension"};
+    assert(raggedy::graphics::valid_capabilities(capabilities, context, graphics_error));
+    capabilities.extensions.clear();
+    assert(!raggedy::graphics::valid_capabilities(capabilities, context, graphics_error));
+    assert(raggedy::graphics::unsupported_extensions(context, capabilities).size() == 1);
+
+    window.width = 100;
+    assert(!raggedy::graphics::build_graphics_layer_plan(window, context, paths, graphics_plan, graphics_error));
+    window.width = 1920;
+    paths.root = "../escape";
+    assert(!raggedy::graphics::build_graphics_layer_plan(window, context, paths, graphics_plan, graphics_error));
+    paths.root = "state/graphics";
+    context.source = raggedy::graphics::ApiFamily::direct3d12;
+    assert(!raggedy::graphics::build_graphics_layer_plan(window, context, paths, graphics_plan, graphics_error));
+    context.source = raggedy::graphics::ApiFamily::opengl;
+    context.extensions.push_back("GL_TEST_extension");
+    assert(!raggedy::graphics::valid_context_config(context, graphics_error));
 
     return 0;
 }

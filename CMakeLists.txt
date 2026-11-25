@@ -20,6 +20,7 @@ add_library(raggedy_core
     src/mods/mod_plan.cpp
     src/controller/navigation.cpp
     src/graphics/translation.cpp
+    src/graphics/layer.cpp
     src/storage/settings.cpp
     src/storage/profile_store.cpp
     src/ui/device_code_view.cpp

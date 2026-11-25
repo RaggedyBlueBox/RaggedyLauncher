@@ -30,6 +30,10 @@ Let Minecraft Java run inside the Xbox UWP sandbox by providing platform abstrac
 - File and resource path abstraction.
 - Diagnostics for unsupported extensions.
 
+## Portable layer status
+
+The portable layer validates window configuration, context requests, relative resource paths, device capabilities, extension gaps, and translation notes. It produces explicit validation steps and always reports that native backend validation is still required. Native window, context, and display backends remain platform work.
+
 ## Validation
 
 Each layer needs a narrow test target before the next layer starts. The first target is window creation and input alone. The second is a clear-color DirectX surface. The third is a minimal OpenGL draw call translated through our abstraction.
