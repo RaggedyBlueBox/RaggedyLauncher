@@ -100,6 +100,7 @@ try {
     Require-Contains $launchSource 'org.lwjgl.opengl.libname' 'LWJGL OpenGL library source'
     Require-Contains $launchSource 'org.lwjgl.sdl.libname' 'LWJGL SDL3 library source'
     Require-Contains $launchSource 'org.lwjgl.system.SharedLibraryExtractPath' 'LWJGL shared library extract path source'
+    Require-Contains $launchSource '-XX:StackShadowPages=32' '26.3 OpenGL stack shadow pages source'
     Require-Contains $launchSource 'L"graphics\\" + graphicsRuntime + L"\\opengl32.dll"' 'Package-relative SDL OpenGL hint source'
     Require-Contains $appSource 'EnsureDefaultModpackInstalled' 'Default modpack bootstrap source'
     Require-Contains $browserSource 'EnsureDefaultModpackInstalled' 'Default modpack installer source'

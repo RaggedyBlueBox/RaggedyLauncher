@@ -23,6 +23,9 @@ Sodium-family performance mods, and what is still untested.
   and the extracted LWJGL native directory are unchanged. Minecraft 26.3 also
   passes `org.lwjgl.system.SharedLibraryExtractPath` so native extraction uses
   the same writable directory as LWJGL's other temporary native paths.
+  Minecraft 26.3 also gets `-XX:StackShadowPages=32` because the official
+  launcher includes it and 26.3's OpenGL resource reload otherwise exits with
+  a JVM access violation immediately after unifont loading.
 - Vulkan is open work, not an opt-in toggle. Bandit's 26.3 path is OpenGL/WGL;
   its known-mod list blocks VulkanMod because the UWP GLFW path lacks
   `glfwInitVulkanLoader`, and this package has `vulkan_dzn.dll` but no
