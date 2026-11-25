@@ -618,6 +618,8 @@ public:
             const Profile packProfile = GetProfileById(exeDir, packProfileId);
             const LaunchTarget packTarget = ResolveProfileTarget(exeDir, packProfile);
             const std::wstring packTitle = DefaultPackTitle(packProfileId);
+            const std::wstring preparingPack = TrFormat(L"Preparing {0}", { packTitle });
+            const std::wstring packReady = TrFormat(L"{0} ready", { packTitle });
             AuthScreenRenderer packRendererInstance;
             AuthScreenRenderer* packRenderer = nullptr;
             if (packRendererInstance.Initialize(g_authWindow.Get())) {
@@ -627,7 +629,7 @@ public:
             RenderPreparationProgress(
                 packRenderer,
                 packState,
-                TrFormat(L"Preparing {0}", { packTitle }),
+                preparingPack.c_str(),
                 Tr(L"Downloading the latest supported modpack"),
                 0.0f);
             std::wstring defaultPackError;
@@ -637,7 +639,7 @@ public:
                     RenderPreparationProgress(
                         packRenderer,
                         packState,
-                        TrFormat(L"Preparing {0}", { packTitle }),
+                        preparingPack.c_str(),
                         status.c_str(),
                         static_cast<float>(fraction));
                 });
@@ -652,7 +654,7 @@ public:
             RenderPreparationProgress(
                 packRenderer,
                 packState,
-                defaultPackReady ? TrFormat(L"{0} ready", { packTitle }) : Tr(L"Modpack setup failed"),
+                defaultPackReady ? packReady.c_str() : Tr(L"Modpack setup failed"),
                 defaultPackReady ? Tr(L"Starting Minecraft") : defaultPackError.c_str(),
                 defaultPackReady ? 1.0f : 0.0f);
             if (!defaultPackReady) SleepWithAuthUi(packRenderer, packState, 5000);

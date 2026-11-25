@@ -1485,7 +1485,7 @@ bool EnsureDefaultModpackInstalled(
         return true;
     }
     if (!DefaultPackSupportsVersion(profileId, target.minecraftVersion)) {
-        error = TrFormat(L"{0} does not support {1}", { DefaultPackTitle(profileId), a2w(target.minecraftVersion.c_str()) });
+        error = TrFormat(L"{0} does not support {1}", { DefaultPackTitle(profileId), target.minecraftVersion });
         return false;
     }
 
@@ -1507,7 +1507,7 @@ bool EnsureDefaultModpackInstalled(
     pack.slug = profileId == kReConsoleProfileId ? L"legacy-minecraft" : L"simply-legacy";
     pack.title = DefaultPackTitle(profileId);
     if (!InstallModpack(pack, runtimeRoot, profileId, error,
-        target.minecraftVersion, w2a(ToLowerW(target.loader).c_str()), true, progress)) return false;
+        w2a(target.minecraftVersion.c_str()), w2a(ToLowerW(target.loader).c_str()), true, progress)) return false;
     if (!SetProfileTarget(runtimeRoot, profileId, target)) {
         error = Tr(L"The selected version could not be saved");
         return false;

@@ -520,7 +520,7 @@ private:
         }
 
         const wchar_t* packTitle = state.versionPackSelected == 1 ? L"Re-Console" : L"Simply Legacy";
-        DrawText(TrFormat(L"{0} versions", { packTitle }), leadFormat_.Get(),
+        DrawText(TrFormat(L"{0} versions", { packTitle }).c_str(), leadFormat_.Get(),
             D2D1::RectF(L_, T_ + 258.0f, R_, T_ + 290.0f), text_);
 
         float y = T_ + 300.0f;
