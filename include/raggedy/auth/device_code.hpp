@@ -50,7 +50,7 @@ namespace raggedy::auth
     struct AuthConfig
     {
         std::string client_id;
-        std::string tenant = "common";
+        std::string tenant = "consumers";
         std::string scope = "XboxLive.signin openid profile offline_access";
     };
 

@@ -4,10 +4,14 @@ The launcher uses the official Microsoft device-code flow.
 
 ## Application setup
 
-- Use your own Microsoft application registration.
-- The client ID must be approved for Minecraft services; unapproved IDs receive an explicit error from Minecraft services.
-- Store the public client ID in `state/settings.json` as `microsoft_client_id`.
-- Never store access tokens, refresh tokens, XUIDs, or account identifiers in settings, logs, telemetry, or diagnostics exports.
+1. Sign in to https://entra.microsoft.com and open **Entra ID** > **App registrations** > **New registration**.
+2. Enter a name you own and choose **Personal Microsoft accounts only**.
+3. Open **Overview** and copy **Application (client) ID**. This is a public ID, not a secret.
+4. Open **Authentication** and set **Allow public client flows** to **Yes**. Device-code sign-in needs no redirect URI and no client secret.
+5. Open **API permissions** and add or consent `XboxLive.signin` if your tenant exposes it. The launcher requests `XboxLive.signin openid profile offline_access`.
+6. Submit the client ID for Minecraft Java Game Service API review using the form linked from https://help.minecraft.net/hc/en-us/articles/16254801392141-Java-Edition-Game-Service-API-Review-or-Application-Process. New IDs return `403 Invalid app registration` until approved.
+7. Store the public client ID in `state/settings.json` as `microsoft_client_id`. Personal Microsoft accounts use the `consumers` tenant.
+8. Never store access tokens, refresh tokens, XUIDs, or account identifiers in settings, logs, telemetry, or diagnostics exports.
 
 ## Screen flow
 

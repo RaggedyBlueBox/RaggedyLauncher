@@ -340,6 +340,8 @@ int main()
     FakeClock auth_clock;
     raggedy::auth::DeviceCodeFlow flow;
     std::string auth_error;
+    const raggedy::auth::AuthConfig default_auth;
+    assert(default_auth.tenant == "consumers");
     const raggedy::auth::AuthConfig auth_config{"client-id", "common", "XboxLive.signin openid profile offline_access"};
     assert(raggedy::auth::request_device_code(auth_http, auth_clock, auth_config, flow, auth_error));
     assert(flow.session.stage == raggedy::auth::Stage::waiting);

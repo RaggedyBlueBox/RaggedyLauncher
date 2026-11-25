@@ -10,6 +10,10 @@ The UWP host is an original C++/WinRT implementation. It is kept separate from t
 - A Microsoft application ID approved for Minecraft services.
 - A loopback process bridge for starting Java.
 
+## Microsoft app setup
+
+Follow the steps in `docs/AUTH-STRATEGY.md`. Use **Personal Microsoft accounts only**, enable public client flows, do not add a client secret, and submit the client ID for Minecraft Java Game Service API review before live play.
+
 ## Steps
 
 1. Create a fresh UWP C++/WinRT project.
@@ -26,6 +30,15 @@ The UWP host is an original C++/WinRT implementation. It is kept separate from t
 - `process_bridge_url`: a loopback URL such as `http://127.0.0.1:4137/launch`.
 - `telemetry_enabled`: stays `false` unless the user opts in.
 - `remote_files_enabled`: stays `false` unless the user opts in.
+
+```json
+{
+  "microsoft_client_id": "YOUR_PUBLIC_CLIENT_ID",
+  "process_bridge_url": "http://127.0.0.1:4137/launch",
+  "telemetry_enabled": false,
+  "remote_files_enabled": false
+}
+```
 
 ## Target manifest fields
 
