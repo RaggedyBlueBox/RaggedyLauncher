@@ -1,0 +1,19 @@
+name: independent-core-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and run tests
+        run: |
+          SOURCES="src/core/target.cpp src/core/launch_plan.cpp src/core/version.cpp src/core/profile.cpp src/catalog/catalog.cpp src/auth/device_code.cpp src/graphics/translation.cpp src/ui/device_code_view.cpp"
+          clang++ -std=c++20 -Wall -Wextra -pedantic -Iinclude tests/core/test_core.cpp $SOURCES -o /tmp/test_core
+          /tmp/test_core
+          clang++ -std=c++20 -Wall -Wextra -pedantic -Iinclude tests/core/test_rewrite.cpp $SOURCES -o /tmp/test_rewrite
+          /tmp/test_rewrite

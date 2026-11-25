@@ -1,0 +1,12 @@
+build/
+cmake-build-*/
+*.o
+*.obj
+*.exe
+*.appx
+*.msix
+*.cer
+*.pfx
+*.snk
+*.log
+.DS_Store
