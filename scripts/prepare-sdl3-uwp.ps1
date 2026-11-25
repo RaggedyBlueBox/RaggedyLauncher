@@ -23,6 +23,11 @@ $lifecyclePatchScript = Join-Path $root "scripts\apply-sdl3-v7-wgl.ps1"
 $providerParityPatchScript = Join-Path $root "scripts\apply-sdl3-v8-provider-parity.ps1"
 $stabilityPatchScript = Join-Path $root "scripts\apply-sdl3-v9-stability.ps1"
 $renderPearlPatchScript = Join-Path $root "scripts\apply-sdl3-v12-renderpearl-contract.ps1"
+$inputPatchScript = Join-Path $root "scripts\apply-sdl3-v13-input.ps1"
+$inputBridgePatchScript = Join-Path $root "scripts\apply-sdl3-v14-input.ps1"
+$inputContractPatchScript = Join-Path $root "scripts\apply-sdl3-v15-input-contract.ps1"
+$launcherCursorPatchScript = Join-Path $root "scripts\apply-sdl3-v16-launcher-cursor.ps1"
+$softwareCursorPatchScript = Join-Path $root "scripts\apply-sdl3-v17-software-cursor.ps1"
 if (-not (Test-Path -LiteralPath $patchPath)) {
     throw "SDL external-host patch is missing: $patchPath"
 }
@@ -37,6 +42,21 @@ if (-not (Test-Path -LiteralPath $stabilityPatchScript)) {
 }
 if (-not (Test-Path -LiteralPath $renderPearlPatchScript)) {
     throw "SDL V12 RenderPearl-contract patcher is missing: $renderPearlPatchScript"
+}
+if (-not (Test-Path -LiteralPath $inputPatchScript)) {
+    throw "SDL V13 input patcher is missing: $inputPatchScript"
+}
+if (-not (Test-Path -LiteralPath $inputBridgePatchScript)) {
+    throw "SDL V14 input-bridge patcher is missing: $inputBridgePatchScript"
+}
+if (-not (Test-Path -LiteralPath $inputContractPatchScript)) {
+    throw "SDL V15 input-contract patcher is missing: $inputContractPatchScript"
+}
+if (-not (Test-Path -LiteralPath $launcherCursorPatchScript)) {
+    throw "SDL V16 launcher-cursor patcher is missing: $launcherCursorPatchScript"
+}
+if (-not (Test-Path -LiteralPath $softwareCursorPatchScript)) {
+    throw "SDL V17 software-cursor patcher is missing: $softwareCursorPatchScript"
 }
 
 # The cache identity is content-addressed. A patch edit, script edit, source commit
@@ -64,6 +84,11 @@ $hashInputs = @(
     "providerParityPatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $providerParityPatchScript).Hash)",
     "stabilityPatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $stabilityPatchScript).Hash)",
     "renderPearlPatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $renderPearlPatchScript).Hash)",
+    "inputPatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $inputPatchScript).Hash)",
+    "inputBridgePatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $inputBridgePatchScript).Hash)",
+    "inputContractPatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $inputContractPatchScript).Hash)",
+    "launcherCursorPatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $launcherCursorPatchScript).Hash)",
+    "softwareCursorPatch=$((Get-FileHash -Algorithm SHA256 -LiteralPath $softwareCursorPatchScript).Hash)",
     "script=$((Get-FileHash -Algorithm SHA256 -LiteralPath $PSCommandPath).Hash)"
 ) -join "`n"
 $sha = [System.Security.Cryptography.SHA256]::Create()
@@ -126,6 +151,11 @@ function Assert-SdlRuntimeCompatibility {
         'BanditSDL_WinRTProviderParityV2',
         'BanditSDL_WinRTStabilityV9',
         'BanditSDL_WinRTRenderPearlV12',
+        'BanditSDL_WinRTInputBridgeV13',
+        'BanditSDL_WinRTInputBridgeV14',
+        'BanditSDL_WinRTInputContractV15',
+        'BanditSDL_WinRTLauncherCursorV16',
+        'BanditSDL_WinRTSoftwareCursorV17',
         'BanditSDL_WinRTAbsoluteLoadFixV1',
         'BanditSDL_WinRTWGLBackendV1',
         'BanditSDL_WinRTSafeWGLInitV1',
@@ -176,7 +206,7 @@ function Assert-SdlRuntimeCompatibility {
         throw "SDL3 runtime is missing required Bandit/LWJGL exports: $($missing -join ', '). Runtime: $Path"
     }
 
-    Write-Host "SDL3 runtime validation passed: x64, external-host/V7 lifecycle + V8 provider parity + V9 stability + V12 RenderPearl contract, logical-multiwindow and absolute-path markers present, required LWJGL SDL surface exported."
+    Write-Host "SDL3 runtime validation passed: x64, external-host/V7 lifecycle + V8 provider parity + V9 stability + V12 RenderPearl + V13/V14/V15 input + V16/V17 cursor contract, logical-multiwindow and absolute-path markers present, required LWJGL SDL surface exported."
 }
 
 function Copy-SdlRuntime {
@@ -288,12 +318,37 @@ function Patch-ExternalHostSupport {
         if (-not $?) {
             throw "Failed to apply SDL V12 RenderPearl-contract patch: $renderPearlPatchScript"
         }
+
+        & $inputPatchScript -SourceRoot $sourceRoot | Out-Host
+        if (-not $?) {
+            throw "Failed to apply SDL V13 input patch: $inputPatchScript"
+        }
+
+        & $inputBridgePatchScript -SourceRoot $sourceRoot | Out-Host
+        if (-not $?) {
+            throw "Failed to apply SDL V14 input-bridge patch: $inputBridgePatchScript"
+        }
+
+        & $inputContractPatchScript -SourceRoot $sourceRoot | Out-Host
+        if (-not $?) {
+            throw "Failed to apply SDL V15 input-contract patch: $inputContractPatchScript"
+        }
+
+        & $launcherCursorPatchScript -SourceRoot $sourceRoot | Out-Host
+        if (-not $?) {
+            throw "Failed to apply SDL V16 launcher-cursor patch: $launcherCursorPatchScript"
+        }
+
+        & $softwareCursorPatchScript -SourceRoot $sourceRoot | Out-Host
+        if (-not $?) {
+            throw "Failed to apply SDL V17 software-cursor patch: $softwareCursorPatchScript"
+        }
     } finally {
         Pop-Location
     }
 
     [System.IO.File]::WriteAllText($patchStamp, $expectedStamp, (New-Object System.Text.UTF8Encoding($false)))
-    Write-Host "Patched SDL WinRT backend for external CoreWindow hosting + V7 lifecycle/multiwindow + V8 provider parity + V9 stability + V12 RenderPearl contract (cache key $cacheKey)."
+    Write-Host "Patched SDL WinRT backend for external CoreWindow hosting + V7 lifecycle/multiwindow + V8 provider parity + V9 stability + V12 RenderPearl + V13/V14/V15 input contract + V16/V17 cursor contract (cache key $cacheKey)."
 }
 
 function Build-SdlRuntime {
@@ -357,7 +412,7 @@ function Build-SdlRuntime {
 # external-host WinRT patch. Stock desktop or stock SDL-UWP binaries are not
 # sufficient because their event sink is never attached to Bandit's view.
 if ($SourceDll) {
-    Write-Host "Using SDL3_UWP_DLL override; validating architecture, Bandit V7 lifecycle + V8 provider-parity + V9 stability + V12 RenderPearl/WGL + multiwindow/absolute-path markers and required exports..."
+    Write-Host "Using SDL3_UWP_DLL override; validating architecture, Bandit V7 lifecycle + V8 provider-parity + V9 stability + V12 RenderPearl/WGL + V13/V14/V15 input + V16/V17 cursor + multiwindow/absolute-path markers and required exports..."
     Copy-SdlRuntime -Path $SourceDll
     return
 }

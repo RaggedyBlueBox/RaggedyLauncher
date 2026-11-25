@@ -1142,6 +1142,7 @@ bool RunEmbeddedMinecraft(const std::wstring& exeDir,
         vmOptionStorage.push_back("-Djna.debug_load.jna=true");
     }
     vmOptionStorage.push_back("-Dorg.lwjgl.system.SharedLibraryExtractDirectory=" + w2a(fwd(lwjglTmpDir)));
+    vmOptionStorage.push_back("-Dorg.lwjgl.system.SharedLibraryExtractPath=" + w2a(fwd(lwjglTmpDir)));
     WriteLogF(L"LWJGL native directory: %s", lwjglNativeDir.c_str());
     const bool usesSdlWindowBackend = CompareVersionNumbers(w2a(minecraftVersion), "26.3") >= 0;
     if (!usesSdlWindowBackend) {

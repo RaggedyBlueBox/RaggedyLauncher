@@ -13,12 +13,16 @@ Sodium-family performance mods, and what is still untested.
   `graphics/<runtime>/opengl32.dll`, forces the WinRT SDL video driver, and
   preloads the Mesa/D3D12 support stack before the JVM. The pinned SDL fork is
   built with WGL enabled, EGL disabled and the WinRT-aware loader; the base
-  patch normalizes absolute packaged Mesa paths for `LoadPackagedLibrary`, and
+  patch normalizes absolute packaged Mesa paths for `LoadPackagedLibrary`;
   V7/V8/V9/V12 handle WGL lifecycle, LWJGL provider parity, stability and
-  RenderPearl's hidden logical windows. This is required because RenderPearl's
-  SDL backend calls `SDL_GL_LoadLibrary()` before LWJGL uses the OpenGL library.
+  RenderPearl's hidden logical windows; and V13/V14/V15/V16/V17 handle the
+  WinRT keyboard/mouse/WGI contract and hidden cursor path. This is required
+  because RenderPearl's SDL backend calls `SDL_GL_LoadLibrary()` before LWJGL
+  uses the OpenGL library.
 - Older targets keep the legacy GLFW and LWJGL OpenGL overrides. `java.library.path`
-  and the extracted LWJGL native directory are unchanged.
+  and the extracted LWJGL native directory are unchanged. Minecraft 26.3 also
+  passes `org.lwjgl.system.SharedLibraryExtractPath` so native extraction uses
+  the same writable directory as LWJGL's other temporary native paths.
 - Vulkan is open work, not an opt-in toggle. Bandit's 26.3 path is OpenGL/WGL;
   its known-mod list blocks VulkanMod because the UWP GLFW path lacks
   `glfwInitVulkanLoader`, and this package has `vulkan_dzn.dll` but no

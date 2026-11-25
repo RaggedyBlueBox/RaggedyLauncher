@@ -84,6 +84,21 @@ $sdkRoot = $sdk.Root
 $sdkVer = $sdk.Version
 # some sdk installs ship makeappx and signtool only under an older bin version
 $sdkToolsFallbackVer = "10.0.26100.0"
+$rcCandidates = @(
+    (Join-Path $sdkRoot "Bin\$sdkVer\x64\rc.exe")
+    (Join-Path $sdkRoot "Bin\$sdkVer\x86\rc.exe")
+    (Join-Path $sdkRoot "Bin\$sdkToolsFallbackVer\x64\rc.exe")
+    (Join-Path $sdkRoot "Bin\$sdkToolsFallbackVer\x86\rc.exe")
+)
+$rcExe = Get-ChildItem -LiteralPath $rcCandidates -ErrorAction SilentlyContinue |
+    Select-Object -First 1 -ExpandProperty FullName
+if (-not $rcExe) {
+    $rcCommand = Get-Command rc.exe -ErrorAction SilentlyContinue
+    if ($rcCommand) { $rcExe = $rcCommand.Source }
+}
+if (-not $rcExe) {
+    throw "Windows SDK resource compiler rc.exe was not found. Install the Windows SDK resource tools or add rc.exe to PATH."
+}
 
 function Assert-AppxVersion {
     param([Parameter(Mandatory = $true)][string]$Version)
@@ -398,10 +413,19 @@ $mcSources = @(
     Get-ChildItem (Join-Path $root "MC.Xbox") -Recurse -File -Include *.cpp, *.c, *.h, *.hpp
     Get-ChildItem (Join-Path $root "mouse_support") -Recurse -File -Include *.cpp, *.h
 ) | Select-Object -ExpandProperty FullName
+$mcResourceScript = Join-Path $root "MC.Xbox\SDL3-WinRTResources.rc"
+$mcResourceCursors = @(
+    (Join-Path $root "MC.Xbox\Assets\SDL3-WinRTResource_BlankCursor.cur")
+    (Join-Path $root "MC.Xbox\Assets\BanditLauncherCursor.cur")
+)
+$mcResourceRes = Join-Path $mcBuildDir "MC.Xbox.resources.res"
+foreach ($resourceInput in (@($mcResourceScript) + $mcResourceCursors)) {
+    if (-not (Test-Path -LiteralPath $resourceInput)) { throw "Required WinRT cursor resource is missing: $resourceInput" }
+}
 $mcStampPath = Join-Path $mcBuildDir "MC.Xbox.stamp"
 $mcStamp = New-BuildStamp `
-    -Values @("mc_xbox_exe", $tools.ClExe, $sdkVer, $jreSrc, ($CommonClFlags -join " ")) `
-    -ContentFiles (@($PSCommandPath, $runtimeConfigOutput) + $mcSources)
+    -Values @("mc_xbox_exe", $tools.ClExe, $rcExe, $sdkVer, $jreSrc, ($CommonClFlags -join " ")) `
+    -ContentFiles (@($PSCommandPath, $runtimeConfigOutput, $mcResourceScript) + $mcResourceCursors + $mcSources)
 $mcNeedsBuild = -not (Test-BuildStampCurrent -StampPath $mcStampPath -Stamp $mcStamp -RequiredOutputs @($mcExe))
 
 if ($mcNeedsBuild) {
@@ -410,10 +434,18 @@ if ($mcNeedsBuild) {
     $env:INCLUDE = "$mcBuildDir;$($tools.MsvcRoot)\include;${sdkRoot}Include\$sdkVer\ucrt;${sdkRoot}Include\$sdkVer\shared;${sdkRoot}Include\$sdkVer\um;${sdkRoot}Include\$sdkVer\winrt;${sdkRoot}Include\$sdkVer\cppwinrt;$jreSrc\include;$jreSrc\include\win32"
     $env:LIB = "$($tools.MsvcRoot)\lib\x64;${sdkRoot}Lib\$sdkVer\ucrt\x64;${sdkRoot}Lib\$sdkVer\um\x64"
 
+    Push-Location (Join-Path $root "MC.Xbox")
+    try {
+        & $rcExe /nologo "/fo$mcResourceRes" "SDL3-WinRTResources.rc"
+        if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $mcResourceRes)) { throw "WinRT cursor resource compile failed" }
+    } finally {
+        Pop-Location
+    }
+
     & $tools.ClExe App.cpp launch\app_globals.cpp common\launcher_common.cpp common\i18n.cpp common\themes.cpp common\crash_report.cpp mods\mod_defaults.cpp mods\mod_source.cpp mods\curseforge.cpp mods\manual_downloads.cpp mods\modpack_io.cpp mods\world_io.cpp net\http_client.cpp net\update_check.cpp profiles\profiles.cpp net\html_translate.cpp net\remote_file_server.cpp net\web_relay_server.cpp auth\minecraft_auth.cpp ui\launcher_ui.cpp ui\launcher_mouse.cpp ui\mods_ui_globals.cpp mods\mods_browser.cpp mods\controller_bundle.cpp mods\performance_bundle.cpp launch\runtime_manager.cpp launch\minecraft_launch.cpp launch\launch_internal.cpp launch\loaders\loader_common.cpp launch\loaders\loader.cpp launch\loaders\fabric.cpp launch\loaders\neoforge.cpp launch\loaders\forge.cpp launch\loaders\cleanroom.cpp telemetry\telemetry.cpp telemetry\crash_fingerprint.cpp telemetry\crash_parse.cpp telemetry\compat_feed.cpp third_party\miniz\miniz.c /std:c++17 /EHsc $CommonClFlags /O2 /GL /Gw /MP /DNDEBUG /D_UNICODE /DUNICODE /D_WIN32_WINNT=0x0A00 /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS /DMINIZ_NO_STDIO /DMINIZ_NO_TIME /I. /Icommon /Inet /Iauth /Iui /Imods /Iprofiles /Ilaunch /Ilaunch\loaders /Itelemetry /I..\mouse_support /Fo"$mcBuildDir\" `
         /DWINAPI_FAMILY=WINAPI_FAMILY_APP `
         /link /LTCG /SUBSYSTEM:WINDOWS /ENTRY:wWinMainCRTStartup /MACHINE:X64 `
-        /OUT:"$mcExe" kernel32.lib shell32.lib runtimeobject.lib windowsapp.lib ole32.lib oleaut32.lib d2d1.lib dwrite.lib d3d11.lib dxgi.lib windowscodecs.lib winhttp.lib bcrypt.lib ws2_32.lib
+        /OUT:"$mcExe" "$mcResourceRes" kernel32.lib shell32.lib runtimeobject.lib windowsapp.lib ole32.lib oleaut32.lib d2d1.lib dwrite.lib d3d11.lib dxgi.lib windowscodecs.lib winhttp.lib bcrypt.lib ws2_32.lib
     if ($LASTEXITCODE -ne 0) { throw "Compile failed" }
     Pop-Location
     Set-BuildStamp -StampPath $mcStampPath -Stamp $mcStamp
