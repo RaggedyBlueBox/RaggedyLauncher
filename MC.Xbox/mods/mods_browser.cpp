@@ -576,6 +576,40 @@ static std::function<void(unsigned long long)> MakeInstallProgress(const std::ws
     };
 }
 
+static ModpackProgressFactory MakeDefaultPackProgress(const DefaultPackProgress& uiProgress) {
+    if (!uiProgress) return nullptr;
+    return [uiProgress](const std::wstring& label, unsigned long long total) {
+        int completed = 0;
+        int count = 0;
+        if (label.size() > 2 && label[0] == L'[') {
+            const size_t slash = label.find(L'/');
+            const size_t close = label.find(L']');
+            if (slash != std::wstring::npos && close != std::wstring::npos && slash > 1 && close > slash + 1) {
+                try {
+                    completed = std::stoi(label.substr(1, slash - 1)) - 1;
+                    count = std::stoi(label.substr(slash + 1, close - slash - 1));
+                } catch (...) {
+                    completed = 0;
+                    count = 0;
+                }
+            }
+        }
+        if (completed < 0) completed = 0;
+        return [uiProgress, label, total, completed, count](unsigned long long done) {
+            std::wstring status = label;
+            if (total > 0) status += L"  " + TrFormat(L"{0} / {1} MB", { MbStr((std::min)(done, total)), MbStr(total) });
+            else status += L"  " + TrFormat(L"{0} MB", { MbStr(done) });
+            const double within = total > 0
+                ? static_cast<double>((std::min)(done, total)) / static_cast<double>(total)
+                : 0.0;
+            const double fraction = count > 0
+                ? (static_cast<double>(completed) + within) / static_cast<double>(count)
+                : within;
+            uiProgress(status, (std::min)(1.0, (std::max)(0.0, fraction)));
+        };
+    };
+}
+
 static bool ExtractPrimaryModrinthFile(
     const winrt::Windows::Data::Json::JsonObject& version,
     std::wstring& url,
@@ -1338,7 +1372,7 @@ static bool ResolveModrinthProjectFile(const std::wstring& idOrSlug, const wchar
     }
 }
 
-static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot, const std::wstring& profileId, std::wstring& error, const std::string& gameVersion, const std::string& loaderId, bool allowBuiltinProfile = false) {
+static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot, const std::wstring& profileId, std::wstring& error, const std::string& gameVersion, const std::string& loaderId, bool allowBuiltinProfile = false, const DefaultPackProgress& progress = nullptr) {
     const std::wstring idOrSlug = !card.projectId.empty() ? card.projectId : card.slug;
 
     SetInstallStatus(TrFormat(L"Resolving {0}...", { card.title }));
@@ -1381,14 +1415,17 @@ static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot,
 
     SetInstallStatus(TrFormat(L"Installing {0}...", { card.title }));
     std::wstring skippedNote;
-    const bool ok = InstallModpackFromFile(mrPath, runtimeRoot, profileId, error, &skippedNote, MakeInstallProgress, allowBuiltinProfile);
+    const auto defaultProgress = MakeDefaultPackProgress(progress);
+    const bool ok = InstallModpackFromFile(mrPath, runtimeRoot, profileId, error, &skippedNote,
+        defaultProgress ? defaultProgress : MakeInstallProgress, allowBuiltinProfile);
     DeleteFileW(mrPath.c_str());
     if (ok && !skippedNote.empty()) error = skippedNote;
     return ok;
 }
 
 bool EnsureDefaultModpackInstalled(
-    const std::wstring& runtimeRoot, const std::wstring& profileId, std::wstring& error) {
+    const std::wstring& runtimeRoot, const std::wstring& profileId, std::wstring& error,
+    const DefaultPackProgress& progress) {
     const std::wstring marker = ProfileDir(runtimeRoot, profileId) + L"\\.raggedy\\default-modpack.txt";
     EnsureDirectoryTree(GetParentDir(marker));
     if (GetFileAttributesW(marker.c_str()) != INVALID_FILE_ATTRIBUTES) return true;
@@ -1407,7 +1444,7 @@ bool EnsureDefaultModpackInstalled(
     pack.projectId = reConsole ? L"g9O0WaGR" : L"f63ynpri";
     pack.slug = reConsole ? L"legacy-minecraft" : L"simply-legacy";
     pack.title = reConsole ? L"Re-Console" : L"Simply Legacy";
-    if (!InstallModpack(pack, runtimeRoot, profileId, error, "26.3", "fabric", true)) return false;
+    if (!InstallModpack(pack, runtimeRoot, profileId, error, "26.3", "fabric", true, progress)) return false;
     WriteLogF(L"Default modpack installed: %s profile=%s", pack.title.c_str(), profileId.c_str());
     return WriteTextFile(marker, reConsole ? L"g9O0WaGR\n" : L"f63ynpri\n");
 }

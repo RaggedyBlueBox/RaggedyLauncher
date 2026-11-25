@@ -18,6 +18,8 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 **Headless AWT image drawing no longer crashes modpacks.** Java 21+ initializes the native Win32 graphics environment before honoring `-Djava.awt.headless=true`. The packaged `java.desktop` patch now returns a headless graphics environment first, so skin and resource mods such as BedrockSkins can draw `BufferedImage`s without querying display devices that UWP does not expose.
 
+**First-boot modpack setup now shows live progress.** Simply Legacy downloads dozens of files, including large texture packs, so a silent progress bar could look stuck. The preparation screen now updates with the current file, byte count, and overall percentage while the pack installs.
+
 **Existing profiles migrate into the simplified layout.** Old controller fields are ignored, built-in names are normalized to Simply Legacy and Re-Console, and the two built-ins stay first in the profile list.
 
 ## 2026-11-23

@@ -105,7 +105,9 @@ try {
     Require-Contains $launchSource 'L"graphics\\" + graphicsRuntime + L"\\opengl32.dll"' 'Package-relative SDL OpenGL hint source'
     Require-Contains $appSource 'SetActiveProfileId(exeDir, kVanillaProfileId)' 'Simply Legacy default profile source'
     Require-Contains $appSource 'EnsureDefaultModpackInstalled' 'Default modpack bootstrap source'
+    Require-Contains $appSource 'static_cast<float>(fraction)' 'Default modpack live progress UI source'
     Require-Contains $browserSource 'EnsureDefaultModpackInstalled' 'Default modpack installer source'
+    Require-Contains $browserSource 'MakeDefaultPackProgress' 'Default modpack live progress source'
     Require-Contains $browserSource '"fabric", true' 'Built-in profile default modpack seeding source'
     $sdlPrepareSource = Get-Content -LiteralPath (Join-Path $root 'scripts/prepare-sdl3-uwp.ps1') -Raw
     $sdlPatchSource = Get-Content -LiteralPath (Join-Path $root 'patches/sdl3-uwp-external-host.patch') -Raw

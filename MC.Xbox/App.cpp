@@ -630,7 +630,15 @@ public:
                 0.0f);
             std::wstring defaultPackError;
             const bool defaultPackReady = EnsureDefaultModpackInstalled(
-                exeDir, GetActiveProfileId(exeDir), defaultPackError);
+                exeDir, GetActiveProfileId(exeDir), defaultPackError,
+                [&](const std::wstring& status, double fraction) {
+                    RenderPreparationProgress(
+                        packRenderer,
+                        packState,
+                        Tr(L"Preparing Simply Legacy"),
+                        status.c_str(),
+                        static_cast<float>(fraction));
+                });
             RenderPreparationProgress(
                 packRenderer,
                 packState,
