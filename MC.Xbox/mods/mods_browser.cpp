@@ -1372,7 +1372,7 @@ static bool ResolveModrinthProjectFile(const std::wstring& idOrSlug, const wchar
     }
 }
 
-static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot, const std::wstring& profileId, std::wstring& error, const std::string& gameVersion, const std::string& loaderId, bool allowBuiltinProfile = false, const DefaultPackProgress& progress = nullptr) {
+static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot, const std::wstring& profileId, std::wstring& error, const std::string& gameVersion, const std::string& loaderId, bool allowBuiltinProfile = false, const DefaultPackProgress& uiProgress = nullptr) {
     const std::wstring idOrSlug = !card.projectId.empty() ? card.projectId : card.slug;
 
     SetInstallStatus(TrFormat(L"Resolving {0}...", { card.title }));
@@ -1415,7 +1415,7 @@ static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot,
 
     SetInstallStatus(TrFormat(L"Installing {0}...", { card.title }));
     std::wstring skippedNote;
-    const auto defaultProgress = MakeDefaultPackProgress(progress);
+    const auto defaultProgress = MakeDefaultPackProgress(uiProgress);
     const bool ok = InstallModpackFromFile(mrPath, runtimeRoot, profileId, error, &skippedNote,
         defaultProgress ? defaultProgress : MakeInstallProgress, allowBuiltinProfile);
     DeleteFileW(mrPath.c_str());
