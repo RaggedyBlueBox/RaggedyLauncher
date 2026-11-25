@@ -183,7 +183,7 @@ bool ApplyPerformanceMode(const std::wstring& runtimeRoot, const std::wstring& p
     status = TrFormat(L"Performance renderer {0} installed ({1} file(s)){2}.",
         { selection.candidate.project, std::to_wstring(installed.size()), modeSuffix });
     if (overwriteMode) {
-        status += L" " + Tr(L"Target metadata matched; Xbox compatibility is still untested.");
+        status += std::wstring(L" ") + Tr(L"Target metadata matched; Xbox compatibility is still untested.");
     }
     const std::vector<std::wstring> conflicts = FindPerfConflicts(runtimeRoot, profileId, selection.candidate.project);
     if (!conflicts.empty()) {
