@@ -8,6 +8,7 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 - **Version replaces Mods on the main menu.** The new page lets you pick Simply Legacy or Re-Console with left/right, choose a Minecraft version with the D-pad or left stick, press A to select it and return, and press B to leave without changing anything.
 - **A new Credits page opens from Settings.** Press B or Back on the footer to leave it; the rest of Settings is unchanged apart from the always-on renderer note below.
+- **Detailed credits for Simply Legacy and Re-Console.** [CREDITS.md](CREDITS.md) credits the creators and thanks them for keeping the Legacy Console Edition spirit alive.
 
 ### Changed
 

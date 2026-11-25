@@ -8,6 +8,8 @@
 Raggedy Launcher by **RaggedyBlueBox** — a controller-first Minecraft Java
 launcher for Xbox Series X|S (Dev Mode) and Windows.
 
+> **Archived repository.** This is the original Raggedy Launcher line. Active development continues as a clean-room rewrite in a separate repository.
+
 > **FULLY VIBE CODED.** This entire project is designed and built with AI
 > assistance — no hand-written code. On-console testing happens on a real
 > Series S devkit.
@@ -33,6 +35,8 @@ lightweight in-game options and the matched renderer, the launcher UI is capped
 at 30 FPS, and menus use a single-image backdrop. See
 [docs/GRAPHICS-AND-PERFORMANCE.md](docs/GRAPHICS-AND-PERFORMANCE.md)
 and [CHANGELOG.md](CHANGELOG.md).
+
+This project would not have been possible in the way I imagined it without the Simply Legacy and Re-Console teams. Their work gave this launcher a purpose: giving 4J Studios' Legacy Console Edition work a new life on Xbox. See [CREDITS.md](CREDITS.md) for the full credits and thanks.
 
 ---
 
@@ -169,6 +173,7 @@ Crash and usage reporting is off until enabled. It can be changed in launcher Se
 - [Contributing](CONTRIBUTING.md)
 - [Translating](docs/TRANSLATING.md)
 - [Third-party components](docs/THIRD-PARTY.md)
+- [Credits and thanks](CREDITS.md)
 
 ## License and creator content
 
