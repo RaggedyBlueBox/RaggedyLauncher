@@ -580,10 +580,8 @@ public:
         }
 
         EnsureProfilesInitialized(exeDir);
-        if (!SetActiveProfileId(exeDir, kVanillaProfileId)) {
-            WriteLog(L"Could not reset active profile to Simply Legacy");
-        } else {
-            WriteLog(L"Default profile reset to Simply Legacy");
+        if (GetActiveProfileId(exeDir).empty() && !SetActiveProfileId(exeDir, kVanillaProfileId)) {
+            WriteLog(L"Could not seed the default Simply Legacy profile");
         }
 
         LaunchAuthConfig authConfig;
@@ -616,6 +614,10 @@ public:
 
         EnsureProfilesInitialized(exeDir);
         {
+            const std::wstring packProfileId = GetActiveProfileId(exeDir);
+            const Profile packProfile = GetProfileById(exeDir, packProfileId);
+            const LaunchTarget packTarget = ResolveProfileTarget(exeDir, packProfile);
+            const std::wstring packTitle = DefaultPackTitle(packProfileId);
             AuthScreenRenderer packRendererInstance;
             AuthScreenRenderer* packRenderer = nullptr;
             if (packRendererInstance.Initialize(g_authWindow.Get())) {
@@ -625,24 +627,32 @@ public:
             RenderPreparationProgress(
                 packRenderer,
                 packState,
-                Tr(L"Preparing Simply Legacy"),
+                TrFormat(L"Preparing {0}", { packTitle }),
                 Tr(L"Downloading the latest supported modpack"),
                 0.0f);
             std::wstring defaultPackError;
             const bool defaultPackReady = EnsureDefaultModpackInstalled(
-                exeDir, GetActiveProfileId(exeDir), defaultPackError,
+                exeDir, packProfileId, packTarget, defaultPackError,
                 [&](const std::wstring& status, double fraction) {
                     RenderPreparationProgress(
                         packRenderer,
                         packState,
-                        Tr(L"Preparing Simply Legacy"),
+                        TrFormat(L"Preparing {0}", { packTitle }),
                         status.c_str(),
                         static_cast<float>(fraction));
                 });
+            if (defaultPackReady) {
+                SetProfilePerfRenderer(exeDir, packProfileId, L"auto");
+                std::wstring perfStatus;
+                bool perfError = false;
+                if (!ApplyPerformanceMode(exeDir, packProfileId, L"auto", perfStatus, perfError)) {
+                    WriteLogF(L"Raggedy performance renderer check failed: %s", perfStatus.c_str());
+                }
+            }
             RenderPreparationProgress(
                 packRenderer,
                 packState,
-                defaultPackReady ? Tr(L"Simply Legacy ready") : Tr(L"Modpack setup failed"),
+                defaultPackReady ? TrFormat(L"{0} ready", { packTitle }) : Tr(L"Modpack setup failed"),
                 defaultPackReady ? Tr(L"Starting Minecraft") : defaultPackError.c_str(),
                 defaultPackReady ? 1.0f : 0.0f);
             if (!defaultPackReady) SleepWithAuthUi(packRenderer, packState, 5000);

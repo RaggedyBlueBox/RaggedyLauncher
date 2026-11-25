@@ -293,7 +293,7 @@ static bool SaveProfilesJson(const std::wstring& runtimeRoot, const std::vector<
         obj.SetNamedValue(L"loaderVersion", jsonString(p.loaderVersion));
         obj.SetNamedValue(L"targetId", jsonString(p.targetId));
         obj.SetNamedValue(L"builtin", JsonValue::CreateBooleanValue(p.builtin));
-        obj.SetNamedValue(L"perfRenderer", jsonString(NormalizePerfRenderer(p.perfRenderer)));
+        obj.SetNamedValue(L"perfRenderer", jsonString(L"auto"));
         arr.Append(obj);
     }
     root.SetNamedValue(L"profiles", arr);
@@ -330,7 +330,7 @@ std::vector<Profile> LoadProfiles(const std::wstring& runtimeRoot) {
                     p.loaderVersion = JsonStringOrEmpty(obj, L"loaderVersion");
                     p.targetId = JsonStringOrEmpty(obj, L"targetId");
                     p.builtin = JsonBoolOrFalse(obj, L"builtin");
-                    p.perfRenderer = NormalizePerfRenderer(JsonStringOrEmpty(obj, L"perfRenderer"));
+                    p.perfRenderer = L"auto";
                     if (p.id.empty()) continue;
                     if (p.id == kVanillaProfileId) p.name = Tr(L"Simply Legacy");
                     else if (p.id == kReConsoleProfileId) p.name = Tr(L"Re-Console");
@@ -490,7 +490,7 @@ static bool WriteProfileBackupMeta(const std::wstring& backupDir, const Profile&
     obj.SetNamedValue(L"loader", jsonString(profile.loader));
     obj.SetNamedValue(L"loaderVersion", jsonString(profile.loaderVersion));
     obj.SetNamedValue(L"targetId", jsonString(profile.targetId));
-    obj.SetNamedValue(L"perfRenderer", jsonString(NormalizePerfRenderer(profile.perfRenderer)));
+    obj.SetNamedValue(L"perfRenderer", jsonString(L"auto"));
     obj.SetNamedValue(L"created", jsonString(CrashTimestampForFileName()));
     return WriteTextFile(backupDir + L"\\profile_backup.json", std::wstring(obj.Stringify().c_str()));
 }
@@ -509,7 +509,7 @@ static bool ReadProfileBackupMeta(const std::wstring& backupDir, Profile& profil
         profile.loader = ToLowerW(JsonStringOrEmpty(obj, L"loader"));
         profile.loaderVersion = JsonStringOrEmpty(obj, L"loaderVersion");
         profile.targetId = JsonStringOrEmpty(obj, L"targetId");
-        profile.perfRenderer = NormalizePerfRenderer(JsonStringOrEmpty(obj, L"perfRenderer"));
+        profile.perfRenderer = L"auto";
         profile.builtin = false;
         if (profile.id.empty()) return false;
         if (profile.name.empty()) profile.name = profile.id;
@@ -649,13 +649,33 @@ bool RenameProfile(const std::wstring& runtimeRoot, const std::wstring& id, cons
 bool SetProfilePerfRenderer(const std::wstring& runtimeRoot, const std::wstring& id, const std::wstring& mode) {
     std::lock_guard<std::recursive_mutex> guard(g_profilesMutex);
     if (id.empty()) return false;
+    (void)mode;
     std::vector<Profile> profiles = LoadProfiles(runtimeRoot);
     for (auto& p : profiles) {
         if (p.id == id) {
-            p.perfRenderer = NormalizePerfRenderer(mode);
+            p.perfRenderer = L"auto";
             break;
         }
     }
+    return SaveProfiles(runtimeRoot, profiles);
+}
+
+bool SetProfileTarget(const std::wstring& runtimeRoot, const std::wstring& id, const LaunchTarget& target) {
+    std::lock_guard<std::recursive_mutex> guard(g_profilesMutex);
+    if (id.empty() || target.targetId.empty()) return false;
+    std::vector<Profile> profiles = LoadProfiles(runtimeRoot);
+    bool found = false;
+    for (auto& p : profiles) {
+        if (p.id != id) continue;
+        p.minecraftVersion = target.minecraftVersion;
+        p.loader = ToLowerW(target.loader);
+        p.loaderVersion = target.loaderVersion;
+        p.targetId = target.targetId;
+        p.perfRenderer = L"auto";
+        found = true;
+        break;
+    }
+    if (!found) return false;
     return SaveProfiles(runtimeRoot, profiles);
 }
 

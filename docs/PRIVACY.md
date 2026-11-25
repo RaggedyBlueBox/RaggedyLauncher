@@ -8,8 +8,9 @@ Accurate against `main` as of 23 November 2026.
 
 ## Who runs this
 
-Raggedy Launcher is made by RaggedyBlueBox, based on Raggedy Launcher by veroxsity /
-RaggedyBlueBox (see LICENSE). There is no Raggedy telemetry server. The only place launcher
+Raggedy Launcher is made by RaggedyBlueBox. It is a derivative of the upstream
+JavaUWP/BanditVault launcher by veroxsity / BanditVault, completely readapted into a new
+controller-first launcher and not a fork (see LICENSE). There is no Raggedy telemetry server. The only place launcher
 crash reports can go is a private GitHub repository owned by the same account,
 `RaggedyBlueBox/RaggedyLauncher-telemetry`, and only as issues you opt into with a token
 you save yourself. Nothing is sold, shared with advertisers, or passed to a third party

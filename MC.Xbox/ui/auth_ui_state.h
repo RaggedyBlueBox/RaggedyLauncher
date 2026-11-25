@@ -26,6 +26,11 @@ struct AuthUiState {
     bool showMainMenu = false;
     bool showRemoteFiles = false;
     bool showModsPage = false;
+    bool showVersionPage = false;
+    std::wstring versionProfileId;
+    std::vector<LaunchTarget> versionTargets;
+    int versionSelected = 0;
+    int versionPackSelected = 0;
     int selectedMenuIndex = 0;
     int selectedModsTab = 0;
     ModSource modsSource = ModSource::Modrinth;
@@ -88,6 +93,7 @@ struct AuthUiState {
     std::wstring crashFootnote;
 
     bool showChangelog = false;
+    bool showCredits = false;
     // the same screen doubles as the new version notice, which adds a QR code and two buttons
     bool changelogOffer = false;
     std::wstring changelogHeadline;

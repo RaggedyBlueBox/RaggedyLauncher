@@ -24,7 +24,10 @@ void ShowModsPage(
 using DefaultPackProgress = std::function<void(const std::wstring& status, double fraction)>;
 
 bool EnsureDefaultModpackInstalled(const std::wstring& runtimeRoot, const std::wstring& profileId,
-    std::wstring& error, const DefaultPackProgress& progress = nullptr);
+    const LaunchTarget& target, std::wstring& error, const DefaultPackProgress& progress = nullptr);
+std::vector<LaunchTarget> SupportedPackTargets(
+    const std::wstring& runtimeRoot, const std::wstring& profileId);
+std::wstring DefaultPackTitle(const std::wstring& profileId);
 bool InstallManagedModrinthProject(const std::wstring& runtimeRoot, const std::wstring& profileId,
     const std::wstring& rootSlug, const std::wstring& ownerToken, const LaunchTarget& target,
     std::vector<std::wstring>& installedOut, std::wstring& error);

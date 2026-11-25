@@ -1423,30 +1423,98 @@ static bool InstallModpack(const ModCard& card, const std::wstring& runtimeRoot,
     return ok;
 }
 
+std::wstring DefaultPackTitle(const std::wstring& profileId) {
+    return profileId == kReConsoleProfileId ? L"Re-Console" : L"Simply Legacy";
+}
+
+static std::wstring DefaultPackProjectId(const std::wstring& profileId) {
+    return profileId == kReConsoleProfileId ? L"g9O0WaGR" : L"f63ynpri";
+}
+
+static bool DefaultPackSupportsVersion(const std::wstring& profileId, const std::wstring& version) {
+    static const wchar_t* kSimplyLegacyVersions[] = {
+        L"26.3", L"26.1.2", L"1.21.10"
+    };
+    static const wchar_t* kReConsoleVersions[] = {
+        L"26.3", L"26.2", L"26.1.2", L"1.21.10", L"1.21.8", L"1.21.5", L"1.21.4",
+        L"1.21.3", L"1.21.1", L"1.21", L"1.20.6", L"1.20.4", L"1.20.1"
+    };
+    const wchar_t* const* versions = profileId == kReConsoleProfileId
+        ? kReConsoleVersions
+        : kSimplyLegacyVersions;
+    const size_t count = profileId == kReConsoleProfileId
+        ? (sizeof(kReConsoleVersions) / sizeof(kReConsoleVersions[0]))
+        : (sizeof(kSimplyLegacyVersions) / sizeof(kSimplyLegacyVersions[0]));
+    for (size_t i = 0; i < count; ++i) {
+        if (version == versions[i]) return true;
+    }
+    return false;
+}
+
+std::vector<LaunchTarget> SupportedPackTargets(
+    const std::wstring& runtimeRoot, const std::wstring& profileId) {
+    std::vector<LaunchTarget> result;
+    for (const LaunchTarget& target : LoadVersionCatalog(runtimeRoot)) {
+        if (ToLowerW(target.loader) != L"fabric") continue;
+        if (DefaultPackSupportsVersion(profileId, target.minecraftVersion)) result.push_back(target);
+    }
+    return result;
+}
+
+static void ClearBuiltinProfileMods(const std::wstring& runtimeRoot, const std::wstring& profileId) {
+    const std::wstring modsDir = ProfileModsDir(runtimeRoot, profileId);
+    WIN32_FIND_DATAW fd = {};
+    HANDLE h = FindFirstFileW((modsDir + L"\\*.jar").c_str(), &fd);
+    if (h == INVALID_HANDLE_VALUE) return;
+    do {
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+        DeleteFileW((modsDir + L"\\" + fd.cFileName).c_str());
+    } while (FindNextFileW(h, &fd));
+    FindClose(h);
+}
+
 bool EnsureDefaultModpackInstalled(
-    const std::wstring& runtimeRoot, const std::wstring& profileId, std::wstring& error,
-    const DefaultPackProgress& progress) {
+    const std::wstring& runtimeRoot, const std::wstring& profileId, const LaunchTarget& target,
+    std::wstring& error, const DefaultPackProgress& progress) {
     const std::wstring marker = ProfileDir(runtimeRoot, profileId) + L"\\.raggedy\\default-modpack.txt";
     EnsureDirectoryTree(GetParentDir(marker));
-    if (GetFileAttributesW(marker.c_str()) != INVALID_FILE_ATTRIBUTES) return true;
     if (profileId != kVanillaProfileId && profileId != kReConsoleProfileId) {
-        return WriteTextFile(marker, L"custom-profile\n");
-    }
-    if (ProfileModCount(runtimeRoot, profileId) > 0) {
-        WriteTextFile(marker, L"existing-profile\n");
+        if (GetFileAttributesW(marker.c_str()) == INVALID_FILE_ATTRIBUTES) {
+            WriteTextFile(marker, L"custom-profile\n");
+        }
         return true;
     }
+    if (!DefaultPackSupportsVersion(profileId, target.minecraftVersion)) {
+        error = TrFormat(L"{0} does not support {1}", { DefaultPackTitle(profileId), a2w(target.minecraftVersion.c_str()) });
+        return false;
+    }
 
-    const bool reConsole = profileId == kReConsoleProfileId;
+    const std::wstring projectId = DefaultPackProjectId(profileId);
+    const std::wstring desiredMarker = projectId + L"\n" + target.targetId + L"\n";
+    std::wstring existingMarker;
+    if (ReadTextFile(marker, existingMarker) && existingMarker == desiredMarker) {
+        SetProfileTarget(runtimeRoot, profileId, target);
+        return true;
+    }
+    if (ProfileModCount(runtimeRoot, profileId) > 0) {
+        ClearBuiltinProfileMods(runtimeRoot, profileId);
+    }
+
     ModCard pack;
     pack.kind = ContentKind::Modpack;
     pack.source = ModSource::Modrinth;
-    pack.projectId = reConsole ? L"g9O0WaGR" : L"f63ynpri";
-    pack.slug = reConsole ? L"legacy-minecraft" : L"simply-legacy";
-    pack.title = reConsole ? L"Re-Console" : L"Simply Legacy";
-    if (!InstallModpack(pack, runtimeRoot, profileId, error, "26.3", "fabric", true, progress)) return false;
-    WriteLogF(L"Default modpack installed: %s profile=%s", pack.title.c_str(), profileId.c_str());
-    return WriteTextFile(marker, reConsole ? L"g9O0WaGR\n" : L"f63ynpri\n");
+    pack.projectId = projectId;
+    pack.slug = profileId == kReConsoleProfileId ? L"legacy-minecraft" : L"simply-legacy";
+    pack.title = DefaultPackTitle(profileId);
+    if (!InstallModpack(pack, runtimeRoot, profileId, error,
+        target.minecraftVersion, w2a(ToLowerW(target.loader).c_str()), true, progress)) return false;
+    if (!SetProfileTarget(runtimeRoot, profileId, target)) {
+        error = Tr(L"The selected version could not be saved");
+        return false;
+    }
+    WriteLogF(L"Default modpack installed: %s profile=%s target=%s",
+        pack.title.c_str(), profileId.c_str(), target.targetId.c_str());
+    return WriteTextFile(marker, desiredMarker);
 }
 
 // a filename check, because install records only cover mods added through the browser

@@ -91,13 +91,17 @@ void RenderAuth(AuthScreenRenderer* renderer, const AuthUiState& state) {
         LauncherMouse& mouse = LauncherMouseInstance();
         mouse.Update(renderer->Width(), renderer->Height());
         renderer->SetCursor(mouse.X(), mouse.Y(), mouse.Visible());
+        static ULONGLONG lastRenderMs = 0;
+        const ULONGLONG now = GetTickCount64();
         if (renderer->NeedsRecovery()) {
             AuthUiState recovery = state;
             recovery.status = Tr(L"Display interrupted. Retrying");
             recovery.isError = true;
             renderer->Render(recovery);
-        } else {
+            lastRenderMs = now;
+        } else if (lastRenderMs == 0 || now - lastRenderMs >= 30) {
             renderer->Render(state);
+            lastRenderMs = now;
         }
     }
 }
@@ -602,16 +606,196 @@ static void ShowChangelogScreen(
     WriteLog(L"Changelog closed");
 }
 
+static void ShowCreditsPage(ICoreWindow* window, AuthScreenRenderer* renderer, AuthUiState& state) {
+    const bool returnToSettings = state.showSettings;
+    state.showMainMenu = false;
+    state.showSettings = false;
+    state.showCredits = true;
+    bool backWas = false;
+    while (true) {
+        RenderAuth(renderer, state);
+        LauncherMouse& mouse = LauncherMouseInstance();
+        bool clickedBack = false;
+        if (mouse.Visible() && mouse.TakeClick()) {
+            clickedBack = renderer->HitTest(mouse.X(), mouse.Y()) == launchhit::kBack;
+        }
+        const bool backDown = AnyVirtualKeyDown(window, {
+            ABI::Windows::System::VirtualKey_Escape,
+            ABI::Windows::System::VirtualKey_GamepadB
+        });
+        if ((backDown && !backWas) || clickedBack) break;
+        backWas = backDown;
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    }
+    WaitForMenuKeysReleased(window, renderer, state);
+    state.showCredits = false;
+    state.showMainMenu = !returnToSettings;
+    state.showSettings = returnToSettings;
+}
+
+static void ApplySelectedVersion(AuthScreenRenderer* renderer, AuthUiState& state, const std::wstring& runtimeRoot) {
+    if (state.versionTargets.empty()) return;
+    const int selectedRow = state.versionSelected < 0 ? 0 : state.versionSelected;
+    const LaunchTarget& target = state.versionTargets[static_cast<size_t>(selectedRow)];
+    const std::wstring profileId = state.versionPackSelected == 1
+        ? std::wstring(kReConsoleProfileId)
+        : std::wstring(kVanillaProfileId);
+    state.status = TrFormat(L"Preparing {0}", { TargetProfileText(target) });
+    state.detail = Tr(L"Downloading the newest compatible modpack");
+    state.isError = false;
+    RenderAuth(renderer, state);
+    if (!SetActiveProfileId(runtimeRoot, profileId) || !SetProfileTarget(runtimeRoot, profileId, target)) {
+        state.status = Tr(L"Version could not be saved");
+        state.detail.clear();
+        state.isError = true;
+        return;
+    }
+    std::wstring error;
+    if (!EnsureDefaultModpackInstalled(runtimeRoot, profileId, target, error,
+        [&](const std::wstring& status, double fraction) {
+            state.status = TrFormat(L"Preparing {0}", { TargetProfileText(target) });
+            state.detail = status;
+            (void)fraction;
+            RenderAuth(renderer, state);
+        })) {
+        state.status = Tr(L"Modpack setup failed");
+        state.detail = error;
+        state.isError = true;
+        return;
+    }
+    SetProfilePerfRenderer(runtimeRoot, profileId, L"auto");
+    std::wstring perfStatus;
+    bool perfError = false;
+    ApplyPerformanceMode(runtimeRoot, profileId, L"auto", perfStatus, perfError);
+    state.status = TrFormat(L"{0} ready", { TargetProfileText(target) });
+    state.detail = Tr(L"Press A on Play to start Minecraft");
+    state.isError = false;
+}
+
+static void ShowVersionPage(ICoreWindow* window, AuthScreenRenderer* renderer, AuthUiState& state,
+    const std::wstring& runtimeRoot) {
+    state.showMainMenu = false;
+    state.showVersionPage = true;
+    const std::wstring activeProfileId = GetActiveProfileId(runtimeRoot);
+    state.versionPackSelected = activeProfileId == kReConsoleProfileId ? 1 : 0;
+    std::wstring packProfileId = state.versionPackSelected == 1
+        ? std::wstring(kReConsoleProfileId)
+        : std::wstring(kVanillaProfileId);
+    state.versionTargets = SupportedPackTargets(runtimeRoot, packProfileId);
+    const std::wstring currentTargetId = ResolveProfileTarget(
+        runtimeRoot, GetProfileById(runtimeRoot, activeProfileId)).targetId;
+    state.versionProfileId = currentTargetId;
+    state.versionSelected = 0;
+    for (size_t i = 0; i < state.versionTargets.size(); ++i) {
+        if (state.versionTargets[i].targetId == currentTargetId) {
+            state.versionSelected = static_cast<int>(i);
+            break;
+        }
+    }
+
+    bool upWas = false;
+    bool downWas = false;
+    bool leftWas = false;
+    bool rightWas = false;
+    bool selectWas = false;
+    bool backWas = false;
+    while (true) {
+        RenderAuth(renderer, state);
+        int clicked = -1;
+        bool clickedBack = false;
+        LauncherMouse& mouse = LauncherMouseInstance();
+        if (mouse.Visible() && mouse.TakeClick()) {
+            const int hit = renderer->HitTest(mouse.X(), mouse.Y());
+            if (hit == launchhit::kBack) clickedBack = true;
+            if (hit >= launchhit::kVersionPackBase && hit < launchhit::kVersionPackBase + 2) {
+                clicked = 1000 + (hit - launchhit::kVersionPackBase);
+            }
+            if (hit >= launchhit::kVersionRowBase &&
+                hit < launchhit::kVersionRowBase + static_cast<int>(state.versionTargets.size())) {
+                clicked = hit - launchhit::kVersionRowBase;
+            }
+        }
+
+        const bool upDown = AnyVirtualKeyDown(window, {
+            ABI::Windows::System::VirtualKey_Up,
+            ABI::Windows::System::VirtualKey_GamepadDPadUp,
+            ABI::Windows::System::VirtualKey_GamepadLeftThumbstickUp
+        });
+        const bool downDown = AnyVirtualKeyDown(window, {
+            ABI::Windows::System::VirtualKey_Down,
+            ABI::Windows::System::VirtualKey_GamepadDPadDown,
+            ABI::Windows::System::VirtualKey_GamepadLeftThumbstickDown
+        });
+        const bool leftDown = AnyVirtualKeyDown(window, {
+            ABI::Windows::System::VirtualKey_Left,
+            ABI::Windows::System::VirtualKey_GamepadDPadLeft,
+            ABI::Windows::System::VirtualKey_GamepadLeftThumbstickLeft
+        });
+        const bool rightDown = AnyVirtualKeyDown(window, {
+            ABI::Windows::System::VirtualKey_Right,
+            ABI::Windows::System::VirtualKey_GamepadDPadRight,
+            ABI::Windows::System::VirtualKey_GamepadLeftThumbstickRight
+        });
+        const bool selectDown = AnyVirtualKeyDown(window, {
+            ABI::Windows::System::VirtualKey_Enter,
+            ABI::Windows::System::VirtualKey_Space,
+            ABI::Windows::System::VirtualKey_GamepadA
+        });
+        const bool backDown = AnyVirtualKeyDown(window, {
+            ABI::Windows::System::VirtualKey_Escape,
+            ABI::Windows::System::VirtualKey_GamepadB
+        });
+
+        const bool togglePack = (leftDown && !leftWas) || (rightDown && !rightWas) ||
+            clicked == 1000 || clicked == 1001;
+        if (togglePack && !state.versionTargets.empty()) {
+            if (clicked >= 1000) state.versionPackSelected = clicked - 1000;
+            else state.versionPackSelected = 1 - state.versionPackSelected;
+            packProfileId = state.versionPackSelected == 1
+                ? std::wstring(kReConsoleProfileId)
+                : std::wstring(kVanillaProfileId);
+            state.versionTargets = SupportedPackTargets(runtimeRoot, packProfileId);
+            state.versionSelected = 0;
+            state.versionProfileId = ResolveProfileTarget(
+                runtimeRoot, GetProfileById(runtimeRoot, packProfileId)).targetId;
+        }
+        const int rowCount = static_cast<int>(state.versionTargets.size());
+        if (upDown && !upWas && rowCount > 0) {
+            state.versionSelected = (state.versionSelected + rowCount - 1) % rowCount;
+        }
+        if (downDown && !downWas && rowCount > 0) {
+            state.versionSelected = (state.versionSelected + 1) % rowCount;
+        }
+        if ((backDown && !backWas) || clickedBack) break;
+
+        const int pressed = clicked >= 0 && clicked < 1000
+            ? clicked
+            : ((selectDown && !selectWas) ? state.versionSelected : -1);
+        if (pressed >= 0 && pressed < rowCount) {
+            state.versionSelected = pressed;
+            ApplySelectedVersion(renderer, state, runtimeRoot);
+            break;
+        }
+
+        upWas = upDown;
+        downWas = downDown;
+        leftWas = leftDown;
+        rightWas = rightDown;
+        selectWas = selectDown;
+        backWas = backDown;
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    }
+    WaitForMenuKeysReleased(window, renderer, state);
+    state.showVersionPage = false;
+    state.showMainMenu = true;
+}
+
 static void RefreshSettingsPerfNote(AuthUiState& state, const std::wstring& runtimeRoot) {
     const std::wstring activeId = GetActiveProfileId(runtimeRoot);
     const Profile activeProfile = GetProfileById(runtimeRoot, activeId);
-    state.settingsPerfMode = activeProfile.perfRenderer;
+    state.settingsPerfMode = L"auto";
     const LaunchTarget target = ResolveProfileTarget(runtimeRoot, activeProfile);
     const PerfSelection selection = SelectPerformanceCandidate(runtimeRoot, target);
-    if (activeProfile.perfRenderer == L"off") {
-        state.settingsPerfNote = Tr(L"Off. Managed files were removed.");
-        return;
-    }
     if (!selection.hasCandidate) {
         state.settingsPerfNote = selection.gap.empty()
             ? Tr(L"No candidate for this target.")
@@ -628,14 +812,16 @@ static void RefreshSettingsPerfNote(AuthUiState& state, const std::wstring& runt
 
 static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, AuthUiState& state,
     const std::wstring& runtimeRoot) {
-    constexpr int kSettingsRows = 7;
+    constexpr int kSettingsRows = 8;
     WriteLog(L"Settings page opened");
 
     state.showMainMenu = false;
     state.showModsPage = false;
+    state.showVersionPage = false;
     state.showRemoteFiles = false;
     state.showDeviceCode = false;
     state.showSettings = true;
+    state.showCredits = false;
     state.settingsSelected = 0;
     state.settingsNote.clear();
     state.settingsConfigured = telemetry::Configured();
@@ -780,15 +966,11 @@ static void ShowSettingsPage(ICoreWindow* window, AuthScreenRenderer* renderer, 
             state.settingsNote = saved ? TrFormat(L"Theme set to {0}.", { state.settingsThemeName })
                                        : Tr(L"The theme was changed but could not be saved.");
         } else if (pressed == 6) {
-            const std::wstring activeId = GetActiveProfileId(runtimeRoot);
-            const Profile activeProfile = GetProfileById(runtimeRoot, activeId);
-            if (PerformanceJobPending(activeId)) {
-                state.settingsNote = Tr(L"Still applying the performance renderer...");
-            } else {
-                const std::wstring next = activeProfile.perfRenderer == L"off" ? L"auto" : L"off";
-                StartPerformanceJob(runtimeRoot, activeId, next);
-                state.settingsNote = Tr(L"Applying performance renderer...");
-            }
+            state.settingsNote = Tr(L"The Raggedy performance renderer is always on.");
+        } else if (pressed == 7) {
+            ShowCreditsPage(window, renderer, state);
+            state.showMainMenu = false;
+            state.showSettings = true;
         }
 
         {
@@ -915,9 +1097,12 @@ MainMenuAction ShowMainMenu(ICoreWindow* window, const LaunchAuthConfig& authCon
                 return MainMenuAction::Play;
             }
             if (selected == 1) {
-                WriteLog(L"Main menu: Mods selected");
-                ShowModsPage(window, renderer, state, runtimeRoot);
-                state.detail = Tr(L"Browse installed, popular, and latest Fabric mods.");
+                WriteLog(L"Main menu: Version selected");
+                ShowVersionPage(window, renderer, state, runtimeRoot);
+                const std::wstring activeId = GetActiveProfileId(runtimeRoot);
+                const Profile activeProfile = GetProfileById(runtimeRoot, activeId);
+                const LaunchTarget activeTarget = ResolveProfileTarget(runtimeRoot, activeProfile);
+                state.detail = TrFormat(L"Active profile: {0} - {1}", { activeProfile.name, TargetProfileText(activeTarget) });
             } else if (selected == 2) {
                 WriteLog(L"Main menu: Remote files selected");
                 ShowRemoteFilesPage(window, renderer, state, runtimeRoot);

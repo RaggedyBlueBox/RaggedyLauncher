@@ -6,23 +6,23 @@
  // SDL-internal globals:
  SDL_Window *WINRT_GlobalSDLWindow = NULL;
 +
-+/* Exported build marker used by Bandit's packager to reject stock SDL-UWP
++/* Exported build marker used by Raggedy's packager to reject stock SDL-UWP
 +   binaries. Bump this whenever the external-host contract changes. */
-+extern "C" __declspec(dllexport) int BanditSDL_ExternalHostPatchVersion(void)
++extern "C" __declspec(dllexport) int RaggedySDL_ExternalHostPatchVersion(void)
 +{
 +    return 6;
 +}
 +
 +/* V6 keeps the external CoreWindow/event bridge and SDL_main readiness fix,
 +   and adds the packaged-Mesa absolute-path normalization contract. */
-+extern "C" __declspec(dllexport) int BanditSDL_WinRTIntegrationPatchV6(void)
++extern "C" __declspec(dllexport) int RaggedySDL_WinRTIntegrationPatchV6(void)
 +{
 +    return 6;
 +}
 +
 +#ifdef SDL_VIDEO_OPENGL_WGL
 +/* This symbol only exists when the runtime was actually compiled with WGL. */
-+extern "C" __declspec(dllexport) int BanditSDL_WinRTWGLBackendV1(void)
++extern "C" __declspec(dllexport) int RaggedySDL_WinRTWGLBackendV1(void)
 +{
 +    return 1;
 +}
@@ -59,7 +59,7 @@
      device->GL_GetSwapInterval = WIN_GL_GetSwapInterval;
      device->GL_SwapWindow = WIN_GL_SwapWindow;
      device->GL_DestroyContext = WIN_GL_DestroyContext;
-+    SDL_Log("Bandit SDL: WinRT GL backend=WGL");
++    SDL_Log("Raggedy SDL: WinRT GL backend=WGL");
 +#elif defined(SDL_VIDEO_OPENGL_EGL)
 +    device->GL_LoadLibrary = WINRT_GLES_LoadLibrary;
 +    device->GL_GetProcAddress = WINRT_GLES_GetProcAddress;
@@ -70,7 +70,7 @@
 +    device->GL_GetSwapInterval = WINRT_GLES_GetSwapInterval;
 +    device->GL_SwapWindow = WINRT_GLES_SwapWindow;
 +    device->GL_DestroyContext = WINRT_GLES_DestroyContext;
-+    SDL_Log("Bandit SDL: WinRT GL backend=EGL (unexpected fallback)");
++    SDL_Log("Raggedy SDL: WinRT GL backend=EGL (unexpected fallback)");
  #endif
      device->free = WINRT_DeleteDevice;
  
@@ -82,7 +82,7 @@
      */
      WINRT_GlobalSDLWindow = window;
 +
-+    /* Bandit Launcher embeds SDL inside an already-running UWP IFrameworkView.
++    /* Raggedy Launcher embeds SDL inside an already-running UWP IFrameworkView.
 +       Attach SDL's standard WinRT event sink to the host-owned CoreWindow so
 +       SDL_PollEvent pumps keyboard, mouse, text, window and activation events. */
 +    if (!SDL_WinRTGlobalApp && data->coreWindow.Get() != nullptr) {
@@ -102,7 +102,7 @@
      Uint32 flags_initialized = 0;
  
 +#ifdef SDL_PLATFORM_WINRT
-+    /* Bandit does not enter through SDL_main: its UWP IFrameworkView already
++    /* Raggedy does not enter through SDL_main: its UWP IFrameworkView already
 +       exists and launches the JVM directly. SDL's normal WinRT bootstrap
 +       therefore never gets a chance to call SDL_SetMainReady(). Prime the
 +       flag lazily on the first SDL subsystem request before enforcing the
@@ -167,7 +167,7 @@
  #include "../../core/windows/SDL_windows.h"
  
 +#ifdef SDL_PLATFORM_WINRT
-+__declspec(dllexport) int BanditSDL_WinRTAbsoluteLoadFixV1(void)
++__declspec(dllexport) int RaggedySDL_WinRTAbsoluteLoadFixV1(void)
 +{
 +    return 1;
 +}
@@ -192,7 +192,7 @@
 +
 +       Minecraft 26.3 passes the absolute path of LWJGL's already-loaded
 +       OpenGL provider to SDL_GL_LoadLibrary(). LoadPackagedLibrary rejects
-+       absolute paths with ERROR_INVALID_PARAMETER, so normalize Bandit's
++       absolute paths with ERROR_INVALID_PARAMETER, so normalize Raggedy's
 +       packaged Mesa path back to a package-relative module name.
      */
 -    handle = (void *)LoadPackagedLibrary(wstr, 0);
@@ -207,7 +207,7 @@
 +    mesa_path = SDL_wcsstr(wstr, L"\\graphics\\mesa\\");
 +    if (mesa_path) {
 +        packaged_path = mesa_path + 1;
-+        SDL_Log("Bandit SDL: normalized absolute Mesa path for LoadPackagedLibrary");
++        SDL_Log("Raggedy SDL: normalized absolute Mesa path for LoadPackagedLibrary");
 +    }
 +    handle = (void *)LoadPackagedLibrary(packaged_path, 0);
  #else

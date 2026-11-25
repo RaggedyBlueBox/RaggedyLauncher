@@ -26,7 +26,7 @@ Sodium-family performance mods, and what is still untested.
   Minecraft 26.3 also gets `-XX:StackShadowPages=32` because the official
   launcher includes it and 26.3's OpenGL resource reload otherwise exits with
   a JVM access violation immediately after unifont loading.
-- Vulkan is open work, not an opt-in toggle. Bandit's 26.3 path is OpenGL/WGL;
+- Vulkan is open work, not an opt-in toggle. Raggedy's 26.3 path is OpenGL/WGL;
   its known-mod list blocks VulkanMod because the UWP GLFW path lacks
   `glfwInitVulkanLoader`, and this package has `vulkan_dzn.dll` but no
   `vulkan-1.dll`. A Vulkan bridge needs Dozen ICD discovery, instance/device
@@ -41,6 +41,10 @@ Sodium-family performance mods, and what is still untested.
 
 ## Performance renderers
 
+The performance renderer is always on in lightweight `auto` mode. Settings
+shows **Always on** and has no off switch; the launcher applies the policy on
+every launch and immediately after a version change.
+
 - `config/performance-mods.json` names at most one candidate per exact
   Minecraft version and loader, chosen from publisher metadata
   (Sodium/Embeddium/Rubidium/Nothirium survey in late November 2026).
@@ -48,8 +52,8 @@ Sodium-family performance mods, and what is still untested.
   instead of a fake entry. The file is packaged as
   `runtime/performance-mods.json` and covered by
   `scripts/validate-modern-version-matrix.ps1`.
-- Auto mode installs the candidate only when the matrix marks it `proven` on
-  Xbox. No target is marked proven yet, so today Auto reports the candidate
+- `auto` installs the candidate only when the matrix marks it `proven` on
+  Xbox. No target is marked proven yet, so today it reports the candidate
   (or the gap) and installs nothing. Flipping a target to proven requires an
   on-console test: menus, movement, a save/load cycle, frame times and memory,
   with Legacy4J present where applicable, and exactly one renderer active.
@@ -57,7 +61,8 @@ Sodium-family performance mods, and what is still untested.
   sidecar format: only exact launcher-installed versions are
   ever removed, colliding user jars are stashed before replacement and
   restored on removal, and shared dependencies survive through refcounts.
-  Turning the setting off removes managed files and leaves user mods alone.
+  Replacing a built-in profile's modpack clears its managed mods and installs
+  the newest compatible pack; unrelated user mods are left alone.
 - Only one managed renderer is kept per profile. A user-installed renderer
   alongside a managed one is reported as a conflict and left in place.
 - Nothirium (1.12.2 Cleanroom) is a Forge-compatible chunk renderer similar
@@ -67,3 +72,9 @@ Sodium-family performance mods, and what is still untested.
 - Sodium's publisher notes that OpenGL translation layers are unsupported and
   may not work. Metadata matches are therefore install candidates only; the
   `proven` flag is the claim that matters, and it is set only by testing.
+
+## Launcher UI cost
+
+The launcher UI is capped at 30 FPS and draws one backdrop image at a time
+with no cross-fade. These limits apply only to menus and setup screens; they
+do not cap Minecraft's framerate.

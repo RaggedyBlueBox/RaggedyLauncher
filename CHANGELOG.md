@@ -2,20 +2,38 @@
 
 Notable changes to Raggedy Launcher. Nightly packages are numbered by build revision rather than by release, so entries here are dated.
 
+## 2026-11-24 (controller-first rebuild)
+
+### Added
+
+- **Version replaces Mods on the main menu.** The new page lets you pick Simply Legacy or Re-Console with left/right, choose a Minecraft version with the D-pad or left stick, press A to apply it, and press B to return.
+- **A new Credits page opens from Settings.** Press B or Back on the footer to leave it; the rest of Settings is unchanged apart from the always-on renderer note below.
+
+### Changed
+
+- **The version list is filtered to versions supported by the built-in modpacks.** Simply Legacy and Re-Console each show only catalog versions they support, so unsupported targets no longer appear.
+- **Changing the version pulls the newest compatible modpack automatically.** The selected built-in profile's managed mods are replaced and the latest supported pack is downloaded before the menu returns.
+- **Built-in profile selection persists.** Simply Legacy is seeded only on first run; after that the last selected built-in profile stays active across restarts instead of being reset every launch.
+- **Right-stick look sensitivity is permanently 115%.** The launcher reseeds the controller config at 115% on every launch, and separate controller bundle and sensitivity settings are no longer offered.
+- **The performance renderer is always on.** Settings shows **Always on** with no off switch; the lightweight `auto` policy still installs only candidates proven on Xbox and reports gaps without forcing untested files.
+- **The launcher UI is capped at 30 FPS.** This keeps menu input and drawing light on console; in-game framerate is unaffected.
+- **Menus use a single-image backdrop.** One image is shown at a time with no cross-fade, replacing the old rotating fade.
+- **Branding is Raggedy-only.** Raggedy Launcher is a derivative of the upstream JavaUWP/BanditVault launcher by veroxsity / BanditVault, completely readapted into a new controller-first launcher, not a fork. Required upstream credit stays in LICENSE, LEGAL, the README legal section, and the publish-release note.
+
 ## 2026-11-24
 
 ### Changed
 
-**The launcher is now focused on 26.3 Fabric.** The catalog contains only `26.3 + Fabric 0.20.1`. The built-in profiles are Simply Legacy and Re-Console; they now download the latest supported modpack on first run. Other profiles are for custom mod setups on that target.
+**The launcher is now focused on 26.3 Fabric.** At that point the catalog contained only `26.3 + Fabric 0.20.1`. The built-in profiles are Simply Legacy and Re-Console; they now download the latest supported modpack on first run. Other profiles are for custom mod setups on that target. The controller-first rebuild above expands the catalog to supported versions for both built-in modpacks.
 
-**Controller and graphics-backend customization is gone.** The controller bundle setting, bundled controller jar, renderer setting, Vulkan probe and `renderer_policy` code have been removed from the launcher, build, catalog and validation. Managed-mod sidecars remain generic and are still used by the performance renderer. Settings now has seven rows.
+**Controller and graphics-backend customization is gone.** The controller bundle setting, bundled controller jar, renderer setting, Vulkan probe and `renderer_policy` code have been removed from the launcher, build, catalog and validation. Managed-mod sidecars remain generic and are still used by the performance renderer. Settings had seven rows at that point.
 
 ### Fixed
 
-**26.3 now uses Bandit's proven Mesa/WGL launch path.** LWJGL gets the absolute `opengl32.dll` path and `org.lwjgl.system.SharedLibraryExtractPath`, SDL gets the package-relative `graphics/<runtime>/opengl32.dll` hint, the Mesa support stack is preloaded before the JVM, and the pinned SDL UWP fork is built with WGL enabled, EGL disabled, the WinRT-aware loader, absolute Mesa path normalization, and the full V7/V8/V9/V12/V13/V14/V15/V16/V17/V18 RenderPearl, input and cursor lifecycle patches.
+**26.3 now uses Raggedy's proven Mesa/WGL launch path.** LWJGL gets the absolute `opengl32.dll` path and `org.lwjgl.system.SharedLibraryExtractPath`, SDL gets the package-relative `graphics/<runtime>/opengl32.dll` hint, the Mesa support stack is preloaded before the JVM, and the pinned SDL UWP fork is built with WGL enabled, EGL disabled, the WinRT-aware loader, absolute Mesa path normalization, and the full V7/V8/V9/V12/V13/V14/V15/V16/V17/V18 RenderPearl, input and cursor lifecycle patches.
  The JVM also gets `-XX:StackShadowPages=32`, matching the official launcher and preventing 26.3's OpenGL resource-reload access violation after unifont loading. Vulkan remains open work rather than a hidden or claimed option.
 
-**Simply Legacy is now the permanent default profile.** The launcher restores it as the active profile on every start and seeds its latest modpack automatically, including controller support, without a keyboard or a separate controller bundle toggle. Re-Console remains selectable.
+**Simply Legacy is now the permanent default profile.** At that point the launcher restored it as the active profile on every start and seeded its latest modpack automatically, including controller support, without a keyboard or a separate controller bundle toggle. Re-Console remained selectable. The controller-first rebuild above makes the built-in selection persistent instead.
 
 **Headless AWT image drawing no longer crashes modpacks.** Java 21+ initializes the native Win32 graphics environment before honoring `-Djava.awt.headless=true`. The packaged `java.desktop` patch now returns a headless graphics environment first, so skin and resource mods such as BedrockSkins can draw `BufferedImage`s without querying display devices that UWP does not expose.
 
@@ -29,7 +47,7 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 ### Added
 
-**Controller bundles.** Settings has a new Controller bundle option with five choices: Auto (the default), Legacy4J, Raggedy, Controlify and None. Auto prefers Legacy4J and falls back per version and loader when the publisher has no compatible build. Legacy4J and Controlify download with their required dependencies and are tracked so switching bundles never deletes your own mods. None leaves your own controller setup alone. The profile screen shows the same choice. Existing profiles keep their behavior: Bandit on becomes Raggedy, Bandit off becomes None.
+**Controller bundles.** Settings has a new Controller bundle option with five choices: Auto (the default), Legacy4J, Raggedy, Controlify and None. Auto prefers Legacy4J and falls back per version and loader when the publisher has no compatible build. Legacy4J and Controlify download with their required dependencies and are tracked so switching bundles never deletes your own mods. None leaves your own controller setup alone. The profile screen shows the same choice. Existing profiles keep their behavior: the old controller toggle maps to Raggedy when on and None when off.
 
 **Minecraft 26.3.** The version catalog lists 26.3 for Fabric (0.20.1), Forge (66.1.9) and NeoForge (26.3.0.115) as experimental targets, and 26.3 appears in every target picker. Those rows ship no bundled Raggedy controller, so use Controlify or your own mods where supported; Legacy4J has no 26.3 build.
 
@@ -55,7 +73,7 @@ Notable changes to Raggedy Launcher. Nightly packages are numbered by build revi
 
 ### Added
 
-**Themes.** Settings has a new Theme option with seven colour themes: Bandit, Midnight, Moss, Ocean, Berry, Ember and Daylight, which is a light one. Each press moves to the next and the screen changes straight away. You can also make your own: upload a small theme file to the new Themes folder in Remote Files and it shows up in Settings after the built in ones. A theme file only needs the colours it changes. See docs/THEMES.md for how to write one.
+**Themes.** Settings has a new Theme option with seven colour themes: Raggedy, Midnight, Moss, Ocean, Berry, Ember and Daylight, which is a light one. Each press moves to the next and the screen changes straight away. You can also make your own: upload a small theme file to the new Themes folder in Remote Files and it shows up in Settings after the built in ones. A theme file only needs the colours it changes. See docs/THEMES.md for how to write one.
 
 ## 2026-11-12
 

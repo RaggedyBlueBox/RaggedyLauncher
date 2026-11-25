@@ -5,29 +5,33 @@
 ![Minecraft Java Edition](https://img.shields.io/badge/Minecraft-Java%20Edition-62b47a)
 ![vibe-coded](https://img.shields.io/badge/vibe--coded-100%25-7c3aed)
 
-Raggedy Launcher by **RaggedyBlueBox** — a polished, everyday-consumer
-Minecraft Java launcher for Xbox Series S|X (Dev Mode).
+Raggedy Launcher by **RaggedyBlueBox** — a controller-first Minecraft Java
+launcher for Xbox Series X|S (Dev Mode) and Windows.
 
 > **FULLY VIBE CODED.** This entire project is designed and built with AI
 > assistance — no hand-written code. On-console testing happens on a real
 > Series S devkit.
 
-Based on **Raggedy Launcher** ([veroxsity/JavaUWP](https://github.com/veroxsity/JavaUWP)).
-The goal is a better polished launcher for the every day consumer
-experience: clear settings, sane defaults, honest messages when something is
-not available on a version, and no silent surprises with your mods, worlds,
-or login.
+Raggedy Launcher is a derivative project: its code was taken from the upstream
+JavaUWP/BanditVault launcher ([veroxsity/JavaUWP](https://github.com/veroxsity/JavaUWP))
+and completely readapted into a new controller-first launcher. It is branded
+only as Raggedy Launcher, not as a fork, mod, reskin, or separate install of
+another launcher. The goal is a lightweight everyday launcher with clear
+settings, sane defaults, honest messages when something is not available on a
+version, and no silent surprises with your mods, worlds, or login.
 
 > Experimental and under active development. Test builds come from the
 > `Test build (no publish)` workflow; nothing here auto-updates any console.
-> This is a **separate install** from Raggedy Launcher, so back up your
-> worlds, saves, and profiles first.
+> Back up your worlds, saves, and profiles before changing builds or removing
+> the app.
 
-What is in this branch: only the Minecraft 26.3 + Fabric 0.20.1 target,
-built-in Simply Legacy and Re-Console profiles that download the latest
-supported modpack on first run, an automatic OpenGL/Mesa path for
-RenderPearl/SDL, and a performance renderer setting backed by a per-version
-data file. See [docs/GRAPHICS-AND-PERFORMANCE.md](docs/GRAPHICS-AND-PERFORMANCE.md)
+What is in this build: a **Version** page in place of Mods, a version list
+limited to the Minecraft versions supported by Simply Legacy and Re-Console,
+automatic download of the newest compatible modpack when you change version,
+and persistent built-in profile selection. Controller look sensitivity is
+fixed at 115%, the performance renderer is always on in lightweight `auto`
+mode, the launcher UI is capped at 30 FPS, and menus use a single-image
+backdrop. See [docs/GRAPHICS-AND-PERFORMANCE.md](docs/GRAPHICS-AND-PERFORMANCE.md)
 and [CHANGELOG.md](CHANGELOG.md).
 
 ---
@@ -38,7 +42,7 @@ and [CHANGELOG.md](CHANGELOG.md).
 
 Raggedy Launcher runs **Minecraft Java Edition directly on Xbox Series X|S in Developer Mode**, with Fabric. It signs in through Microsoft, verifies Java Edition ownership and downloads the official game files.
 
-> **Xbox One, Xbox One S and Xbox One X are not supported.** Both launcher builds are for Xbox Series S and Xbox Series X only.
+> **Xbox One, Xbox One S and Xbox One X are not supported.** The launcher is for Xbox Series S and Xbox Series X only.
 
 [Download](#download) · [Getting started](#getting-started) · [Minecraft versions](#minecraft-versions)
 
@@ -55,13 +59,13 @@ Java is included in the launcher package for supported targets. No separate Java
 
 | Build | Download | Mouse input |
 | --- | --- | --- |
-| Test | [Test build workflow artifacts](https://github.com/RaggedyBlueBox/RaggedyLauncher/actions/workflows/test-build.yml) | Optional mouse relay from a phone or PC on the same network. |
+| Test | [Test build workflow artifacts](https://github.com/RaggedyBlueBox/RaggedyLauncher/actions/workflows/test-build.yml) | Direct USB mouse, or optional mouse relay from a phone or PC on the same network. |
 
 Download the `.appx` from a successful test-build run and check it against the published `.sha256`. Sideload it through Xbox Device Portal while the console is in Developer Mode, trusting the certificate that ships with the build.
 
 These are pre-release testing builds. They are experimental and do not come with support.
 
-**The native mouse build installs as a separate app and has its own saves, profiles and settings.** Switching between builds does not transfer data automatically. Export important worlds through Remote Files before changing builds or removing an app.
+APPX packages keep their own local data. Export important worlds through Remote Files before changing builds or removing an app.
 
 ## Getting started
 
@@ -69,37 +73,39 @@ These are pre-release testing builds. They are experimental and do not come with
 2. Open **Raggedy Launcher**.
 3. When the Microsoft device code appears, open [microsoft.com/link](https://www.microsoft.com/link) on another device. Enter the code and sign in with the account that has Java Edition.
 4. Wait for the launcher to verify the account and Minecraft entitlement.
-5. Choose or create a profile, then select its Minecraft version and loader. The default is **Minecraft 1.21.11 with Fabric**.
+5. Open **Version** on the main menu. Simply Legacy is the initial built-in profile; use left/right to switch to Re-Console if you want it. Up/down picks a supported Minecraft version, and **A** applies it. Your built-in profile selection is kept for next time.
 6. Press **Play**. The first launch downloads the game, libraries, assets and loader files for that target. Allow time for this to finish.
 
-Use the **Mods** page to manage profiles and install content. Start **Remote Files** to upload worlds, edit configs or download logs from another device.
+Changing the version on the **Version** page downloads the newest compatible modpack for the selected built-in profile. Use **Remote Files** to upload worlds, edit configs, import modpacks or download logs from another device.
 
 ## Features
 
-- Built-in Simply Legacy and Re-Console profiles that seed the latest supported modpack on first run.
-- Custom profiles for separate mod setups on the supported launch target.
-- Modrinth and CurseForge browsing for mods, modpacks, resource packs and shaders.
-- Recommended mods filtered for the selected launch target.
+- Built-in Simply Legacy and Re-Console profiles whose active selection persists across restarts.
+- A Version page filtered to the Minecraft versions each built-in modpack supports.
+- Newest compatible modpack pulled automatically whenever the version changes.
+- Custom profiles for separate mod setups on supported catalog targets.
+- Remote Files for managing profiles, worlds and modpack imports through a browser on the local network.
 - Profile backups and restore options, including undoing the last deleted profile.
-- Remote Files for managing profiles and worlds through a browser on the local network.
 - Download repair, current and previous run logs, and crash report ZIPs.
-- Optional crash and usage reporting, controlled from launcher Settings.
+- Optional crash and usage reporting, and a Credits page, in launcher Settings.
+- Lightweight always-on defaults: 30 FPS launcher UI, single-image menu backdrop and an always-on performance renderer.
 
 ## Minecraft versions
 
-The only catalog target is **26.3 + Fabric 0.20.1**, using the Java 25 runtime.
+Only Fabric 0.20.1 versions supported by the two built-in modpacks are cataloged. The Version page shows the rows for the profile you select.
 
-| Minecraft version | Loader | Status |
-| --- | --- | --- |
-| `26.3` | Fabric 0.20.1 | Experimental. Uses the packaged Mesa/D3D12 OpenGL bridge. |
+| Built-in profile | Minecraft versions |
+| --- | --- |
+| Simply Legacy | `26.3`, `26.1.2`, `1.21.10` |
+| Re-Console | `26.3`, `26.2`, `26.1.2`, `1.21.10`, `1.21.8`, `1.21.5`, `1.21.4`, `1.21.3`, `1.21.1`, `1.21`, `1.20.6`, `1.20.4`, `1.20.1` |
 
-The exact target is listed in [the version catalog](config/versions.tsv). Experimental targets still need testing, and available targets can differ between builds. Check the installed launcher's target list and the release notes.
+`26.x` rows use the packaged Java 25 runtime and the Mesa/D3D12 OpenGL bridge; newer 1.21 rows use Java 21, and `1.20.4`/`1.20.1` use Java 17 with their existing OpenGL path. Experimental targets still need testing, and available targets can differ between builds. Check the installed launcher's Version page and the release notes.
 
 ## Mods, modpacks and other content
 
-Choose the profile and launch target before installing content. Mods must match both the Minecraft version and loader, and must work inside the Xbox UWP sandbox.
+Choose the built-in profile and launch target on the **Version** page before installing content. Changing the version replaces that profile's managed mods with the newest compatible modpack. Mods must match both the Minecraft version and loader, and must work inside the Xbox UWP sandbox.
 
-The Mods page includes **Popular**, **Latest**, **Recommended**, **Modpacks**, **Resource packs** and **Shaders** tabs. Switch between Modrinth and CurseForge using the source selector or launcher Settings.
+The launcher keeps lightweight defaults for modpacks: the performance renderer is always applied in `auto` mode, and untested candidates are reported rather than installed. Custom profiles are still available for your own mod setups. Remote Files accepts Modrinth `.mrpack` and CurseForge `.zip` modpacks.
 
 **CurseForge needs a personal API key.** Start Remote Files and add it under **Settings**, then select CurseForge in the launcher. Modrinth does not need a key.
 
@@ -109,10 +115,9 @@ Shader packs need a compatible shader loader such as Iris or Oculus in the same 
 
 ## Controller and mouse
 
-Simply Legacy is reset as the active profile every time the launcher starts and is seeded automatically from its latest supported modpack, so controller support is ready without a keyboard. Re-Console stays selectable. The launcher no longer offers a separate controller bundle setting.
+Simply Legacy is seeded as the initial built-in profile on first run and gets its controller support from the newest compatible modpack, so play is ready without a keyboard. After that, your selection persists: Re-Console stays active if you choose it. The launcher no longer offers a controller bundle or look sensitivity setting; right-stick sensitivity is permanently 115% and is reseeded on every launch.
 
-- **Main nightly** uses the optional mouse relay. A browser page is available from the launcher. Companion downloads for Windows, Android and iOS are published alongside the mouse relay build.
-- **Native mouse nightly** accepts a USB mouse directly. Launcher Settings has separate menu and game mouse sensitivity controls.
+Raggedy Launcher accepts a USB mouse directly and also offers an optional browser mouse relay. A relay page is available from the launcher, with companion apps for Windows, Android and iOS. The launcher UI is capped at 30 FPS and uses one backdrop image at a time; in-game framerate is not capped by the launcher. Settings has no menu or game mouse sensitivity rows.
 
 ## Remote Files
 
@@ -135,14 +140,14 @@ Remote Files uses plain HTTP and a PIN on the local network. Keep the URL privat
 
 Each profile has its own worlds, mods, resource packs, configs and logs. Downloaded game libraries and assets are shared between profiles within the same installed app.
 
-Updating the same app package keeps its normal profile data. **Back up worlds before uninstalling or moving to another build.** Removing the app can remove its local data, and the main and native mouse packages do not share storage.
+Updating the same app package keeps its normal profile data and your selected built-in profile. **Back up worlds before uninstalling or moving to another build.** Removing the app can remove its local data, and APPX packages do not share storage.
 
 Use Remote Files to export worlds. The Profiles page also has profile backup and restore options.
 
 ## Known limitations and troubleshooting
 
 - **Xbox One consoles are not supported.**
-- Forge, NeoForge and modern targets are experimental. Mod and shader compatibility varies by version and build.
+- The `26.x` Fabric targets are experimental. Mod and shader compatibility varies by version and build.
 - Large modpacks can exceed the console app's available memory. A successful download does not mean the pack will run.
 - First launch and large pack imports can take several minutes.
 - Some desktop mods depend on native libraries or platform features that the Xbox sandbox does not provide.
@@ -166,7 +171,7 @@ Crash and usage reporting is off until enabled. It can be changed in launcher Se
 
 ## License and creator content
 
-Original project code uses the custom terms in [LICENSE](LICENSE). Private use and private modifications are allowed under those terms. Public forks, mirrors, source redistribution and packaged builds require prior written permission from veroxsity / BanditVault.
+The code in Raggedy Launcher was taken from the upstream JavaUWP/BanditVault launcher by veroxsity / BanditVault and completely readapted into this controller-first launcher. Raggedy Launcher is a derivative, not a fork. Original project code uses the custom terms in [LICENSE](LICENSE). Private use and private modifications are allowed under those terms. Public forks, mirrors, source redistribution and packaged builds require prior written permission from veroxsity / BanditVault.
 
 Videos, streams, screenshots, reviews, benchmarks and tutorials are allowed when they credit veroxsity / BanditVault and visibly link to the official project or another official BanditVault page. They must follow the license's redistribution, authentication and endorsement rules.
 

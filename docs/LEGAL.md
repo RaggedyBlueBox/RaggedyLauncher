@@ -2,6 +2,8 @@
 
 This repository contains source code and build scripts for the UWP host, GLFW shim, compatibility mod, Fabric Loader patches, and related project tooling.
 
+Raggedy Launcher is a derivative project: its code was taken from the upstream JavaUWP/BanditVault launcher by veroxsity / BanditVault and completely readapted into a new controller-first launcher. It is branded only as Raggedy Launcher and is not a fork, mod, reskin, or separate install of another launcher. The license terms below remain unchanged.
+
 It does not grant rights to redistribute Minecraft, Mojang assets, Fabric, LWJGL, Java, Xbox platform files, or any other external component.
 
 The Mesa UWP runtime DLLs in `mesa-runtime/` remain under their own upstream license terms.

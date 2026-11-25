@@ -24,20 +24,20 @@ $mouse=Read-Sdl $mousePath
 $pointer=Read-Sdl $pointerPath
 $app=Read-Sdl $appPath
 $old=@'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTLauncherCursorV16(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTLauncherCursorV16(void)
 {
     return 16;
 }
 '@
 $new=@'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTLauncherCursorV16(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTLauncherCursorV16(void)
 {
     return 16;
 }
 
 /* V17 draws the 26.3 menu cursor in Minecraft, leaving the Xbox shell pointer
    hidden, with MouseDevice deltas driving SDL menu position and game mouse-look. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTSoftwareCursorV17(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTSoftwareCursorV17(void)
 {
     return 17;
 }
@@ -53,7 +53,7 @@ if($start -lt 0 -or $end -le $start -or $mouse.IndexOf('static bool WINRT_ShowCu
 $newShow=@'
 static bool WINRT_ShowCursor(SDL_Cursor *cursor)
 {
-    // Bandit V17: Minecraft's GUI renders its own small crosshair. The Xbox
+    // Raggedy V17: Minecraft's GUI renders its own small crosshair. The Xbox
     // CoreWindow OS cursor must remain hidden both when SDL requests a visible
     // GUI cursor and when SDL requests a grabbed/gameplay cursor.
     // MouseDevice::MouseMoved continues to deliver physical movement with a
@@ -79,7 +79,7 @@ $new=@'
 #if !SDL_WINAPI_FAMILY_PHONE
     // V17: SDL does not own a visible Xbox system cursor. Java's GUI draws it.
     window->PointerCursor = nullptr;
-    SDL_Log("Bandit SDL V17: CoreWindow OS pointer hidden on input attach");
+    SDL_Log("Raggedy SDL V17: CoreWindow OS pointer hidden on input attach");
 #endif
 '@
 $app=Replace-SdlOnce $app $old $new 'SetWindow Arrow removal'
@@ -121,14 +121,14 @@ $new=@'
         // SDL's virtual absolute position updated using unbounded mouse deltas.
         float x = 0.0f, y = 0.0f;
         SDL_GetMouseState(&x, &y);
-        static bool banditMenuMouseSeeded = false;
-        if (!banditMenuMouseSeeded) {
-            banditMenuMouseSeeded = true;
+        static bool raggedyMenuMouseSeeded = false;
+        if (!raggedyMenuMouseSeeded) {
+            raggedyMenuMouseSeeded = true;
             if (x == 0.0f && y == 0.0f) {
                 x = window->w * 0.5f;
                 y = window->h * 0.5f;
             }
-            SDL_Log("Bandit SDL V17: menu cursor driven by raw MouseDevice deltas");
+            SDL_Log("Raggedy SDL V17: menu cursor driven by raw MouseDevice deltas");
         }
         x = SDL_clamp(x + dx, 0.0f, SDL_max(0.0f, (float)window->w - 1.0f));
         y = SDL_clamp(y + dy, 0.0f, SDL_max(0.0f, (float)window->h - 1.0f));

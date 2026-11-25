@@ -686,11 +686,44 @@ static bool DirectoryHasRaggedyController(const std::wstring& modsDir) {
             controllerJar);
 }
 
+static void SeedRaggedyControllerLookSpeed(const std::wstring& gameDir) {
+    const std::wstring path = gameDir + L"\\config\\raggedy-controller.properties";
+    EnsureDirectoryTree(GetParentDir(path));
+    std::wstring body;
+    std::vector<std::wstring> lines;
+    if (ReadTextFile(path, body)) {
+        size_t start = 0;
+        while (start <= body.size()) {
+            const size_t end = body.find(L'\n', start);
+            std::wstring line = body.substr(start, end == std::wstring::npos ? std::wstring::npos : end - start);
+            if (!line.empty() && line.back() == L'\r') line.pop_back();
+            lines.push_back(line);
+            if (end == std::wstring::npos) break;
+            start = end + 1;
+        }
+    }
+    bool found = false;
+    for (std::wstring& line : lines) {
+        if (line.rfind(L"lookSpeed=", 0) == 0) {
+            line = L"lookSpeed=115.0";
+            found = true;
+        }
+    }
+    if (!found) lines.push_back(L"lookSpeed=115.0");
+    std::wstring output;
+    for (const std::wstring& line : lines) {
+        output += line;
+        output += L'\n';
+    }
+    WriteTextFile(path, output);
+}
+
 void ConfigureKnownModDefaults(
     const std::wstring& gameDir,
     const std::wstring& userModsDir,
     const std::wstring& minecraftVersion,
     const std::wstring& bundledModsDir) {
+    SeedRaggedyControllerLookSpeed(gameDir);
     PatchMoonlightPoiMixin(gameDir, userModsDir, minecraftVersion);
     ConfigureSodiumDefaults(gameDir, userModsDir, minecraftVersion);
     ConfigureDistantHorizonsDefaults(gameDir, userModsDir);

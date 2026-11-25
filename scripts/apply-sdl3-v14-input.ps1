@@ -42,22 +42,22 @@ $app = Read-NormalizedText $appPath
 $wgi = Read-NormalizedText $wgiPath
 
 $old = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTInputBridgeV13(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTInputBridgeV13(void)
 {
     return 13;
 }
 '@
 $new = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTInputBridgeV13(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTInputBridgeV13(void)
 {
     return 13;
 }
 
 /* V14 fixes the controller backend rather than merely checking SDL gamepad
    exports. Windows Store/UWP SDL uses Windows.Gaming.Input (WGI), whose
-   backend is opt-in by default upstream. Bandit enables it by default and
+   backend is opt-in by default upstream. Raggedy enables it by default and
    still allows an explicit SDL_JOYSTICK_WGI=0 override for diagnostics. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTInputBridgeV14(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTInputBridgeV14(void)
 {
     return 14;
 }
@@ -66,7 +66,7 @@ $video = Replace-Once $video $old $new "V14 runtime marker"
 
 # SDL UWP's actual Xbox controller backend is WGI. Upstream makes the backend
 # opt-in, which allowed SDL_INIT_GAMEPAD to report success while enumerating no
-# controllers. On Bandit's WinRT runtime WGI must be on unless explicitly
+# controllers. On Raggedy's WinRT runtime WGI must be on unless explicitly
 # disabled for diagnostics.
 $old = @'
 static bool WGI_JoystickInit(void)
@@ -83,15 +83,15 @@ static bool WGI_JoystickInit(void)
     HRESULT hr;
 
 #ifdef SDL_PLATFORM_WINRT
-    /* Bandit/Xbox: WGI is the actual UWP controller backend. Upstream defaults
+    /* Raggedy/Xbox: WGI is the actual UWP controller backend. Upstream defaults
        this hint to false, which makes SDL_InitSubSystem(SDL_INIT_GAMEPAD)
        succeed while SDL_GetGamepads() stays empty forever. Default it on for
        WinRT; an explicit SDL_JOYSTICK_WGI=0 still disables it for diagnostics. */
     if (!SDL_GetHintBoolean(SDL_HINT_JOYSTICK_WGI, true)) {
-        SDL_Log("Bandit SDL V14: WGI controller backend explicitly disabled");
+        SDL_Log("Raggedy SDL V14: WGI controller backend explicitly disabled");
         return true;
     }
-    SDL_Log("Bandit SDL V14: WGI controller backend initializing");
+    SDL_Log("Raggedy SDL V14: WGI controller backend initializing");
 #else
     if (!SDL_GetHintBoolean(SDL_HINT_JOYSTICK_WGI, false)) {
         return true;
@@ -111,7 +111,7 @@ static int WGI_JoystickGetCount(void)
 '@
 $new = @'
 #ifdef SDL_PLATFORM_WINRT
-    SDL_Log("Bandit SDL V14: WGI initialization complete controller_count=%d", wgi.controller_count);
+    SDL_Log("Raggedy SDL V14: WGI initialization complete controller_count=%d", wgi.controller_count);
 #endif
     return true;
 }
@@ -139,7 +139,7 @@ $new = @'
         SDL_SetBooleanProperty(SDL_GetJoystickProperties(joystick), SDL_PROP_JOYSTICK_CAP_TRIGGER_RUMBLE_BOOLEAN, true);
     }
 #ifdef SDL_PLATFORM_WINRT
-    SDL_Log("Bandit SDL V14: WGI joystick opened index=%d axes=%d buttons=%d hats=%d gamepad=%d",
+    SDL_Log("Raggedy SDL V14: WGI joystick opened index=%d axes=%d buttons=%d hats=%d gamepad=%d",
             device_index, joystick->naxes, joystick->nbuttons, joystick->nhats, hwdata->gamepad ? 1 : 0);
 #endif
     return true;
@@ -155,7 +155,7 @@ extern "C" bool WINRT_UsingRelativeMouseMode = false;
 '@
 $new = @'
 extern "C" bool WINRT_UsingRelativeMouseMode = false;
-extern "C" bool WINRT_BanditHasRawMouseDevice = false;
+extern "C" bool WINRT_RaggedyHasRawMouseDevice = false;
 '@
 $mouse = Replace-Once $mouse $old $new "raw MouseDevice availability state"
 
@@ -164,7 +164,7 @@ extern bool WINRT_UsingRelativeMouseMode;
 '@
 $new = @'
 extern bool WINRT_UsingRelativeMouseMode;
-extern bool WINRT_BanditHasRawMouseDevice;
+extern bool WINRT_RaggedyHasRawMouseDevice;
 '@
 $mouseHeader = Replace-Once $mouseHeader $old $new "raw MouseDevice availability declaration"
 
@@ -176,7 +176,7 @@ $old = @'
 $new = @'
 #ifdef __cplusplus_winrt
 
-extern "C" bool WINRT_BanditHasRawMouseDevice;
+extern "C" bool WINRT_RaggedyHasRawMouseDevice;
 
 // Pointers (Mice, Touch, etc.)
 '@
@@ -197,55 +197,55 @@ $new = @'
 
     Windows::Foundation::Point normalizedPoint = WINRT_TransformCursorPosition(window, pointerPoint->Position, NormalizeZeroToOne);
     Windows::Foundation::Point windowPoint = WINRT_TransformCursorPosition(window, pointerPoint->Position, TransformToSDLWindowSize);
-    static bool banditRelativeSeedValid = false;
-    static Windows::Foundation::Point banditRelativeSeed;
+    static bool raggedyRelativeSeedValid = false;
+    static Windows::Foundation::Point raggedyRelativeSeed;
 
     if (WINRT_UsingRelativeMouseMode) {
-        if (WINRT_BanditHasRawMouseDevice) {
-            banditRelativeSeedValid = false;
+        if (WINRT_RaggedyHasRawMouseDevice) {
+            raggedyRelativeSeedValid = false;
             return; // raw MouseDevice::MouseMoved is the preferred unbounded source
         }
 
-        if (!banditRelativeSeedValid) {
-            banditRelativeSeed = windowPoint;
-            banditRelativeSeedValid = true;
-            SDL_Log("Bandit SDL V14: using CoreWindow relative-mouse fallback (raw MouseDevice unavailable)");
+        if (!raggedyRelativeSeedValid) {
+            raggedyRelativeSeed = windowPoint;
+            raggedyRelativeSeedValid = true;
+            SDL_Log("Raggedy SDL V14: using CoreWindow relative-mouse fallback (raw MouseDevice unavailable)");
             return;
         }
 
-        const float dx = windowPoint.X - banditRelativeSeed.X;
-        const float dy = windowPoint.Y - banditRelativeSeed.Y;
-        banditRelativeSeed = windowPoint;
+        const float dx = windowPoint.X - raggedyRelativeSeed.X;
+        const float dy = windowPoint.Y - raggedyRelativeSeed.Y;
+        raggedyRelativeSeed = windowPoint;
         if (dx != 0.0f || dy != 0.0f) {
             SDL_SendMouseMotion(0, window, SDL_DEFAULT_MOUSE_ID, true, dx, dy);
         }
         return;
     }
 
-    banditRelativeSeedValid = false;
+    raggedyRelativeSeedValid = false;
 '@
 $pointer = Replace-Once $pointer $old $new "relative pointer fallback when raw mouse is unavailable"
 
 $old = @'
-    auto banditMouseDevice = Windows::Devices::Input::MouseDevice::GetForCurrentView();
-    if (banditMouseDevice != nullptr) {
-        banditMouseDevice->MouseMoved +=
+    auto raggedyMouseDevice = Windows::Devices::Input::MouseDevice::GetForCurrentView();
+    if (raggedyMouseDevice != nullptr) {
+        raggedyMouseDevice->MouseMoved +=
             ref new TypedEventHandler<MouseDevice ^, MouseEventArgs ^>(this, &SDL_WinRTApp::OnMouseMoved);
-        SDL_Log("Bandit SDL V13: WinRT MouseDevice relative-motion source attached");
+        SDL_Log("Raggedy SDL V13: WinRT MouseDevice relative-motion source attached");
     } else {
-        SDL_Log("Bandit SDL V13: no physical WinRT MouseDevice present while attaching input bridge");
+        SDL_Log("Raggedy SDL V13: no physical WinRT MouseDevice present while attaching input bridge");
     }
 '@
 $new = @'
-    auto banditMouseDevice = Windows::Devices::Input::MouseDevice::GetForCurrentView();
-    if (banditMouseDevice != nullptr) {
-        WINRT_BanditHasRawMouseDevice = true;
-        banditMouseDevice->MouseMoved +=
+    auto raggedyMouseDevice = Windows::Devices::Input::MouseDevice::GetForCurrentView();
+    if (raggedyMouseDevice != nullptr) {
+        WINRT_RaggedyHasRawMouseDevice = true;
+        raggedyMouseDevice->MouseMoved +=
             ref new TypedEventHandler<MouseDevice ^, MouseEventArgs ^>(this, &SDL_WinRTApp::OnMouseMoved);
-        SDL_Log("Bandit SDL V14: WinRT MouseDevice raw relative-motion source attached");
+        SDL_Log("Raggedy SDL V14: WinRT MouseDevice raw relative-motion source attached");
     } else {
-        WINRT_BanditHasRawMouseDevice = false;
-        SDL_Log("Bandit SDL V14: no WinRT MouseDevice; CoreWindow relative-motion fallback enabled");
+        WINRT_RaggedyHasRawMouseDevice = false;
+        SDL_Log("Raggedy SDL V14: no WinRT MouseDevice; CoreWindow relative-motion fallback enabled");
     }
 '@
 $app = Replace-Once $app $old $new "raw MouseDevice availability handoff"

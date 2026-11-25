@@ -194,10 +194,14 @@ public:
         d2dContext_->BeginDraw();
         d2dContext_->Clear(D2D1::ColorF(pal_.bg));
 
-        if (state.showModsPage) {
+        if (state.showVersionPage) {
+            DrawVersionPage(state);
+        } else if (state.showModsPage) {
             if (state.modsDetailOpen) DrawModDetail(state);
             else if (state.modsProfileOpen) DrawProfile(state);
             else DrawModsBrowser(state);
+        } else if (state.showCredits) {
+            DrawCredits(state);
         } else if (state.showChangelog) {
             DrawChangelog(state);
         } else if (state.showSettings) {
@@ -466,7 +470,7 @@ private:
         }
 
         const wchar_t* labels[] = {
-            Tr(L"Play"), Tr(L"Mods"), Tr(L"Remote Files"), Tr(L"Settings"),
+            Tr(L"Play"), Tr(L"Version"), Tr(L"Remote Files"), Tr(L"Settings"),
             state.updateAvailable ? Tr(L"Update available") : Tr(L"What's new"),
             Tr(L"Repair downloads"), Tr(L"Sign out") };
         const wchar_t* menuIcons[] = { L"\uE768", L"\uE74C", L"\uE838", L"\uE713", L"\uE946", L"\uE72C", L"\uE7E8" };
@@ -488,6 +492,68 @@ private:
             y += h + (play ? 14.0f : 4.0f);
         }
         mainMenuRectCount_ = kMainMenuItems;
+    }
+
+    void DrawVersionPage(const AuthUiState& state) {
+        const D2D1_RECT_F full = D2D1::RectF(0.0f, 0.0f, width_, height_);
+        d2dContext_->FillRectangle(full, MakeBrush(pal_.bg, 0.97f));
+        DrawHeader(Tr(L"Version"));
+        DrawBrand(L"RAGGEDY LAUNCHER", muted_);
+        float infoY = T_ + 58.0f;
+        if (!state.status.empty()) {
+            infoY += DrawFlow(state.status.c_str(), leadFormat_.Get(), L_, infoY, R_ - L_, 28.0f,
+                state.isError ? danger_ : text_) + 2.0f;
+        }
+        if (!state.detail.empty()) {
+            DrawFlow(state.detail.c_str(), smallFormat_.Get(), L_, infoY, R_ - L_, 28.0f, muted_);
+        }
+
+        const wchar_t* packs[] = { L"Simply Legacy", L"Re-Console" };
+        for (int i = 0; i < 2; ++i) {
+            const D2D1_RECT_F r = D2D1::RectF(L_, T_ + 128.0f + i * 60.0f, R_, T_ + 178.0f + i * 60.0f);
+            const bool selected = i == state.versionPackSelected;
+            FillRound(r, selected ? raised_ : MakeBrush(pal_.shade, 0.45f), 12.0f);
+            if (selected) FocusRing(r, 12.0f);
+            DrawText(packs[i], rowStrongFormat_.Get(),
+                D2D1::RectF(r.left + 24.0f, r.top, r.right - 24.0f, r.bottom), selected ? accent_ : text_);
+            RegisterHit(launchhit::kVersionPackBase + i, r);
+        }
+
+        const wchar_t* packTitle = state.versionPackSelected == 1 ? L"Re-Console" : L"Simply Legacy";
+        DrawText(TrFormat(L"{0} versions", { packTitle }), leadFormat_.Get(),
+            D2D1::RectF(L_, T_ + 258.0f, R_, T_ + 290.0f), text_);
+
+        float y = T_ + 300.0f;
+        if (state.versionTargets.empty()) {
+            DrawText(Tr(L"No supported versions are available for this modpack."), smallFormat_.Get(),
+                D2D1::RectF(L_, y, R_, y + 54.0f), muted_);
+        }
+        for (size_t i = 0; i < state.versionTargets.size(); ++i) {
+            const LaunchTarget& target = state.versionTargets[i];
+            if (y > B_ - 118.0f) break;
+            const D2D1_RECT_F r = D2D1::RectF(L_, y, R_, y + 50.0f);
+            const bool focused = static_cast<int>(i) == state.versionSelected;
+            const bool active = target.targetId == state.versionProfileId;
+            DrawRow(r, L"\uE7B8", TargetProfileText(target).c_str(), focused, active, false);
+            RegisterHit(launchhit::kVersionRowBase + static_cast<int>(i), r);
+            y += 54.0f;
+        }
+        DrawFooter(Tr(L"A selects a version. Left or right changes the modpack. B returns."));
+    }
+
+    void DrawCredits(const AuthUiState& state) {
+        (void)state;
+        const D2D1_RECT_F full = D2D1::RectF(0.0f, 0.0f, width_, height_);
+        d2dContext_->FillRectangle(full, MakeBrush(pal_.bg, 0.97f));
+        DrawHeader(Tr(L"Credits"));
+        DrawBrand(L"RAGGEDY LAUNCHER", muted_);
+        DrawText(Tr(L"Raggedy Launcher"), displayFormat_.Get(),
+            D2D1::RectF(L_, T_ + 104.0f, R_, T_ + 188.0f), text_);
+        DrawText(Tr(L"Built as a controller-first launcher for Xbox and Windows."), leadFormat_.Get(),
+            D2D1::RectF(L_, T_ + 200.0f, R_, T_ + 258.0f), text_);
+        DrawText(Tr(L"Microsoft sign-in, Minecraft entitlement, modpacks, controller input, rendering patches, and performance work are integrated into one launcher."),
+            smallFormat_.Get(), D2D1::RectF(L_, T_ + 276.0f, R_, T_ + 400.0f), muted_);
+        DrawFooter(Tr(L"Press B or select Back to return to settings."));
     }
 
     void DrawProgress(const AuthUiState& state) {
@@ -754,10 +820,10 @@ private:
         {
             const D2D1_RECT_F r = row(6, Tr(L"Performance renderer"), state.settingsPerfNote.c_str(), 300.0f);
             DrawIcon(L"\uE7F4", D2D1::RectF(r.right - 56.0f, r.top, r.right - 22.0f, r.bottom), muted_);
-            DrawText(state.settingsPerfMode == L"off" ? Tr(L"Off") : Tr(L"Auto"), valueFormat_.Get(),
-                D2D1::RectF(r.right - 380.0f, r.top, r.right - 66.0f, r.bottom),
-                state.settingsPerfMode == L"off" ? muted_ : text_);
+            DrawText(Tr(L"Always on"), valueFormat_.Get(),
+                D2D1::RectF(r.right - 380.0f, r.top, r.right - 66.0f, r.bottom), text_);
         }
+        row(7, Tr(L"Credits"), Tr(L"Open the Raggedy Launcher credits."), 0.0f);
         const float noteTop = rowY + 12.0f;
         const float noteBottom = B_ - 62.0f;
         if (!state.settingsNote.empty()) {
@@ -1903,22 +1969,10 @@ private:
         if (screenshotPaths_.empty()) return;
 
         const int total = static_cast<int>(screenshotPaths_.size());
-        const double now = nowMs / 1000.0;
-        const double hold = 6.0;
-        const double t = now / hold;
-        const long long base = static_cast<long long>(floor(t));
+        const long long base = static_cast<long long>(nowMs / 6000ULL);
         const int idx = static_cast<int>(((base % total) + total) % total);
-        const int nextIdx = (idx + 1) % total;
-        const double frac = t - static_cast<double>(base);
-        const double fade = frac > 0.82 ? (frac - 0.82) / 0.18 : 0.0;
-        const float easedFade = static_cast<float>(fade * fade * (3.0 - 2.0 * fade));
-
         ComPtr<ID2D1Bitmap1> cur = GetCachedBitmap(screenshotPaths_[static_cast<size_t>(idx)]);
         if (cur) DrawBitmapCover(cur.Get(), rect, 1.0f, 1.0f, 0.0f, 0.0f);
-        if (easedFade > 0.0f && total > 1) {
-            ComPtr<ID2D1Bitmap1> nxt = GetCachedBitmap(screenshotPaths_[static_cast<size_t>(nextIdx)]);
-            if (nxt) DrawBitmapCover(nxt.Get(), rect, easedFade, 1.0f, 0.0f, 0.0f);
-        }
     }
 
     // the caller draws the white card, which is also the light border a qr code needs to scan

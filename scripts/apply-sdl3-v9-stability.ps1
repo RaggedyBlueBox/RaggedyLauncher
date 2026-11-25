@@ -31,13 +31,13 @@ $video = Read-NormalizedText -Path $videoPath
 $gl = Read-NormalizedText -Path $glPath
 
 $old = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTProviderParityV2(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTProviderParityV2(void)
 {
     return 2;
 }
 '@
 $new = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTProviderParityV2(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTProviderParityV2(void)
 {
     return 2;
 }
@@ -45,7 +45,7 @@ extern "C" __declspec(dllexport) int BanditSDL_WinRTProviderParityV2(void)
 /* V9 hardens the first real Mesa/WGL handoff. It adds crash-resistant proc
    resolution, persistent stage breadcrumbs and a deliberately minimal WGL
    extension setup until Minecraft has produced its first frame. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTStabilityV9(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTStabilityV9(void)
 {
     return 9;
 }
@@ -53,58 +53,58 @@ extern "C" __declspec(dllexport) int BanditSDL_WinRTStabilityV9(void)
 $video = Replace-Once -Text $video -Old $old -New $new -Label "V9 stability marker"
 
 $old = @'
-static HGLRC BANDIT_WIN_GL_CreateContextSafe(SDL_VideoDevice *_this, HDC hdc)
+static HGLRC RAGGEDY_WIN_GL_CreateContextSafe(SDL_VideoDevice *_this, HDC hdc)
 {
     HGLRC result = NULL;
     __try {
         result = _this->gl_data->wglCreateContext(hdc);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        SDL_SetError("Bandit WinRT WGL: wglCreateContext raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        SDL_SetError("Raggedy WinRT WGL: wglCreateContext raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
     return result;
 }
 
-static BOOL BANDIT_WIN_GL_MakeCurrentSafe(SDL_VideoDevice *_this, HDC hdc, HGLRC context)
+static BOOL RAGGEDY_WIN_GL_MakeCurrentSafe(SDL_VideoDevice *_this, HDC hdc, HGLRC context)
 {
     BOOL result = FALSE;
     __try {
         result = _this->gl_data->wglMakeCurrent(hdc, context);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        SDL_SetError("Bandit WinRT WGL: wglMakeCurrent raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        SDL_SetError("Raggedy WinRT WGL: wglMakeCurrent raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
     return result;
 }
 
-static HGLRC BANDIT_WIN_GL_CreateContextAttribsSafe(PFNWGLCREATECONTEXTATTRIBSARBPROC proc, HDC hdc, HGLRC share_context, const int *attribs)
+static HGLRC RAGGEDY_WIN_GL_CreateContextAttribsSafe(PFNWGLCREATECONTEXTATTRIBSARBPROC proc, HDC hdc, HGLRC share_context, const int *attribs)
 {
     HGLRC result = NULL;
     __try {
         result = proc(hdc, share_context, attribs);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        SDL_SetError("Bandit WinRT WGL: wglCreateContextAttribsARB raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        SDL_SetError("Raggedy WinRT WGL: wglCreateContextAttribsARB raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
     return result;
 }
 
-static BOOL BANDIT_WIN_GL_SwapBuffersSafe(SDL_VideoDevice *_this, HDC hdc)
+static BOOL RAGGEDY_WIN_GL_SwapBuffersSafe(SDL_VideoDevice *_this, HDC hdc)
 {
     BOOL result = FALSE;
     __try {
         result = _this->gl_data->wglSwapBuffers(hdc);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        SDL_SetError("Bandit WinRT WGL: wglSwapBuffers raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        SDL_SetError("Raggedy WinRT WGL: wglSwapBuffers raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
     return result;
 }
 #else
-#define BANDIT_WIN_GL_CreateContextSafe(_this, hdc) ((_this)->gl_data->wglCreateContext(hdc))
-#define BANDIT_WIN_GL_MakeCurrentSafe(_this, hdc, context) ((_this)->gl_data->wglMakeCurrent((hdc), (context)))
-#define BANDIT_WIN_GL_CreateContextAttribsSafe(proc, hdc, share_context, attribs) ((proc)((hdc), (share_context), (attribs)))
-#define BANDIT_WIN_GL_SwapBuffersSafe(_this, hdc) ((_this)->gl_data->wglSwapBuffers(hdc))
+#define RAGGEDY_WIN_GL_CreateContextSafe(_this, hdc) ((_this)->gl_data->wglCreateContext(hdc))
+#define RAGGEDY_WIN_GL_MakeCurrentSafe(_this, hdc, context) ((_this)->gl_data->wglMakeCurrent((hdc), (context)))
+#define RAGGEDY_WIN_GL_CreateContextAttribsSafe(proc, hdc, share_context, attribs) ((proc)((hdc), (share_context), (attribs)))
+#define RAGGEDY_WIN_GL_SwapBuffersSafe(_this, hdc) ((_this)->gl_data->wglSwapBuffers(hdc))
 #endif
 '@
 $new = @'
-static void BANDIT_WIN_GL_Breadcrumb(const char *stage)
+static void RAGGEDY_WIN_GL_Breadcrumb(const char *stage)
 {
     WCHAR logDir[768];
     DWORD chars = GetEnvironmentVariableW(L"MC_LOG_DIR", logDir, SDL_arraysize(logDir));
@@ -127,7 +127,7 @@ static void BANDIT_WIN_GL_Breadcrumb(const char *stage)
     CloseHandle(f);
 }
 
-static PROC BANDIT_WIN_GL_GetProcAddressSafe(SDL_VideoDevice *_this, const char *proc)
+static PROC RAGGEDY_WIN_GL_GetProcAddressSafe(SDL_VideoDevice *_this, const char *proc)
 {
     PROC result = NULL;
     __try {
@@ -136,80 +136,80 @@ static PROC BANDIT_WIN_GL_GetProcAddressSafe(SDL_VideoDevice *_this, const char 
         char msg[192];
         SDL_snprintf(msg, sizeof(msg), "wglGetProcAddress SEH 0x%08lX for %s",
                      (unsigned long)GetExceptionCode(), proc ? proc : "<null>");
-        BANDIT_WIN_GL_Breadcrumb(msg);
+        RAGGEDY_WIN_GL_Breadcrumb(msg);
         SDL_LogError(SDL_LOG_CATEGORY_VIDEO,
-                     "Bandit WinRT WGL: wglGetProcAddress(%s) raised SEH 0x%08lX; falling back when possible",
+                     "Raggedy WinRT WGL: wglGetProcAddress(%s) raised SEH 0x%08lX; falling back when possible",
                      proc ? proc : "<null>", (unsigned long)GetExceptionCode());
     }
     return result;
 }
 
-static HGLRC BANDIT_WIN_GL_CreateContextSafe(SDL_VideoDevice *_this, HDC hdc)
+static HGLRC RAGGEDY_WIN_GL_CreateContextSafe(SDL_VideoDevice *_this, HDC hdc)
 {
     HGLRC result = NULL;
-    BANDIT_WIN_GL_Breadcrumb("wglCreateContext:begin");
+    RAGGEDY_WIN_GL_Breadcrumb("wglCreateContext:begin");
     __try {
         result = _this->gl_data->wglCreateContext(hdc);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        BANDIT_WIN_GL_Breadcrumb("wglCreateContext:SEH");
-        SDL_SetError("Bandit WinRT WGL: wglCreateContext raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        RAGGEDY_WIN_GL_Breadcrumb("wglCreateContext:SEH");
+        SDL_SetError("Raggedy WinRT WGL: wglCreateContext raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
-    BANDIT_WIN_GL_Breadcrumb(result ? "wglCreateContext:ok" : "wglCreateContext:fail");
+    RAGGEDY_WIN_GL_Breadcrumb(result ? "wglCreateContext:ok" : "wglCreateContext:fail");
     return result;
 }
 
-static BOOL BANDIT_WIN_GL_MakeCurrentSafe(SDL_VideoDevice *_this, HDC hdc, HGLRC context)
+static BOOL RAGGEDY_WIN_GL_MakeCurrentSafe(SDL_VideoDevice *_this, HDC hdc, HGLRC context)
 {
     BOOL result = FALSE;
     static volatile LONG loggedFirst = 0;
     const BOOL first = InterlockedCompareExchange(&loggedFirst, 1, 0) == 0;
-    if (first) BANDIT_WIN_GL_Breadcrumb(context ? "wglMakeCurrent:set:begin" : "wglMakeCurrent:clear:begin");
+    if (first) RAGGEDY_WIN_GL_Breadcrumb(context ? "wglMakeCurrent:set:begin" : "wglMakeCurrent:clear:begin");
     __try {
         result = _this->gl_data->wglMakeCurrent(hdc, context);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        BANDIT_WIN_GL_Breadcrumb("wglMakeCurrent:SEH");
-        SDL_SetError("Bandit WinRT WGL: wglMakeCurrent raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        RAGGEDY_WIN_GL_Breadcrumb("wglMakeCurrent:SEH");
+        SDL_SetError("Raggedy WinRT WGL: wglMakeCurrent raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
-    if (first || !result) BANDIT_WIN_GL_Breadcrumb(result ? "wglMakeCurrent:ok" : "wglMakeCurrent:fail");
+    if (first || !result) RAGGEDY_WIN_GL_Breadcrumb(result ? "wglMakeCurrent:ok" : "wglMakeCurrent:fail");
     return result;
 }
 
-static HGLRC BANDIT_WIN_GL_CreateContextAttribsSafe(PFNWGLCREATECONTEXTATTRIBSARBPROC proc, HDC hdc, HGLRC share_context, const int *attribs)
+static HGLRC RAGGEDY_WIN_GL_CreateContextAttribsSafe(PFNWGLCREATECONTEXTATTRIBSARBPROC proc, HDC hdc, HGLRC share_context, const int *attribs)
 {
     HGLRC result = NULL;
-    BANDIT_WIN_GL_Breadcrumb("wglCreateContextAttribsARB:begin");
+    RAGGEDY_WIN_GL_Breadcrumb("wglCreateContextAttribsARB:begin");
     __try {
         result = proc(hdc, share_context, attribs);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        BANDIT_WIN_GL_Breadcrumb("wglCreateContextAttribsARB:SEH");
-        SDL_SetError("Bandit WinRT WGL: wglCreateContextAttribsARB raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        RAGGEDY_WIN_GL_Breadcrumb("wglCreateContextAttribsARB:SEH");
+        SDL_SetError("Raggedy WinRT WGL: wglCreateContextAttribsARB raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
-    BANDIT_WIN_GL_Breadcrumb(result ? "wglCreateContextAttribsARB:ok" : "wglCreateContextAttribsARB:fail");
+    RAGGEDY_WIN_GL_Breadcrumb(result ? "wglCreateContextAttribsARB:ok" : "wglCreateContextAttribsARB:fail");
     return result;
 }
 
-static BOOL BANDIT_WIN_GL_SwapBuffersSafe(SDL_VideoDevice *_this, HDC hdc)
+static BOOL RAGGEDY_WIN_GL_SwapBuffersSafe(SDL_VideoDevice *_this, HDC hdc)
 {
     BOOL result = FALSE;
     static volatile LONG loggedFirst = 0;
     const BOOL first = InterlockedCompareExchange(&loggedFirst, 1, 0) == 0;
-    if (first) BANDIT_WIN_GL_Breadcrumb("wglSwapBuffers:begin");
+    if (first) RAGGEDY_WIN_GL_Breadcrumb("wglSwapBuffers:begin");
     __try {
         result = _this->gl_data->wglSwapBuffers(hdc);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        BANDIT_WIN_GL_Breadcrumb("wglSwapBuffers:SEH");
-        SDL_SetError("Bandit WinRT WGL: wglSwapBuffers raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        RAGGEDY_WIN_GL_Breadcrumb("wglSwapBuffers:SEH");
+        SDL_SetError("Raggedy WinRT WGL: wglSwapBuffers raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
-    if (first || !result) BANDIT_WIN_GL_Breadcrumb(result ? "wglSwapBuffers:ok" : "wglSwapBuffers:fail");
+    if (first || !result) RAGGEDY_WIN_GL_Breadcrumb(result ? "wglSwapBuffers:ok" : "wglSwapBuffers:fail");
     return result;
 }
 #else
-#define BANDIT_WIN_GL_Breadcrumb(stage) ((void)0)
-#define BANDIT_WIN_GL_GetProcAddressSafe(_this, proc) ((_this)->gl_data->wglGetProcAddress(proc))
-#define BANDIT_WIN_GL_CreateContextSafe(_this, hdc) ((_this)->gl_data->wglCreateContext(hdc))
-#define BANDIT_WIN_GL_MakeCurrentSafe(_this, hdc, context) ((_this)->gl_data->wglMakeCurrent((hdc), (context)))
-#define BANDIT_WIN_GL_CreateContextAttribsSafe(proc, hdc, share_context, attribs) ((proc)((hdc), (share_context), (attribs)))
-#define BANDIT_WIN_GL_SwapBuffersSafe(_this, hdc) ((_this)->gl_data->wglSwapBuffers(hdc))
+#define RAGGEDY_WIN_GL_Breadcrumb(stage) ((void)0)
+#define RAGGEDY_WIN_GL_GetProcAddressSafe(_this, proc) ((_this)->gl_data->wglGetProcAddress(proc))
+#define RAGGEDY_WIN_GL_CreateContextSafe(_this, hdc) ((_this)->gl_data->wglCreateContext(hdc))
+#define RAGGEDY_WIN_GL_MakeCurrentSafe(_this, hdc, context) ((_this)->gl_data->wglMakeCurrent((hdc), (context)))
+#define RAGGEDY_WIN_GL_CreateContextAttribsSafe(proc, hdc, share_context, attribs) ((proc)((hdc), (share_context), (attribs)))
+#define RAGGEDY_WIN_GL_SwapBuffersSafe(_this, hdc) ((_this)->gl_data->wglSwapBuffers(hdc))
 #endif
 '@
 $gl = Replace-Once -Text $gl -Old $old -New $new -Label "persistent WGL breadcrumbs and guarded proc resolver"
@@ -221,7 +221,7 @@ $old = @'
     }
 '@
 $new = @'
-    func = (SDL_FunctionPointer)BANDIT_WIN_GL_GetProcAddressSafe(_this, proc);
+    func = (SDL_FunctionPointer)RAGGEDY_WIN_GL_GetProcAddressSafe(_this, proc);
     if (!func) {
         func = (SDL_FunctionPointer)GetProcAddress((HMODULE)_this->gl_config.dll_handle, proc);
     }
@@ -234,12 +234,12 @@ $old = @'
 '@
 $new = @'
         wglCreateContextAttribsARB =
-            (PFNWGLCREATECONTEXTATTRIBSARBPROC)BANDIT_WIN_GL_GetProcAddressSafe(_this, "wglCreateContextAttribsARB");
+            (PFNWGLCREATECONTEXTATTRIBSARBPROC)RAGGEDY_WIN_GL_GetProcAddressSafe(_this, "wglCreateContextAttribsARB");
 '@
 $gl = Replace-Once -Text $gl -Old $old -New $new -Label "guard attributed-context proc lookup"
 
 $old = @'
-static void BANDIT_WIN_GL_InitExtensionsFromCurrentContext(SDL_VideoDevice *_this, HDC hdc)
+static void RAGGEDY_WIN_GL_InitExtensionsFromCurrentContext(SDL_VideoDevice *_this, HDC hdc)
 {
     const char *(WINAPI *wglGetExtensionsStringARB)(HDC) = NULL;
     const char *extensions = NULL;
@@ -273,15 +273,15 @@ static void BANDIT_WIN_GL_InitExtensionsFromCurrentContext(SDL_VideoDevice *_thi
     _this->gl_data->HAS_WGL_ARB_pixel_format_float = HasExtension("WGL_ARB_pixel_format_float", extensions);
     _this->gl_data->HAS_WGL_EXT_create_context_es2_profile = false;
 
-    SDL_Log("Bandit SDL: initialized WGL extensions from real WinRT context (swap_control=%d)",
+    SDL_Log("Raggedy SDL: initialized WGL extensions from real WinRT context (swap_control=%d)",
             _this->gl_data->wglSwapIntervalEXT != NULL ? 1 : 0);
 }
 '@
 $new = @'
-static void BANDIT_WIN_GL_InitExtensionsFromCurrentContext(SDL_VideoDevice *_this, HDC hdc)
+static void RAGGEDY_WIN_GL_InitExtensionsFromCurrentContext(SDL_VideoDevice *_this, HDC hdc)
 {
     (void)hdc;
-    BANDIT_WIN_GL_Breadcrumb("wglExtensions:minimal:begin");
+    RAGGEDY_WIN_GL_Breadcrumb("wglExtensions:minimal:begin");
 
     /* Stability-first on WinRT: do not call wglGetExtensionsStringARB here.
        Mesa-UWP has already proven it can create a 3.x context; querying and
@@ -301,42 +301,42 @@ static void BANDIT_WIN_GL_InitExtensionsFromCurrentContext(SDL_VideoDevice *_thi
     _this->gl_data->HAS_WGL_EXT_create_context_es2_profile = false;
 
     _this->gl_data->wglSwapIntervalEXT =
-        (BOOL (WINAPI *)(int))BANDIT_WIN_GL_GetProcAddressSafe(_this, "wglSwapIntervalEXT");
+        (BOOL (WINAPI *)(int))RAGGEDY_WIN_GL_GetProcAddressSafe(_this, "wglSwapIntervalEXT");
     _this->gl_data->wglGetSwapIntervalEXT =
-        (int (WINAPI *)(void))BANDIT_WIN_GL_GetProcAddressSafe(_this, "wglGetSwapIntervalEXT");
+        (int (WINAPI *)(void))RAGGEDY_WIN_GL_GetProcAddressSafe(_this, "wglGetSwapIntervalEXT");
 
-    BANDIT_WIN_GL_Breadcrumb("wglExtensions:minimal:ok");
-    SDL_Log("Bandit SDL V9: minimal WGL extension init complete (swap_control=%d)",
+    RAGGEDY_WIN_GL_Breadcrumb("wglExtensions:minimal:ok");
+    SDL_Log("Raggedy SDL V9: minimal WGL extension init complete (swap_control=%d)",
             _this->gl_data->wglSwapIntervalEXT != NULL ? 1 : 0);
 }
 '@
 $gl = Replace-Once -Text $gl -Old $old -New $new -Label "remove risky WGL extension-string probe"
 
 $old = @'
-        SDL_Log("Bandit SDL: WinRT WGL context create begin hdc=%p", hdc);
-        HGLRC temp_context = BANDIT_WIN_GL_CreateContextSafe(_this, hdc);
+        SDL_Log("Raggedy SDL: WinRT WGL context create begin hdc=%p", hdc);
+        HGLRC temp_context = RAGGEDY_WIN_GL_CreateContextSafe(_this, hdc);
 '@
 $new = @'
-        SDL_Log("Bandit SDL: WinRT WGL context create begin hdc=%p", hdc);
-        BANDIT_WIN_GL_Breadcrumb("GL_CreateContext:begin");
-        HGLRC temp_context = BANDIT_WIN_GL_CreateContextSafe(_this, hdc);
+        SDL_Log("Raggedy SDL: WinRT WGL context create begin hdc=%p", hdc);
+        RAGGEDY_WIN_GL_Breadcrumb("GL_CreateContext:begin");
+        HGLRC temp_context = RAGGEDY_WIN_GL_CreateContextSafe(_this, hdc);
 '@
 $gl = Replace-Once -Text $gl -Old $old -New $new -Label "context-stage breadcrumb"
 
 $old = @'
-    BANDIT_WIN_GL_InitExtensionsFromCurrentContext(_this, hdc);
-    SDL_Log("Bandit SDL: WinRT WGL OpenGL %d.%d context ready context=%p",
+    RAGGEDY_WIN_GL_InitExtensionsFromCurrentContext(_this, hdc);
+    SDL_Log("Raggedy SDL: WinRT WGL OpenGL %d.%d context ready context=%p",
 '@
 $new = @'
-    BANDIT_WIN_GL_InitExtensionsFromCurrentContext(_this, hdc);
-    BANDIT_WIN_GL_Breadcrumb("GL_CreateContext:ready");
-    SDL_Log("Bandit SDL: WinRT WGL OpenGL %d.%d context ready context=%p",
+    RAGGEDY_WIN_GL_InitExtensionsFromCurrentContext(_this, hdc);
+    RAGGEDY_WIN_GL_Breadcrumb("GL_CreateContext:ready");
+    SDL_Log("Raggedy SDL: WinRT WGL OpenGL %d.%d context ready context=%p",
 '@
 $gl = Replace-Once -Text $gl -Old $old -New $new -Label "context-ready breadcrumb"
 
 foreach ($required in @(
-    "BanditSDL_WinRTStabilityV9",
-    "BANDIT_WIN_GL_GetProcAddressSafe",
+    "RaggedySDL_WinRTStabilityV9",
+    "RAGGEDY_WIN_GL_GetProcAddressSafe",
     "sdl_wgl_stage.log",
     "wglExtensions:minimal:ok",
     "GL_CreateContext:ready"
@@ -345,7 +345,7 @@ foreach ($required in @(
         throw "V9 SDL validation failed: missing $required"
     }
 }
-$extensionInit = [regex]::Matches($gl, '(?ms)^static void BANDIT_WIN_GL_InitExtensionsFromCurrentContext\([^\n]*\)\n\{.*?^\}')
+$extensionInit = [regex]::Matches($gl, '(?ms)^static void RAGGEDY_WIN_GL_InitExtensionsFromCurrentContext\([^\n]*\)\n\{.*?^\}')
 if ($extensionInit.Count -ne 1) { throw 'V9 SDL validation failed: expected one real-context extension initializer' }
 if ($extensionInit[0].Value.Contains('wglGetExtensionsStringARB(hdc)')) {
     throw "V9 SDL validation failed: risky wglGetExtensionsStringARB call remains"

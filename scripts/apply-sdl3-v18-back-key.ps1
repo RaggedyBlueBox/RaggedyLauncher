@@ -20,18 +20,18 @@ foreach($p in @($videoPath,$appPath)){
 $video=Read-Sdl $videoPath
 $app=Read-Sdl $appPath
 $old=@'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTSoftwareCursorV17(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTSoftwareCursorV17(void)
 {
     return 17;
 }
 '@
 $new=@'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTSoftwareCursorV17(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTSoftwareCursorV17(void)
 {
     return 17;
 }
 
-extern "C" __declspec(dllexport) int BanditSDL_WinRTBackKeyContractV18(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTBackKeyContractV18(void)
 {
     return 18;
 }
@@ -54,10 +54,10 @@ $new=@'
 template <typename BackButtonEventArgs>
 static void WINRT_OnBackButtonPressed(BackButtonEventArgs ^ args)
 {
-    static bool banditBackKeyContractLogged = false;
-    if (!banditBackKeyContractLogged) {
-        banditBackKeyContractLogged = true;
-        SDL_Log("Bandit SDL V18: BackRequested stays gamepad B; synthetic AC_BACK suppressed");
+    static bool raggedyBackKeyContractLogged = false;
+    if (!raggedyBackKeyContractLogged) {
+        raggedyBackKeyContractLogged = true;
+        SDL_Log("Raggedy SDL V18: BackRequested stays gamepad B; synthetic AC_BACK suppressed");
     }
 
     if (SDL_GetHintBoolean(SDL_HINT_WINRT_HANDLE_BACK_BUTTON, false)) {

@@ -23,7 +23,7 @@ public class ControllerSettingsStore {
     public boolean invertY = false;
     public boolean showGuides = true;
     public boolean keyboardMovement = false;
-    public float lookSpeed = 135.0f;
+    public float lookSpeed = 115.0f;
     public double cursorSpeed = 14.0;
     public double scrollAmount = 1.0;
     public float moveDeadzone = 0.35f;

@@ -5,8 +5,13 @@ $root = Resolve-RepoRoot
 if (-not $CatalogPath) { $CatalogPath = Join-Path $root $ProjectConfig.VersionCatalog }
 if (-not $PackagePath) { $PackagePath = Get-ConfigPath "PackageContentDir" }
 $targets = @(Import-Csv $CatalogPath -Delimiter "`t" | Where-Object { $_.loaderVersion -and $_.loaderVersion -ne 'selected' -and $_.loaderVersion -ne 'none' })
-if ($targets.Count -ne 1 -or $targets[0].minecraftVersion -ne '26.3' -or $targets[0].loader -ne 'fabric' -or $targets[0].loaderVersion -ne '0.20.1') {
-    throw 'Version catalog must contain only the 26.3 Fabric target'
+$requiredVersions = @('26.3','26.2','26.1.2','1.21.10','1.21.8','1.21.5','1.21.4','1.21.3','1.21.1','1.21','1.20.6','1.20.4','1.20.1')
+$actualVersions = @($targets | ForEach-Object { $_.minecraftVersion })
+foreach ($requiredVersion in $requiredVersions) {
+    if ($actualVersions -notcontains $requiredVersion) { throw "Version catalog is missing required modpack version $requiredVersion" }
+}
+foreach ($target in $targets) {
+    if ($target.loader -ne 'fabric' -or $target.loaderVersion -ne '0.20.1') { throw "Unsupported catalog target $($target.minecraftVersion)" }
 }
 if ($ProjectConfig.MinecraftVersion -ne '26.3' -or $ProjectConfig.FabricLoaderVersion -ne '0.20.1' -or $ProjectConfig.MinecraftAssetIndex -ne '34') {
     throw 'Build defaults must match the 26.3 Fabric target (minecraft 26.3, fabric 0.20.1, asset index 34)'
@@ -104,11 +109,24 @@ try {
     Require-Contains $launchSource '-Djava.awt.headless=true' 'Headless AWT launch source'
     Require-Contains $launchSource 'L"graphics\\" + graphicsRuntime + L"\\opengl32.dll"' 'Package-relative SDL OpenGL hint source'
     Require-Contains $appSource 'SetActiveProfileId(exeDir, kVanillaProfileId)' 'Simply Legacy default profile source'
+    Require-Contains $appSource 'ApplyPerformanceMode(exeDir, packProfileId, L"auto"' 'Always-on performance renderer source'
     Require-Contains $appSource 'EnsureDefaultModpackInstalled' 'Default modpack bootstrap source'
     Require-Contains $appSource 'static_cast<float>(fraction)' 'Default modpack live progress UI source'
     Require-Contains $browserSource 'EnsureDefaultModpackInstalled' 'Default modpack installer source'
     Require-Contains $browserSource 'MakeDefaultPackProgress' 'Default modpack live progress source'
-    Require-Contains $browserSource '"fabric", true' 'Built-in profile default modpack seeding source'
+    Require-Contains $browserSource 'SupportedPackTargets' 'Version-only selector source'
+    Require-Contains $browserSource 'DefaultPackSupportsVersion' 'Modpack-supported version filter source'
+    $launcherUiSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/ui/launcher_ui.cpp') -Raw
+    $uiStateSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/ui/auth_ui_state.h') -Raw
+    $modDefaultsSource = Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/mods/mod_defaults.cpp') -Raw
+    $controllerSettingsSource = Get-Content -LiteralPath (Join-Path $root 'controller_mod/core/src/main/java/raggedy/controllercore/ControllerSettingsStore.java') -Raw
+    Require-Contains $launcherUiSource 'ShowVersionPage' 'Version page source'
+    Require-Contains $launcherUiSource 'ShowCreditsPage' 'Credits page source'
+    Require-Contains $launcherUiSource 'The Raggedy performance renderer is always on' 'Always-on performance renderer UI source'
+    Require-Contains $uiStateSource 'showVersionPage' 'Version page state source'
+    Require-Contains $uiStateSource 'showCredits' 'Credits page state source'
+    Require-Contains $modDefaultsSource 'lookSpeed=115.0' 'Permanent controller look speed source'
+    Require-Contains $controllerSettingsSource 'public float lookSpeed = 115.0f' 'Permanent controller look speed default'
     $sdlPrepareSource = Get-Content -LiteralPath (Join-Path $root 'scripts/prepare-sdl3-uwp.ps1') -Raw
     $sdlPatchSource = Get-Content -LiteralPath (Join-Path $root 'patches/sdl3-uwp-external-host.patch') -Raw
     Require-Contains $sdlPrepareSource 'b3852a0076c358f65ee19765e85ef9eded6e50df' 'Pinned UWP SDL3 source'
@@ -116,7 +134,7 @@ try {
     Require-Contains $sdlPrepareSource '-DSDL_OPENGLES=OFF' 'UWP SDL3 EGL disable config'
     Require-Contains $sdlPatchSource 'src/loadso/windows/SDL_sysloadso.c' 'UWP SDL3 WinRT-aware shared-object loader source'
     Require-Contains $sdlPatchSource 'src/video/windows/SDL_windowsopengl.c' 'UWP SDL3 WGL source inclusion'
-    Require-Contains $sdlPatchSource 'BanditSDL_WinRTAbsoluteLoadFixV1' 'UWP SDL3 absolute Mesa path normalization'
+    Require-Contains $sdlPatchSource 'RaggedySDL_WinRTAbsoluteLoadFixV1' 'UWP SDL3 absolute Mesa path normalization'
     foreach ($patchScript in @(
         'apply-sdl3-v7-wgl.ps1',
         'apply-sdl3-v8-provider-parity.ps1',
@@ -132,8 +150,8 @@ try {
         Require-Contains $sdlPrepareSource $patchScript "UWP SDL3 $patchScript wired into preparer"
     }
     Require-Contains (Get-Content -LiteralPath (Join-Path $root 'scripts/apply-sdl3-v14-input.ps1') -Raw) 'SDL_winrtevents_c.h' 'V14 raw-mouse declaration for app source'
-    Require-Contains (Get-Content -LiteralPath (Join-Path $root 'scripts/apply-sdl3-v18-back-key.ps1') -Raw) 'BanditSDL_WinRTBackKeyContractV18' 'V18 back-key runtime marker'
-    Require-Contains $sdlPrepareSource 'BanditSDL_WinRTBackKeyContractV18' 'V18 back-key export validation'
+    Require-Contains (Get-Content -LiteralPath (Join-Path $root 'scripts/apply-sdl3-v18-back-key.ps1') -Raw) 'RaggedySDL_WinRTBackKeyContractV18' 'V18 back-key runtime marker'
+    Require-Contains $sdlPrepareSource 'RaggedySDL_WinRTBackKeyContractV18' 'V18 back-key export validation'
     Require-Contains (Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/SDL3-WinRTResources.rc') -Raw) '5000 CURSOR' 'Transparent WinRT cursor resource'
     Require-Contains (Get-Content -LiteralPath (Join-Path $root 'MC.Xbox/SDL3-WinRTResources.rc') -Raw) '5001 CURSOR' 'Launcher WinRT cursor resource'
     $buildSource = Get-Content -LiteralPath (Join-Path $root 'build.ps1') -Raw

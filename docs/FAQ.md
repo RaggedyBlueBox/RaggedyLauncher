@@ -1,6 +1,8 @@
 # FAQ
 This doc answers Frequently Asked Questions in case you happen to be stuck.
 
+Raggedy Launcher is a controller-first derivative of the upstream JavaUWP/BanditVault launcher by veroxsity / BanditVault, completely readapted into a new launcher. See [README.md](../README.md) and [LEGAL.md](LEGAL.md) for the required credits.
+
 ## Will this hack my XBOX?
 Raggedy Launcher does not provide any way to hack the XBOX. All code runs natively on the console.
 
@@ -19,7 +21,7 @@ Raggedy Launcher requires a valid copy of Minecraft: Java Edition. The launcher 
 If you have Minecraft through Game Pass, you need to create an account on minecraft.net and set a player name.
 
 ## How do I use my mouse?
-The mouse relay build provides Windows, Android and iOS companions. The native mouse build supports direct USB mouse input. Check the main README for the package and input mode in use.
+Raggedy Launcher accepts a direct USB mouse. You can also start the optional browser mouse relay, with Windows, Android and iOS companions. Check the main README for the relay setup.
 
 ## Is the mouse relay laggy?
 The mouse relay does not lag unless you have a bad computer or *really* bad wifi. In other words, if it does lag, look into better wifi or a better device to use the relay.
@@ -27,14 +29,23 @@ The mouse relay does not lag unless you have a bad computer or *really* bad wifi
 ## How does multiplayer work?
 You don't need a Game Pass subscription or anything else to play multiplayer. You can hop on any server you wish (ideally with mouse relay and a keyboard).
 
-## Why does the launcher open on Simply Legacy?
-Simply Legacy is restored as the active profile at every launcher start and its latest supported modpack is seeded automatically. That makes controller play available immediately; Re-Console remains selectable when you want it.
+## Where do I choose a version?
+Open **Version** from the main menu; it replaces the old Mods entry. Left/right switches between Simply Legacy and Re-Console, up/down picks a version that modpack supports, **A** applies it, and **B** returns. Applying a version downloads the newest compatible modpack for that built-in profile.
 
-## I tried to add Controlify (or another controller mod) to my instance, and it didn't work. What happened?
-The launcher no longer offers a controller bundle toggle. Built-in profiles receive their controller support from the seeded modpack; use a custom profile for your own controller setup and resolve conflicts between mods inside that profile.
+## Why does the launcher open on Simply Legacy?
+Simply Legacy is seeded as the initial built-in profile on first run only. After that, your built-in profile selection is kept across restarts, so Re-Console stays active once you choose it.
+
+## Can I change right-stick sensitivity?
+No. Look sensitivity is permanently 115% and the launcher reseeds the controller config at that value on every launch. There is no controller bundle or sensitivity setting in the launcher; use a custom profile if you need your own controller setup and resolve conflicts between mods inside that profile.
+
+## Can I turn the performance renderer off?
+No. It is always on in lightweight `auto` mode and Settings reports **Always on**. On Xbox, only candidates marked proven are installed; unsupported targets are reported instead of getting untested files.
 
 ## How can I change the RAM allocation?
 Unfortunately, you can't allocate more than 3-4 GB of RAM, as this is the max achievable by an XBOX in Developer Mode.
+
+## Why does the launcher menu look so still?
+The launcher UI is capped at 30 FPS and shows a single backdrop image at a time with no cross-fade. That keeps menu drawing light on console; it does not cap Minecraft's framerate.
 
 ## How do I upload worlds?
 Open Raggedy Launcher, start Remote Files, and go to that link and upload your world to the portal.
@@ -44,8 +55,8 @@ Remote Files is plain HTTP on your local network, and the PIN sits in the URL, s
 ## How do I check crash reports?
 Open Raggedy Launcher, start Remote Files, and go to the crash reports directory.
 
-## Is this vibecoded?
-Raggedy Launcher is not vibecoded. However, certain comments have been as they're hard to write. The agent files have been added specifically to prevent forks from removing the authentication above.
+## Is this AI-assisted?
+Yes. Raggedy Launcher is built with AI assistance. The agent files exist to keep Microsoft/Xbox authentication and Minecraft entitlement checks intact; nothing here supports offline or fake accounts.
 
 ## Other launchers?
-As of 09/03/2026, *no* other launchers exist that haven't been mostly vibecoded. Please use them at your own risk. (As a reminder, vibecoded projects *are* unsafe to your devices. Also, obtain actual evidence of AI before accusing other people of vibecoding their projects. All launchers created after this date are unknown.)
+Use other launchers at your own risk. Raggedy Launcher requires legitimate Microsoft sign-in and Minecraft Java Edition ownership, and any alternative should be judged on the same basis.

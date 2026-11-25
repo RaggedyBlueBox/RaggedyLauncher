@@ -59,32 +59,32 @@ $new = @'
 $video = Replace-Once -Text $video -Old $old -New $new -Label "WinRT C++ include block"
 
 $old = @'
-/* Exported build marker used by Bandit's packager to reject stock SDL-UWP
+/* Exported build marker used by Raggedy's packager to reject stock SDL-UWP
    binaries. Bump this whenever the external-host contract changes. */
-extern "C" __declspec(dllexport) int BanditSDL_ExternalHostPatchVersion(void)
+extern "C" __declspec(dllexport) int RaggedySDL_ExternalHostPatchVersion(void)
 {
     return 6;
 }
 
 /* V6 keeps the external CoreWindow/event bridge and SDL_main readiness fix,
    and adds the packaged-Mesa absolute-path normalization contract. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTIntegrationPatchV6(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTIntegrationPatchV6(void)
 {
     return 6;
 }
 
 #ifdef SDL_VIDEO_OPENGL_WGL
 /* This symbol only exists when the runtime was actually compiled with WGL. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTWGLBackendV1(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTWGLBackendV1(void)
 {
     return 1;
 }
 #endif
 '@
 $new = @'
-/* Exported build marker used by Bandit's packager to reject stock SDL-UWP
+/* Exported build marker used by Raggedy's packager to reject stock SDL-UWP
    binaries. Bump this whenever the external-host contract changes. */
-extern "C" __declspec(dllexport) int BanditSDL_ExternalHostPatchVersion(void)
+extern "C" __declspec(dllexport) int RaggedySDL_ExternalHostPatchVersion(void)
 {
     return 7;
 }
@@ -92,24 +92,24 @@ extern "C" __declspec(dllexport) int BanditSDL_ExternalHostPatchVersion(void)
 /* V7 keeps the external CoreWindow bridge, direct SDL3/LWJGL loading and
    packaged-Mesa normalization, then fixes the WinRT/WGL lifetime itself:
    no pre-window probe, real-window pixel-format setup and logical multiwindow. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTIntegrationPatchV7(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTIntegrationPatchV7(void)
 {
     return 7;
 }
 
 #ifdef SDL_VIDEO_OPENGL_WGL
 /* This symbol only exists when the runtime was actually compiled with WGL. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTWGLBackendV1(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTWGLBackendV1(void)
 {
     return 1;
 }
 
 /* Build markers for the V7 WGL lifecycle and logical-window virtualization. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTSafeWGLInitV1(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTSafeWGLInitV1(void)
 {
     return 1;
 }
-extern "C" __declspec(dllexport) int BanditSDL_WinRTMultiWindowV1(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTMultiWindowV1(void)
 {
     return 1;
 }
@@ -120,7 +120,7 @@ extern "C" __declspec(dllexport) int BanditSDL_WinRTMultiWindowV1(void)
    then the real game window). Keep the logical objects while mapping all
    of them to that single CoreWindow. The newest logical window receives
    CoreWindow events. */
-static std::vector<SDL_Window *> BanditWinRTLogicalWindows;
+static std::vector<SDL_Window *> RaggedyWinRTLogicalWindows;
 '@
 $video = Replace-Once -Text $video -Old $old -New $new -Label "V7 build markers"
 
@@ -133,7 +133,7 @@ $old = @'
 
 '@
 $new = @'
-    /* Bandit: do not reject a second logical SDL window. WinRT still has one
+    /* Raggedy: do not reject a second logical SDL window. WinRT still has one
        physical CoreWindow; Minecraft 26.3 intentionally creates multiple SDL
        window objects over it during OpenGL startup. */
 
@@ -150,7 +150,7 @@ $new = @'
     if (data->coreWindow.Get() == nullptr) {
         delete data;
         window->internal = NULL;
-        return SDL_SetError("Bandit WinRT WGL: CoreWindow is unavailable on the SDL thread");
+        return SDL_SetError("Raggedy WinRT WGL: CoreWindow is unavailable on the SDL thread");
     }
 
     data->hdc = (HDC)data->coreWindow.Get();
@@ -158,7 +158,7 @@ $new = @'
     if (!_this->gl_data) {
         delete data;
         window->internal = NULL;
-        return SDL_SetError("Bandit WinRT WGL: OpenGL library was not loaded before window creation");
+        return SDL_SetError("Raggedy WinRT WGL: OpenGL library was not loaded before window creation");
     }
 
     /* The desktop Windows backend calls WIN_GL_SetupWindow before context
@@ -169,22 +169,22 @@ $new = @'
        All Minecraft logical SDL windows share the same physical CoreWindow,
        and WGL permits SetPixelFormat only once, so later logical windows reuse
        the already-established format. */
-    const int banditPixelFormat = WIN_GL_GetWindowPixelFormat(_this, data->hdc);
-    if (banditPixelFormat < 0) {
+    const int raggedyPixelFormat = WIN_GL_GetWindowPixelFormat(_this, data->hdc);
+    if (raggedyPixelFormat < 0) {
         delete data;
         window->internal = NULL;
         return false;
     }
-    if (banditPixelFormat > 0) {
-        SDL_Log("Bandit SDL: WinRT WGL reusing CoreWindow pixel format=%d", banditPixelFormat);
+    if (raggedyPixelFormat > 0) {
+        SDL_Log("Raggedy SDL: WinRT WGL reusing CoreWindow pixel format=%d", raggedyPixelFormat);
     } else {
-        SDL_Log("Bandit SDL: WinRT WGL pixel-format setup begin hdc=%p", data->hdc);
+        SDL_Log("Raggedy SDL: WinRT WGL pixel-format setup begin hdc=%p", data->hdc);
         if (!WIN_GL_SetupWindow(_this, window)) {
             delete data;
             window->internal = NULL;
             return false;
         }
-        SDL_Log("Bandit SDL: WinRT WGL pixel-format setup ready hdc=%p", data->hdc);
+        SDL_Log("Raggedy SDL: WinRT WGL pixel-format setup ready hdc=%p", data->hdc);
     }
     }
 #endif
@@ -194,17 +194,17 @@ $video = Replace-Once -Text $video -Old $old -New $new -Label "WinRT real-window
 $old = @'
     WINRT_GlobalSDLWindow = window;
 
-    /* Bandit Launcher embeds SDL inside an already-running UWP IFrameworkView.
+    /* Raggedy Launcher embeds SDL inside an already-running UWP IFrameworkView.
        Attach SDL's standard WinRT event sink to the host-owned CoreWindow so
        SDL_PollEvent pumps keyboard, mouse, text, window and activation events. */
 '@
 $new = @'
-    BanditWinRTLogicalWindows.push_back(window);
+    RaggedyWinRTLogicalWindows.push_back(window);
     WINRT_GlobalSDLWindow = window;
-    SDL_Log("Bandit SDL: logical WinRT window created count=%llu window=%p",
-            (unsigned long long)BanditWinRTLogicalWindows.size(), window);
+    SDL_Log("Raggedy SDL: logical WinRT window created count=%llu window=%p",
+            (unsigned long long)RaggedyWinRTLogicalWindows.size(), window);
 
-    /* Bandit Launcher embeds SDL inside an already-running UWP IFrameworkView.
+    /* Raggedy Launcher embeds SDL inside an already-running UWP IFrameworkView.
        Attach SDL's standard WinRT event sink to the host-owned CoreWindow so
        SDL_PollEvent pumps keyboard, mouse, text, window and activation events. */
 '@
@@ -233,9 +233,9 @@ void WINRT_VideoQuit(SDL_VideoDevice *_this)
     WINRT_QuitGameBar(_this);
     WINRT_QuitMouse(_this);
 
-    BanditWinRTLogicalWindows.clear();
+    RaggedyWinRTLogicalWindows.clear();
     WINRT_GlobalSDLWindow = NULL;
-    SDL_Log("Bandit SDL: WinRT video quit cleared logical window targets");
+    SDL_Log("Raggedy SDL: WinRT video quit cleared logical window targets");
 }
 '@
 $video = Replace-Once -Text $video -Old $old -New $new -Label "clear logical windows on video quit"
@@ -247,15 +247,15 @@ $old = @'
 
 '@
 $new = @'
-    for (size_t i = 0; i < BanditWinRTLogicalWindows.size(); ++i) {
-        if (BanditWinRTLogicalWindows[i] == window) {
-            BanditWinRTLogicalWindows.erase(BanditWinRTLogicalWindows.begin() + i);
+    for (size_t i = 0; i < RaggedyWinRTLogicalWindows.size(); ++i) {
+        if (RaggedyWinRTLogicalWindows[i] == window) {
+            RaggedyWinRTLogicalWindows.erase(RaggedyWinRTLogicalWindows.begin() + i);
             break;
         }
     }
-    WINRT_GlobalSDLWindow = BanditWinRTLogicalWindows.empty() ? NULL : BanditWinRTLogicalWindows.back();
-    SDL_Log("Bandit SDL: logical WinRT window destroyed count=%llu window=%p next=%p",
-            (unsigned long long)BanditWinRTLogicalWindows.size(), window, WINRT_GlobalSDLWindow);
+    WINRT_GlobalSDLWindow = RaggedyWinRTLogicalWindows.empty() ? NULL : RaggedyWinRTLogicalWindows.back();
+    SDL_Log("Raggedy SDL: logical WinRT window destroyed count=%llu window=%p next=%p",
+            (unsigned long long)RaggedyWinRTLogicalWindows.size(), window, WINRT_GlobalSDLWindow);
 
 '@
 $video = Replace-Once -Text $video -Old $old -New $new -Label "logical WinRT window destruction"
@@ -299,54 +299,54 @@ $new = @'
 /* Mesa-UWP lives outside SDL. If a driver entrypoint faults, turn it into a
    useful SDL error instead of terminating the embedded JVM with an opaque
    EXCEPTION_ACCESS_VIOLATION. */
-static HGLRC BANDIT_WIN_GL_CreateContextSafe(SDL_VideoDevice *_this, HDC hdc)
+static HGLRC RAGGEDY_WIN_GL_CreateContextSafe(SDL_VideoDevice *_this, HDC hdc)
 {
     HGLRC result = NULL;
     __try {
         result = _this->gl_data->wglCreateContext(hdc);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        SDL_SetError("Bandit WinRT WGL: wglCreateContext raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        SDL_SetError("Raggedy WinRT WGL: wglCreateContext raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
     return result;
 }
 
-static BOOL BANDIT_WIN_GL_MakeCurrentSafe(SDL_VideoDevice *_this, HDC hdc, HGLRC context)
+static BOOL RAGGEDY_WIN_GL_MakeCurrentSafe(SDL_VideoDevice *_this, HDC hdc, HGLRC context)
 {
     BOOL result = FALSE;
     __try {
         result = _this->gl_data->wglMakeCurrent(hdc, context);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        SDL_SetError("Bandit WinRT WGL: wglMakeCurrent raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        SDL_SetError("Raggedy WinRT WGL: wglMakeCurrent raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
     return result;
 }
 
-static HGLRC BANDIT_WIN_GL_CreateContextAttribsSafe(PFNWGLCREATECONTEXTATTRIBSARBPROC proc, HDC hdc, HGLRC share_context, const int *attribs)
+static HGLRC RAGGEDY_WIN_GL_CreateContextAttribsSafe(PFNWGLCREATECONTEXTATTRIBSARBPROC proc, HDC hdc, HGLRC share_context, const int *attribs)
 {
     HGLRC result = NULL;
     __try {
         result = proc(hdc, share_context, attribs);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        SDL_SetError("Bandit WinRT WGL: wglCreateContextAttribsARB raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        SDL_SetError("Raggedy WinRT WGL: wglCreateContextAttribsARB raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
     return result;
 }
 
-static BOOL BANDIT_WIN_GL_SwapBuffersSafe(SDL_VideoDevice *_this, HDC hdc)
+static BOOL RAGGEDY_WIN_GL_SwapBuffersSafe(SDL_VideoDevice *_this, HDC hdc)
 {
     BOOL result = FALSE;
     __try {
         result = _this->gl_data->wglSwapBuffers(hdc);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        SDL_SetError("Bandit WinRT WGL: wglSwapBuffers raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        SDL_SetError("Raggedy WinRT WGL: wglSwapBuffers raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
     }
     return result;
 }
 #else
-#define BANDIT_WIN_GL_CreateContextSafe(_this, hdc) ((_this)->gl_data->wglCreateContext(hdc))
-#define BANDIT_WIN_GL_MakeCurrentSafe(_this, hdc, context) ((_this)->gl_data->wglMakeCurrent((hdc), (context)))
-#define BANDIT_WIN_GL_CreateContextAttribsSafe(proc, hdc, share_context, attribs) ((proc)((hdc), (share_context), (attribs)))
-#define BANDIT_WIN_GL_SwapBuffersSafe(_this, hdc) ((_this)->gl_data->wglSwapBuffers(hdc))
+#define RAGGEDY_WIN_GL_CreateContextSafe(_this, hdc) ((_this)->gl_data->wglCreateContext(hdc))
+#define RAGGEDY_WIN_GL_MakeCurrentSafe(_this, hdc, context) ((_this)->gl_data->wglMakeCurrent((hdc), (context)))
+#define RAGGEDY_WIN_GL_CreateContextAttribsSafe(proc, hdc, share_context, attribs) ((proc)((hdc), (share_context), (attribs)))
+#define RAGGEDY_WIN_GL_SwapBuffersSafe(_this, hdc) ((_this)->gl_data->wglSwapBuffers(hdc))
 #endif
 
 bool WIN_GL_LoadLibrary(SDL_VideoDevice *_this, const char *path)
@@ -395,7 +395,7 @@ $old = @'
     return true;
 '@
 $new = @'
-    SDL_Log("Bandit SDL: Mesa WGL exports loaded");
+    SDL_Log("Raggedy SDL: Mesa WGL exports loaded");
 
 #ifdef SDL_PLATFORM_WINRT
     /* Do not create SDL's temporary WGL probe context here. Minecraft 26.3
@@ -403,7 +403,7 @@ $new = @'
        needs the real CoreWindow/pixel-format lifecycle first; probing here can
        fault natively. WGL capabilities are populated after the first real
        OpenGL context becomes current. */
-    SDL_Log("Bandit SDL: deferred WinRT WGL extension probe until a real context is current");
+    SDL_Log("Raggedy SDL: deferred WinRT WGL extension probe until a real context is current");
 #else
     /* XXX Too sleazy? WIN_GL_InitExtensions looks for certain OpenGL
        extensions via SDL_GL_DeduceMaxSupportedESProfile. This uses
@@ -474,7 +474,7 @@ $new = @'
 int WIN_GL_GetWindowPixelFormat(SDL_VideoDevice *_this, HDC hdc)
 {
     if (!_this->gl_data || !_this->gl_data->wglGetPixelFormat) {
-        SDL_SetError("Bandit WinRT WGL: wglGetPixelFormat export is unavailable");
+        SDL_SetError("Raggedy WinRT WGL: wglGetPixelFormat export is unavailable");
         return -1;
     }
 #if defined(SDL_PLATFORM_WINRT) && defined(_MSC_VER)
@@ -482,7 +482,7 @@ int WIN_GL_GetWindowPixelFormat(SDL_VideoDevice *_this, HDC hdc)
     __try {
         result = _this->gl_data->wglGetPixelFormat(hdc);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        SDL_SetError("Bandit WinRT WGL: wglGetPixelFormat raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
+        SDL_SetError("Raggedy WinRT WGL: wglGetPixelFormat raised SEH 0x%08lX", (unsigned long)GetExceptionCode());
         return -1;
     }
     return result;
@@ -512,7 +512,7 @@ $new = @'
    CoreWindow-backed context. Intentionally leave HAS_WGL_ARB_pixel_format
    false so later logical SDL windows reuse the one physical CoreWindow pixel
    format instead of creating more temporary probe contexts. */
-static void BANDIT_WIN_GL_InitExtensionsFromCurrentContext(SDL_VideoDevice *_this, HDC hdc)
+static void RAGGEDY_WIN_GL_InitExtensionsFromCurrentContext(SDL_VideoDevice *_this, HDC hdc)
 {
     const char *(WINAPI *wglGetExtensionsStringARB)(HDC) = NULL;
     const char *extensions = NULL;
@@ -546,7 +546,7 @@ static void BANDIT_WIN_GL_InitExtensionsFromCurrentContext(SDL_VideoDevice *_thi
     _this->gl_data->HAS_WGL_ARB_pixel_format_float = HasExtension("WGL_ARB_pixel_format_float", extensions);
     _this->gl_data->HAS_WGL_EXT_create_context_es2_profile = false;
 
-    SDL_Log("Bandit SDL: initialized WGL extensions from real WinRT context (swap_control=%d)",
+    SDL_Log("Raggedy SDL: initialized WGL extensions from real WinRT context (swap_control=%d)",
             _this->gl_data->wglSwapIntervalEXT != NULL ? 1 : 0);
 }
 
@@ -585,7 +585,7 @@ $old = @'
         context = _this->gl_data->wglCreateContext(hdc);
 '@
 $new = @'
-        context = BANDIT_WIN_GL_CreateContextSafe(_this, hdc);
+        context = RAGGEDY_WIN_GL_CreateContextSafe(_this, hdc);
 '@
 $gl = Replace-Once -Text $gl -Old $old -New $new -Label "safe legacy context creation"
 
@@ -593,8 +593,8 @@ $old = @'
         HGLRC temp_context = _this->gl_data->wglCreateContext(hdc);
 '@
 $new = @'
-        SDL_Log("Bandit SDL: WinRT WGL context create begin hdc=%p", hdc);
-        HGLRC temp_context = BANDIT_WIN_GL_CreateContextSafe(_this, hdc);
+        SDL_Log("Raggedy SDL: WinRT WGL context create begin hdc=%p", hdc);
+        HGLRC temp_context = RAGGEDY_WIN_GL_CreateContextSafe(_this, hdc);
 '@
 $gl = Replace-Once -Text $gl -Old $old -New $new -Label "safe temporary context creation"
 
@@ -602,7 +602,7 @@ $old = @'
             context = wglCreateContextAttribsARB(hdc, share_context, attribs);
 '@
 $new = @'
-            context = BANDIT_WIN_GL_CreateContextAttribsSafe(wglCreateContextAttribsARB, hdc, share_context, attribs);
+            context = RAGGEDY_WIN_GL_CreateContextAttribsSafe(wglCreateContextAttribsARB, hdc, share_context, attribs);
 '@
 $gl = Replace-Once -Text $gl -Old $old -New $new -Label "safe attributed context creation"
 
@@ -621,8 +621,8 @@ $new = @'
     }
 
 #ifdef SDL_PLATFORM_WINRT
-    BANDIT_WIN_GL_InitExtensionsFromCurrentContext(_this, hdc);
-    SDL_Log("Bandit SDL: WinRT WGL OpenGL %d.%d context ready context=%p",
+    RAGGEDY_WIN_GL_InitExtensionsFromCurrentContext(_this, hdc);
+    SDL_Log("Raggedy SDL: WinRT WGL OpenGL %d.%d context ready context=%p",
             _this->gl_config.major_version, _this->gl_config.minor_version, context);
 #endif
 
@@ -636,7 +636,7 @@ $old = @'
     }
 '@
 $new = @'
-    if (!BANDIT_WIN_GL_MakeCurrentSafe(_this, hdc, (HGLRC)context)) {
+    if (!RAGGEDY_WIN_GL_MakeCurrentSafe(_this, hdc, (HGLRC)context)) {
         if (!*SDL_GetError()) {
             return WIN_SetError("wglMakeCurrent()");
         }
@@ -652,7 +652,7 @@ $old = @'
 '@
 $new = @'
 #ifdef SDL_PLATFORM_WINRT
-    if (!BANDIT_WIN_GL_SwapBuffersSafe(_this, hdc)) {
+    if (!RAGGEDY_WIN_GL_SwapBuffersSafe(_this, hdc)) {
         if (!*SDL_GetError()) {
             return WIN_SetError("wglSwapBuffers()");
         }
@@ -670,9 +670,9 @@ if ($video.Contains("WinRT only supports one window")) {
     throw "V7 SDL patch validation failed: upstream one-window rejection is still present"
 }
 foreach ($required in @(
-    "BanditSDL_WinRTIntegrationPatchV7",
-    "BanditSDL_WinRTSafeWGLInitV1",
-    "BanditSDL_WinRTMultiWindowV1",
+    "RaggedySDL_WinRTIntegrationPatchV7",
+    "RaggedySDL_WinRTSafeWGLInitV1",
+    "RaggedySDL_WinRTMultiWindowV1",
     "logical WinRT window created",
     "WIN_GL_SetupWindow(_this, window)"
 )) {
@@ -681,7 +681,7 @@ foreach ($required in @(
 if (-not $glHeader.Contains("WIN_GL_GetWindowPixelFormat")) { throw "V7 SDL WGL header validation failed: safe pixel-format query is missing" }
 foreach ($required in @(
     "deferred WinRT WGL extension probe until a real context is current",
-    "BANDIT_WIN_GL_CreateContextSafe",
+    "RAGGEDY_WIN_GL_CreateContextSafe",
     "initialized WGL extensions from real WinRT context",
     "extern bool WIN_SetError",
     "GetProcAddress((HMODULE)_this->gl_config.dll_handle, proc)"
@@ -693,4 +693,4 @@ Write-NormalizedText -Path $videoPath -Text $video
 Write-NormalizedText -Path $glPath -Text $gl
 Write-NormalizedText -Path $glHeaderPath -Text $glHeader
 
-Write-Host "Applied Bandit SDL V7 WinRT/WGL lifecycle patch: deferred probe, real-window pixel format, pointer parity, logical multiwindow and SEH diagnostics."
+Write-Host "Applied Raggedy SDL V7 WinRT/WGL lifecycle patch: deferred probe, real-window pixel format, pointer parity, logical multiwindow and SEH diagnostics."

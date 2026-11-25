@@ -106,7 +106,7 @@ try {
 
 $sourceRoot = Join-Path $cacheRoot "source-$shortCommit-$cacheKey"
 $buildRoot = Join-Path $cacheRoot "build-$shortCommit-$cacheKey"
-$patchStamp = Join-Path $sourceRoot ".bandit-external-host-patch"
+$patchStamp = Join-Path $sourceRoot ".raggedy-external-host-patch"
 $runtimeCacheDir = Join-Path $cacheRoot "runtime-$shortCommit-$cacheKey"
 $runtimeCacheDll = Join-Path $runtimeCacheDir "SDL3.dll"
 
@@ -148,24 +148,24 @@ function Assert-SdlRuntimeCompatibility {
         throw "dumpbin could not inspect SDL3 runtime exports: $Path"
     }
 
-    # Marker proves this is Bandit's external-IFrameworkView/CoreWindow build,
+    # Marker proves this is Raggedy's external-IFrameworkView/CoreWindow build,
     # not a stock desktop/UWP SDL DLL supplied through SDL3_UWP_DLL.
     $requiredExports = @(
-        'BanditSDL_ExternalHostPatchVersion',
-        'BanditSDL_WinRTIntegrationPatchV7',
-        'BanditSDL_WinRTProviderParityV2',
-        'BanditSDL_WinRTStabilityV9',
-        'BanditSDL_WinRTRenderPearlV12',
-        'BanditSDL_WinRTInputBridgeV13',
-        'BanditSDL_WinRTInputBridgeV14',
-        'BanditSDL_WinRTInputContractV15',
-        'BanditSDL_WinRTLauncherCursorV16',
-        'BanditSDL_WinRTSoftwareCursorV17',
-        'BanditSDL_WinRTBackKeyContractV18',
-        'BanditSDL_WinRTAbsoluteLoadFixV1',
-        'BanditSDL_WinRTWGLBackendV1',
-        'BanditSDL_WinRTSafeWGLInitV1',
-        'BanditSDL_WinRTMultiWindowV1',
+        'RaggedySDL_ExternalHostPatchVersion',
+        'RaggedySDL_WinRTIntegrationPatchV7',
+        'RaggedySDL_WinRTProviderParityV2',
+        'RaggedySDL_WinRTStabilityV9',
+        'RaggedySDL_WinRTRenderPearlV12',
+        'RaggedySDL_WinRTInputBridgeV13',
+        'RaggedySDL_WinRTInputBridgeV14',
+        'RaggedySDL_WinRTInputContractV15',
+        'RaggedySDL_WinRTLauncherCursorV16',
+        'RaggedySDL_WinRTSoftwareCursorV17',
+        'RaggedySDL_WinRTBackKeyContractV18',
+        'RaggedySDL_WinRTAbsoluteLoadFixV1',
+        'RaggedySDL_WinRTWGLBackendV1',
+        'RaggedySDL_WinRTSafeWGLInitV1',
+        'RaggedySDL_WinRTMultiWindowV1',
         'SDL_Init',
         'SDL_InitSubSystem',
         'SDL_SetMainReady',
@@ -209,7 +209,7 @@ function Assert-SdlRuntimeCompatibility {
         }
     }
     if ($missing.Count -gt 0) {
-        throw "SDL3 runtime is missing required Bandit/LWJGL exports: $($missing -join ', '). Runtime: $Path"
+        throw "SDL3 runtime is missing required Raggedy/LWJGL exports: $($missing -join ', '). Runtime: $Path"
     }
 
     Write-Host "SDL3 runtime validation passed: x64, external-host/V7 lifecycle + V8 provider parity + V9 stability + V12 RenderPearl + V13/V14/V15 input + V16/V17 cursor contract, logical-multiwindow and absolute-path markers present, required LWJGL SDL surface exported."
@@ -236,7 +236,7 @@ function Resolve-CMakeExe {
             if (Test-Path -LiteralPath $bundled) { return $bundled }
         }
     }
-    throw "CMake was not found. Install the Visual Studio C++ CMake tools, or set SDL3_UWP_DLL to a prebuilt Bandit-compatible SDL3.dll."
+    throw "CMake was not found. Install the Visual Studio C++ CMake tools, or set SDL3_UWP_DLL to a prebuilt Raggedy-compatible SDL3.dll."
 }
 
 function Resolve-VsGenerator {
@@ -421,9 +421,9 @@ function Build-SdlRuntime {
 
 # Advanced override for a runtime the developer has already built with the
 # external-host WinRT patch. Stock desktop or stock SDL-UWP binaries are not
-# sufficient because their event sink is never attached to Bandit's view.
+# sufficient because their event sink is never attached to Raggedy's view.
 if ($SourceDll) {
-    Write-Host "Using SDL3_UWP_DLL override; validating architecture, Bandit V7 lifecycle + V8 provider-parity + V9 stability + V12 RenderPearl/WGL + V13/V14/V15 input + V16/V17 cursor + multiwindow/absolute-path markers and required exports..."
+    Write-Host "Using SDL3_UWP_DLL override; validating architecture, Raggedy V7 lifecycle + V8 provider-parity + V9 stability + V12 RenderPearl/WGL + V13/V14/V15 input + V16/V17 cursor + multiwindow/absolute-path markers and required exports..."
     Copy-SdlRuntime -Path $SourceDll
     return
 }

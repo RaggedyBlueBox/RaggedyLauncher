@@ -36,20 +36,20 @@ $pointer = Read-NormalizedText $pointerPath
 $app = Read-NormalizedText $appPath
 
 $old = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTRenderPearlV12(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTRenderPearlV12(void)
 {
     return 12;
 }
 '@
 $new = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTRenderPearlV12(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTRenderPearlV12(void)
 {
     return 12;
 }
 
 /* V13 keeps the proven V12 Mesa/RenderPearl path untouched and hardens
    external-host WinRT mouse input for both menu and relative gameplay use. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTInputBridgeV13(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTInputBridgeV13(void)
 {
     return 13;
 }
@@ -58,7 +58,7 @@ $video = Replace-Once $video $old $new "V13 runtime marker"
 
 # Never use PointerCursor=nullptr as the fallback. SDL's own WinRT comments
 # document that doing so suppresses CoreWindow pointer-motion events. The
-# transparent cursor resource is optional in Bandit's host EXE, so preserve
+# transparent cursor resource is optional in Raggedy's host EXE, so preserve
 # motion by keeping a stock cursor if that resource is unavailable.
 $old = @'
         if (FAILED(hr)) {
@@ -70,7 +70,7 @@ $old = @'
 '@
 $new = @'
         if (FAILED(hr)) {
-            /* Bandit's UWP host may not link SDL's optional cursor resource.
+            /* Raggedy's UWP host may not link SDL's optional cursor resource.
                PointerCursor=nullptr suppresses CoreWindow PointerMoved events,
                which makes Minecraft menus appear to lose the mouse. Keep a
                normal cursor instead; raw MouseDevice deltas still drive SDL
@@ -79,7 +79,7 @@ $new = @'
             coreWindow->PointerCursor = ref new CoreCursor(CoreCursorType::Arrow, 0);
             if (!loggedMissingBlankCursor) {
                 loggedMissingBlankCursor = true;
-                SDL_Log("Bandit SDL V13: transparent cursor resource unavailable; preserving pointer motion with Arrow fallback");
+                SDL_Log("Raggedy SDL V13: transparent cursor resource unavailable; preserving pointer motion with Arrow fallback");
             }
         }
 '@
@@ -97,7 +97,7 @@ static bool WINRT_SetRelativeMouseMode(bool enabled)
 {
     if (WINRT_UsingRelativeMouseMode != enabled) {
         WINRT_UsingRelativeMouseMode = enabled;
-        SDL_Log("Bandit SDL V13: relative mouse mode=%d", enabled ? 1 : 0);
+        SDL_Log("Raggedy SDL V13: relative mouse mode=%d", enabled ? 1 : 0);
     }
     return true;
 }
@@ -115,7 +115,7 @@ $new = @'
         static bool loggedAbsoluteMouseMotion = false;
         if (!loggedAbsoluteMouseMotion) {
             loggedAbsoluteMouseMotion = true;
-            SDL_Log("Bandit SDL V13: first absolute CoreWindow mouse motion delivered");
+            SDL_Log("Raggedy SDL V13: first absolute CoreWindow mouse motion delivered");
         }
         // For some odd reason Moved events are used for multiple mouse buttons
 '@
@@ -130,7 +130,7 @@ $new = @'
     static bool loggedRelativeMouseMotion = false;
     if (!loggedRelativeMouseMotion) {
         loggedRelativeMouseMotion = true;
-        SDL_Log("Bandit SDL V13: first raw MouseDevice relative delta delivered");
+        SDL_Log("Raggedy SDL V13: first raw MouseDevice relative delta delivered");
     }
     const Windows::Foundation::Point mouseDeltaInDIPs((float)args->MouseDelta.X, (float)args->MouseDelta.Y);
     const Windows::Foundation::Point mouseDeltaInSDLWindowCoords = WINRT_TransformCursorPosition(window, mouseDeltaInDIPs, TransformToSDLWindowSize);
@@ -139,7 +139,7 @@ $new = @'
 $pointer = Replace-Once $pointer $old $new "relative mouse-motion proof"
 
 # GetForCurrentView can legitimately return null when no physical mouse exists.
-# Do not dereference it while attaching SDL to Bandit's externally-owned view.
+# Do not dereference it while attaching SDL to Raggedy's externally-owned view.
 $old = @'
     // Retrieves relative-only mouse movements:
     Windows::Devices::Input::MouseDevice::GetForCurrentView()->MouseMoved +=
@@ -147,13 +147,13 @@ $old = @'
 '@
 $new = @'
     // Retrieves relative-only mouse movements:
-    auto banditMouseDevice = Windows::Devices::Input::MouseDevice::GetForCurrentView();
-    if (banditMouseDevice != nullptr) {
-        banditMouseDevice->MouseMoved +=
+    auto raggedyMouseDevice = Windows::Devices::Input::MouseDevice::GetForCurrentView();
+    if (raggedyMouseDevice != nullptr) {
+        raggedyMouseDevice->MouseMoved +=
             ref new TypedEventHandler<MouseDevice ^, MouseEventArgs ^>(this, &SDL_WinRTApp::OnMouseMoved);
-        SDL_Log("Bandit SDL V13: WinRT MouseDevice relative-motion source attached");
+        SDL_Log("Raggedy SDL V13: WinRT MouseDevice relative-motion source attached");
     } else {
-        SDL_Log("Bandit SDL V13: no physical WinRT MouseDevice present while attaching input bridge");
+        SDL_Log("Raggedy SDL V13: no physical WinRT MouseDevice present while attaching input bridge");
     }
 '@
 $app = Replace-Once $app $old $new "null-safe MouseDevice subscription"

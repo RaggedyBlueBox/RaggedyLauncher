@@ -44,13 +44,13 @@ $appHeader = Read-NormalizedText $appHeaderPath
 # Marker makes stale V14 SDL overrides fail at packaging instead of silently
 # bringing back the broken SDL2-era WinRT input calling convention.
 $old = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTInputBridgeV14(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTInputBridgeV14(void)
 {
     return 14;
 }
 '@
 $new = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTInputBridgeV14(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTInputBridgeV14(void)
 {
     return 14;
 }
@@ -58,7 +58,7 @@ extern "C" __declspec(dllexport) int BanditSDL_WinRTInputBridgeV14(void)
 /* V15 corrects the WinRT input layer's SDL2 -> SDL3 API drift: keyboard
    down/up semantics, mouse button argument order, direct CoreWindow physical
    key delivery, capture-loss cleanup and true hidden-cursor support. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTInputContractV15(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTInputContractV15(void)
 {
     return 15;
 }
@@ -151,7 +151,7 @@ $old = @'
 '@
 $new = @'
         if (!WINRT_GetSDLButtonForPointerPoint(pointerPoint, &button, &pressed) || button == 0) {
-            SDL_Log("Bandit SDL V15: ignored pointer press without a valid SDL button");
+            SDL_Log("Raggedy SDL V15: ignored pointer press without a valid SDL button");
             return;
         }
         SDL_assert(pressed == 1);
@@ -178,7 +178,7 @@ $old = @'
 '@
 $new = @'
         if (!WINRT_GetSDLButtonForPointerPoint(pointerPoint, &button, &pressed) || button == 0) {
-            SDL_Log("Bandit SDL V15: ignored pointer release without a valid SDL button");
+            SDL_Log("Raggedy SDL V15: ignored pointer release without a valid SDL button");
             return;
         }
         SDL_assert(pressed == 0);
@@ -221,7 +221,7 @@ extern void WINRT_ProcessPointerEnteredEvent(SDL_Window *window, Windows::UI::In
 '@
 $eventsHeader = Replace-Once $eventsHeader $old $new "declare WinRT mouse reset helper"
 
-# Use the exact same physical key event source as Bandit's hardware-proven
+# Use the exact same physical key event source as Raggedy's hardware-proven
 # GLFW path. CharacterReceived remains separate for text input.
 $old = @'
     window->Dispatcher->AcceleratorKeyActivated +=
@@ -368,7 +368,7 @@ $appHeader = Replace-Once $appHeader $old $new "declare key and pointer-capture 
 # is actually resolving. V13's Arrow fallback remains only as an emergency path.
 $old = @'
         if (FAILED(hr)) {
-            /* Bandit's UWP host may not link SDL's optional cursor resource.
+            /* Raggedy's UWP host may not link SDL's optional cursor resource.
                PointerCursor=nullptr suppresses CoreWindow PointerMoved events,
                which makes Minecraft menus appear to lose the mouse. Keep a
                normal cursor instead; raw MouseDevice deltas still drive SDL
@@ -377,7 +377,7 @@ $old = @'
             coreWindow->PointerCursor = ref new CoreCursor(CoreCursorType::Arrow, 0);
             if (!loggedMissingBlankCursor) {
                 loggedMissingBlankCursor = true;
-                SDL_Log("Bandit SDL V13: transparent cursor resource unavailable; preserving pointer motion with Arrow fallback");
+                SDL_Log("Raggedy SDL V13: transparent cursor resource unavailable; preserving pointer motion with Arrow fallback");
             }
         }
 '@
@@ -389,13 +389,13 @@ $new = @'
             coreWindow->PointerCursor = ref new CoreCursor(CoreCursorType::Arrow, 0);
             if (!loggedMissingBlankCursor) {
                 loggedMissingBlankCursor = true;
-                SDL_Log("Bandit SDL V15: ERROR transparent cursor resource 5000 unavailable; using Arrow fallback");
+                SDL_Log("Raggedy SDL V15: ERROR transparent cursor resource 5000 unavailable; using Arrow fallback");
             }
         } else {
             static bool loggedBlankCursor = false;
             if (!loggedBlankCursor) {
                 loggedBlankCursor = true;
-                SDL_Log("Bandit SDL V15: transparent WinRT cursor resource 5000 active");
+                SDL_Log("Raggedy SDL V15: transparent WinRT cursor resource 5000 active");
             }
         }
 '@
@@ -409,7 +409,7 @@ static bool WINRT_SetRelativeMouseMode(bool enabled)
 {
     if (WINRT_UsingRelativeMouseMode != enabled) {
         WINRT_UsingRelativeMouseMode = enabled;
-        SDL_Log("Bandit SDL V13: relative mouse mode=%d", enabled ? 1 : 0);
+        SDL_Log("Raggedy SDL V13: relative mouse mode=%d", enabled ? 1 : 0);
     }
     return true;
 }
@@ -419,7 +419,7 @@ static bool WINRT_SetRelativeMouseMode(bool enabled)
 {
     if (WINRT_UsingRelativeMouseMode != enabled) {
         WINRT_UsingRelativeMouseMode = enabled;
-        SDL_Log("Bandit SDL V15: relative mouse mode=%d", enabled ? 1 : 0);
+        SDL_Log("Raggedy SDL V15: relative mouse mode=%d", enabled ? 1 : 0);
     }
 
     CoreWindow ^ coreWindow = CoreWindow::GetForCurrentThread();
@@ -431,7 +431,7 @@ static bool WINRT_SetRelativeMouseMode(bool enabled)
                 coreWindow->ReleasePointerCapture();
             }
         } catch (...) {
-            SDL_Log("Bandit SDL V15: CoreWindow pointer capture transition failed enabled=%d", enabled ? 1 : 0);
+            SDL_Log("Raggedy SDL V15: CoreWindow pointer capture transition failed enabled=%d", enabled ? 1 : 0);
         }
     }
     return true;

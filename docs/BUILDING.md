@@ -37,7 +37,7 @@ Current defaults:
 - Java release: `21` for helper patches; the game uses `javaRuntime=current` from the catalog
 - JNA: `5.17.0`
 
-The only default and catalog target is `26.3 + Fabric 0.20.1`. It remains experimental until it has been tested end-to-end on Xbox hardware.
+The catalog contains the Fabric 0.20.1 rows supported by Simply Legacy or Re-Console; `26.3 + Fabric 0.20.1` is the default and remains experimental until it has been tested end-to-end on Xbox hardware. The launcher filters the Version page to those supported rows and applies the performance renderer in lightweight `auto` mode on every launch.
 
 Build every configured target and retain staged package contents with:
 
@@ -51,7 +51,7 @@ The validator checks the staged package against every catalog row. It does not b
 The main build accepts temporary overrides:
 
 ```powershell
-.\build.ps1 -McVersion 1.21.11 -FabricLoader 0.19.5 -AssetIndex 29
+.\build.ps1 -McVersion 26.2 -FabricLoader 0.20.1
 ```
 
 These values are passed into setup helpers and into the generated `runtime_config.h` header used across `MC.Xbox/` host modules.
@@ -84,7 +84,7 @@ For adding another playable Forge target, add it to `config\versions.tsv`, exten
 
 ### Minecraft 26.3
 
-`26.3` is a calendar versioned experimental target. Loader versions are recorded in `config/versions.tsv`: Fabric `0.20.1`, asset index `34`, and `javaRuntime=current`. The launcher does not manage a controller mod; controller behavior comes from the selected modpack or custom profile.
+`26.3` is a calendar versioned experimental target. Loader versions are recorded in `config/versions.tsv`: Fabric `0.20.1`, asset index `34`, and `javaRuntime=current`. Built-in profiles get controller behavior from the seeded modpack; custom profiles can supply their own setup.
 
 **It needs JDK 25.** Mojang declares Java 25 for `26.3` and its client classes are class file version 69, which JDK 21 refuses to read. `Resolve-JavaHomeForMinecraft` in `scripts\common.ps1` picks the higher of the version's declared Java major and the `JavaRelease` default, so a JDK 25 has to be installed to compile against this target or to remap for it.
 
@@ -92,7 +92,7 @@ For adding another playable Forge target, add it to `config\versions.tsv`, exten
 
 **Mixin targets are written in Mojang names.** The `src\main` compatibility mixins target intermediary names such as `net.minecraft.class_4239` and `method_47525`. The `26.x` variants under `compat_mod\src\variants` target Mojang names such as `net.minecraft.util.FileUtil` and `createDirectoriesSafe` instead. A mixin copied between the two will not apply.
 
-**RenderPearl needs the Bandit-proven SDL/WGL stack.** For 26.3, `launch\minecraft_launch.cpp` skips the legacy GLFW override, points LWJGL at the packaged UWP `SDL3.dll` and absolute packaged Mesa `opengl32.dll`, sets `SDL_OPENGL_LIBRARY` to the package-relative `graphics\<runtime>\opengl32.dll`, forces the WinRT video driver, passes `org.lwjgl.system.SharedLibraryExtractPath`, and preloads the Mesa/D3D12 support stack before the JVM.
+**RenderPearl needs Raggedy's proven SDL/WGL stack.** For 26.3, `launch\minecraft_launch.cpp` skips the legacy GLFW override, points LWJGL at the packaged UWP `SDL3.dll` and absolute packaged Mesa `opengl32.dll`, sets `SDL_OPENGL_LIBRARY` to the package-relative `graphics\<runtime>\opengl32.dll`, forces the WinRT video driver, passes `org.lwjgl.system.SharedLibraryExtractPath`, and preloads the Mesa/D3D12 support stack before the JVM.
  `scripts\prepare-sdl3-uwp.ps1` builds the pinned SDL fork with desktop OpenGL enabled and EGL disabled, applies the external-host patch so the WinRT loader is compiled and absolute packaged Mesa paths are normalized for `LoadPackagedLibrary`, then applies the full V7 WGL lifecycle, V8 provider-parity, V9 stability, V12 RenderPearl, V13/V14/V15 input, and V16/V17 cursor contract patches. `MC.Xbox\SDL3-WinRTResources.rc` compiles the transparent and launcher cursor resources into `MC.Xbox.exe` for the WinRT cursor path.
 
 **LWJGL natives are listed differently.** Mojang lists each platform's LWJGL natives for `26.x` as its own library entry sharing the base artifact's maven key. `Add-LibraryJar` in `scripts\setup.ps1` drops every `-natives-` entry for that reason: without the filter, `natives-linux` sorts first, wins the maven dedupe, and takes LWJGL's classes off the generated classpath.
@@ -286,7 +286,7 @@ The GitHub Actions workflow in `.github/workflows/nightly.yml` builds and publis
 
 The workflow publishes `RaggedyLauncher-nightly.appx` and `RaggedyLauncher-nightly.sha256` to the `nightly` release, and force moves the `nightly` tag to the commit that produced the package.
 
-Nightly releases are experimental, unsupported, and not full game releases. The generated release notes also remind users that APPX redistribution, public install tutorials, public mirrors, public modified copies, and auth bypass builds are not permitted before the full release.
+Nightly releases are experimental, unsupported, and not full game releases. The generated release notes also carry the required credit to veroxsity / BanditVault and remind users that APPX redistribution, public install tutorials, public mirrors, public modified copies, and auth bypass builds are not permitted before the full release.
 
 Useful options:
 

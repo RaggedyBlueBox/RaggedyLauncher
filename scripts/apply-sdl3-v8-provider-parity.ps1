@@ -41,13 +41,13 @@ $video = Read-NormalizedText -Path $videoPath
 $gl = Read-NormalizedText -Path $glPath
 
 $old = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTIntegrationPatchV7(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTIntegrationPatchV7(void)
 {
     return 7;
 }
 '@
 $new = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTIntegrationPatchV7(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTIntegrationPatchV7(void)
 {
     return 7;
 }
@@ -56,7 +56,7 @@ extern "C" __declspec(dllexport) int BanditSDL_WinRTIntegrationPatchV7(void)
    Windows GL FunctionProvider calls wglGetProcAddress first and only then
    falls back to the SharedLibrary export. SDL must use the same order or
    RenderPearl's exact glGetError pointer check rejects an otherwise-valid GL. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTProviderParityV2(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTProviderParityV2(void)
 {
     return 2;
 }
@@ -103,7 +103,7 @@ SDL_FunctionPointer WIN_GL_GetProcAddress(SDL_VideoDevice *_this, const char *pr
 
 #ifdef SDL_PLATFORM_WINRT
     if (SDL_strcmp(proc, "glGetError") == 0) {
-        SDL_Log("Bandit SDL V8: glGetError LWJGL-order pointer=%p module=%p (wgl-first)",
+        SDL_Log("Raggedy SDL V8: glGetError LWJGL-order pointer=%p module=%p (wgl-first)",
                 (void *)func, (void *)_this->gl_config.dll_handle);
     }
 #endif

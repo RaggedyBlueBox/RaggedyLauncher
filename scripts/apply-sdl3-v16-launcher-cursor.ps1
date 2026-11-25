@@ -32,20 +32,20 @@ $video = Read-NormalizedText $videoPath
 $mouse = Read-NormalizedText $mousePath
 
 $old = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTInputContractV15(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTInputContractV15(void)
 {
     return 15;
 }
 '@
 $new = @'
-extern "C" __declspec(dllexport) int BanditSDL_WinRTInputContractV15(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTInputContractV15(void)
 {
     return 15;
 }
 
-/* V16 makes the visible SDL/WinRT mouse cursor use Bandit's launcher cursor
+/* V16 makes the visible SDL/WinRT mouse cursor use Raggedy's launcher cursor
    resource while keeping the V15 input semantics and V12 graphics contract. */
-extern "C" __declspec(dllexport) int BanditSDL_WinRTLauncherCursorV16(void)
+extern "C" __declspec(dllexport) int RaggedySDL_WinRTLauncherCursorV16(void)
 {
     return 16;
 }
@@ -74,7 +74,7 @@ $old = @'
 '@
 $new = @'
     case SDL_SYSTEM_CURSOR_DEFAULT:
-        /* Match the visible native Bandit launcher cursor instead of exposing
+        /* Match the visible native Raggedy launcher cursor instead of exposing
            WinRT's browser/desktop Arrow inside Minecraft 26.3 menus. Resource
            5001 is linked into MC.Xbox.exe beside SDL's transparent 5000 cursor. */
         cursorType = CoreCursorType::Custom;
@@ -104,7 +104,7 @@ static SDL_Cursor *WINRT_CreateDefaultCursor()
 $new = @'
 static SDL_Cursor *WINRT_CreateDefaultCursor()
 {
-    SDL_Log("Bandit SDL V16: default visible cursor uses launcher resource 5001");
+    SDL_Log("Raggedy SDL V16: default visible cursor uses launcher resource 5001");
     return WINRT_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
 }
 '@

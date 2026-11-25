@@ -62,6 +62,7 @@ bool DeleteProfile(const std::wstring& runtimeRoot, const std::wstring& id);
 bool RenameProfile(const std::wstring& runtimeRoot, const std::wstring& id, const std::wstring& newName);
 std::wstring NormalizePerfRenderer(const std::wstring& mode);
 bool SetProfilePerfRenderer(const std::wstring& runtimeRoot, const std::wstring& id, const std::wstring& mode);
+bool SetProfileTarget(const std::wstring& runtimeRoot, const std::wstring& id, const LaunchTarget& target);
 
 void EnsureProfilesInitialized(const std::wstring& runtimeRoot);
 void EnsureProfileGameDataInitialized(const std::wstring& runtimeRoot, const std::wstring& profileId);
