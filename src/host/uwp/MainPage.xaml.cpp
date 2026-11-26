@@ -194,6 +194,12 @@ namespace winrt::RaggedyLauncher::implementation
         Refresh();
     }
 
+    winrt::Windows::UI::Xaml::Media::Imaging::WriteableBitmap MainPage::CreateQrBitmap(int scale, int quiet_modules)
+    {
+        const std::string uri = raggedy::qr::make_microsoft_link_uri(session_.challenge.verification_uri, session_.challenge.user_code);
+        return raggedy::qr::create_qr_bitmap(uri, scale, quiet_modules);
+    }
+
     void MainPage::Refresh()
     {
         if (launcher_ == nullptr)
