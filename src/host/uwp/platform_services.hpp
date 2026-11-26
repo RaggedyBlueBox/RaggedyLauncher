@@ -3,11 +3,18 @@
 #include "raggedy/platform/interfaces.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <string>
+#include <unknwn.h>
 #include <vector>
 
 namespace winrt::RaggedyLauncher::implementation
 {
+    struct __declspec(uuid("905a0fef-bc53-11df-8c49-001e4fc686da")) IBufferByteAccess : ::IUnknown
+    {
+        virtual HRESULT __stdcall Buffer(std::uint8_t** value) = 0;
+    };
+
     class UwpHttpClient final : public raggedy::platform::IHttpClient
     {
     public:

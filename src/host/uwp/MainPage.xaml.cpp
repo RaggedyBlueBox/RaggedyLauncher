@@ -1,7 +1,10 @@
 #include "pch.h"
 #include "App.xaml.h"
-#include "MainPage.xaml.g.h"
 #include "MainPage.xaml.h"
+
+#if __has_include("MainPage.g.cpp")
+#include "MainPage.g.cpp"
+#endif
 
 #include "raggedy/qr/microsoft_link.hpp"
 #include "raggedy/storage/profile_store.hpp"
@@ -24,11 +27,6 @@ namespace winrt::RaggedyLauncher::implementation
 {
     namespace
     {
-        struct __declspec(uuid("905a0fef-bc53-11df-8c49-001e4fc686da")) IBufferByteAccess : ::IUnknown
-        {
-            virtual HRESULT __stdcall Buffer(std::uint8_t** value) = 0;
-        };
-
         std::wstring widen(std::string_view text)
         {
             return std::wstring{text.begin(), text.end()};
@@ -345,7 +343,15 @@ namespace winrt::RaggedyLauncher::implementation
             if (launcher_ != nullptr)
             {
                 auto& store = launcher_->profiles();
-                raggedy::core::Profile* profile = raggedy::storage::find_profile(store, store.active_profile_id);
+                raggedy::core::Profile* profile = nullptr;
+                for (auto& candidate : store.profiles)
+                {
+                    if (candidate.id == store.active_profile_id)
+                    {
+                        profile = &candidate;
+                        break;
+                    }
+                }
                 if (profile != nullptr)
                 {
                     profile->target_id = selected_target_id_;

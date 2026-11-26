@@ -41,9 +41,9 @@ namespace winrt::RaggedyLauncher::implementation
 
         std::string text_from(const Windows::Storage::Streams::IBuffer& buffer)
         {
-            com_ptr<::IBufferByteAccess> access;
-            buffer.as(access);
-            byte* raw = nullptr;
+            com_ptr<IBufferByteAccess> access;
+            check_hresult(winrt::get_abi(buffer)->QueryInterface(__uuidof(IBufferByteAccess), reinterpret_cast<void**>(access.put())));
+            std::uint8_t* raw = nullptr;
             check_hresult(access->Buffer(&raw));
             return std::string{reinterpret_cast<const char*>(raw), reinterpret_cast<const char*>(raw) + buffer.Length()};
         }

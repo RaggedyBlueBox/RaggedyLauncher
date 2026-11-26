@@ -1,6 +1,9 @@
 #include "pch.h"
-#include "App.xaml.g.h"
 #include "App.xaml.h"
+
+#if __has_include("App.g.cpp")
+#include "App.g.cpp"
+#endif
 
 #include <winrt/Windows.ApplicationModel.h>
 
