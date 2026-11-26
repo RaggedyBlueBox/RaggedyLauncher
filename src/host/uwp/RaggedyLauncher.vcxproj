@@ -149,6 +149,7 @@
     <ClCompile Include="MainPage.xaml.cpp">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="Module.cpp" />
     <ClCompile Include="platform_services.cpp" />
   </ItemGroup>
   <ItemGroup>
