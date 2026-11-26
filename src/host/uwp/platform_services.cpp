@@ -41,7 +41,8 @@ namespace winrt::RaggedyLauncher::implementation
 
         std::string text_from(const Windows::Storage::Streams::IBuffer& buffer)
         {
-            const auto bytes = CryptographicBuffer::CopyToByteArray(buffer);
+            com_array<std::uint8_t> bytes(buffer.Length());
+            CryptographicBuffer::CopyToByteArray(buffer, bytes);
             return std::string{reinterpret_cast<const char*>(bytes.data()), bytes.size()};
         }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pch.h"
+#include "App.g.h"
 #include "App.xaml.g.h"
 #include "platform_services.hpp"
 
@@ -10,7 +11,7 @@
 
 namespace winrt::RaggedyLauncher::implementation
 {
-    struct App : ApplicationT<App>
+    struct App : AppT<App>
     {
         App();
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pch.h"
+#include "MainPage.g.h"
 #include "MainPage.xaml.g.h"
 
 #include "raggedy/app/launcher.hpp"
