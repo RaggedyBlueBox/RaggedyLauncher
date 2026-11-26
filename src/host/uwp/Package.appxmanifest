@@ -11,6 +11,8 @@
         Publisher="CN=Yaro"
         Version="1.0.0.0" />
 
+    <mp:PhoneIdentity PhoneProductId="Yaro.RaggedyLauncher" PhonePublisherId="CN=Yaro" />
+
     <Properties>
         <DisplayName>Raggedy Launcher</DisplayName>
         <PublisherDisplayName>Yaro</PublisherDisplayName>
