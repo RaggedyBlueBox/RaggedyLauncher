@@ -186,12 +186,11 @@ namespace winrt::RaggedyLauncher::implementation
             return;
         }
 
-        std::string error;
         const auto session = launcher_->auth_flow().session;
-        const auto view = raggedy::ui::make_device_code_view(session, error);
-        DeviceCodeText().Text(to_hstring(view.user_code));
+        const auto view = raggedy::ui::make_device_code_view(session);
+        CodeText().Text(to_hstring(view.formatted_code));
         StatusText().Text(to_hstring(view.status));
-        CopyButton().Visibility(view.show_code ? Visibility::Visible : Visibility::Collapsed);
+        CopyButton().Visibility(view.show_copy ? Visibility::Visible : Visibility::Collapsed);
         RetryButton().Visibility(view.show_retry ? Visibility::Visible : Visibility::Collapsed);
         BackButton().Visibility(view.show_back ? Visibility::Visible : Visibility::Collapsed);
         SignInProgress().IsActive(view.show_progress);
