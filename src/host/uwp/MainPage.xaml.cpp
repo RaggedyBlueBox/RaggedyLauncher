@@ -2,7 +2,9 @@
 #include "App.xaml.h"
 #include "MainPage.xaml.h"
 
-#if __has_include("MainPage.g.cpp")
+#if __has_include("Generated Files/sources/MainPage.cpp")
+#include "Generated Files/sources/MainPage.cpp"
+#elif __has_include("MainPage.g.cpp")
 #include "MainPage.g.cpp"
 #endif
 
@@ -177,76 +179,19 @@ namespace winrt::RaggedyLauncher::implementation
         Refresh();
     }
 
-    Windows::UI::Xaml::Media::Imaging::WriteableBitmap MainPage::CreateQrBitmap(int scale, int quiet_modules)
-    {
-        const int module_count = static_cast<int>(raggedy::qr::qr_size) + quiet_modules * 2;
-        const int pixel_count = module_count * scale;
-        WriteableBitmap bitmap(pixel_count, pixel_count);
-
-        auto buffer = bitmap.PixelBuffer();
-        com_ptr<IBufferByteAccess> access;
-        ::IUnknown* unknown = reinterpret_cast<::IUnknown*>(winrt::get_abi(buffer));
-        check_hresult(unknown->QueryInterface(__uuidof(IBufferByteAccess), reinterpret_cast<void**>(access.put())));
-
-        std::uint8_t* raw = nullptr;
-        check_hresult(access->Buffer(&raw));
-        auto* pixels = reinterpret_cast<std::uint32_t*>(raw);
-
-        for (int y = 0; y < pixel_count; ++y)
-        {
-            for (int x = 0; x < pixel_count; ++x)
-            {
-                const int module_x = x / scale - quiet_modules;
-                const int module_y = y / scale - quiet_modules;
-                const bool dark = raggedy::qr::microsoft_link_module(module_x, module_y);
-                pixels[y * pixel_count + x] = dark ? 0xFF1B2444u : 0xFFFFFFFFu;
-            }
-        }
-
-        bitmap.Invalidate();
-        return bitmap;
-    }
-
     void MainPage::Refresh()
     {
-        if (launcher_ != nullptr)
+        if (launcher_ == nullptr)
         {
-            session_ = launcher_->auth_flow().session;
-            settings_ = launcher_->settings();
-            profiles_ = launcher_->profiles();
+            return;
         }
 
-        const bool shell = session_.stage == raggedy::auth::Stage::signed_in && session_.entitlement_verified;
-        SignInPanel().Visibility(shell ? Visibility::Collapsed : Visibility::Visible);
-        ShellPanel().Visibility(shell ? Visibility::Visible : Visibility::Collapsed);
-
-        if (shell)
-        {
-            if (mode_ == PageMode::sign_in)
-            {
-                mode_ = PageMode::menu;
-            }
-            RefreshShell();
-        }
-        else
-        {
-            RefreshSignIn();
-        }
-    }
-
-    void MainPage::RefreshSignIn()
-    {
-        const auto view = raggedy::ui::make_device_code_view(session_);
-
-        TitleText().Text(hstring{view.title});
-        HeadingText().Text(hstring{view.heading});
-        InstructionsText().Text(hstring{view.instructions});
-        CodeText().Text(view.formatted_code.empty() ? L"---- ----" : view.formatted_code);
-        LinkText().Text(view.link_label);
-        StatusText().Text(view.status);
-
-        QrCard().Visibility(view.show_qr ? Visibility::Visible : Visibility::Collapsed);
-        CopyButton().Visibility(view.show_copy ? Visibility::Visible : Visibility::Collapsed);
+        std::string error;
+        const auto session = launcher_->auth_flow().session;
+        const auto view = raggedy::ui::make_device_code_view(session, error);
+        DeviceCodeText().Text(to_hstring(view.user_code));
+        StatusText().Text(to_hstring(view.status));
+        CopyButton().Visibility(view.show_code ? Visibility::Visible : Visibility::Collapsed);
         RetryButton().Visibility(view.show_retry ? Visibility::Visible : Visibility::Collapsed);
         BackButton().Visibility(view.show_back ? Visibility::Visible : Visibility::Collapsed);
         SignInProgress().IsActive(view.show_progress);

@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "App.xaml.h"
 
-#if __has_include("App.g.cpp")
+#if __has_include("Generated Files/sources/App.cpp")
+#include "Generated Files/sources/App.cpp"
+#elif __has_include("App.g.cpp")
 #include "App.g.cpp"
 #endif
 
