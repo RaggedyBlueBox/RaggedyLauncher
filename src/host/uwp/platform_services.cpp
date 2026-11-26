@@ -247,6 +247,8 @@ namespace winrt::RaggedyLauncher::implementation
         return to_string(CryptographicBuffer::ConvertBinaryToString(BinaryStringEncoding::Hex, hash));
     }
 
+    BridgeProcessRunner::BridgeProcessRunner() = default;
+
     BridgeProcessRunner::BridgeProcessRunner(std::string bridge_url)
         : bridge_url_(std::move(bridge_url))
     {

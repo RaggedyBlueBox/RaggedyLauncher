@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "App.xaml.g.hpp"
+#include "App.xaml.g.h"
 #include "App.xaml.h"
 
 #include <winrt/Windows.ApplicationModel.h>

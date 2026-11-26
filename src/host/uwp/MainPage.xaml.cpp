@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "App.xaml.h"
-#include "MainPage.xaml.g.hpp"
+#include "MainPage.xaml.g.h"
 #include "MainPage.xaml.h"
 
 #include "raggedy/qr/microsoft_link.hpp"
@@ -24,6 +24,11 @@ namespace winrt::RaggedyLauncher::implementation
 {
     namespace
     {
+        struct __declspec(uuid("905a0fef-bc53-11df-8c49-001e4fc686da")) IBufferByteAccess : ::IUnknown
+        {
+            virtual HRESULT __stdcall Buffer(std::uint8_t** value) = 0;
+        };
+
         std::wstring widen(std::string_view text)
         {
             return std::wstring{text.begin(), text.end()};
@@ -181,10 +186,10 @@ namespace winrt::RaggedyLauncher::implementation
         WriteableBitmap bitmap(pixel_count, pixel_count);
 
         auto buffer = bitmap.PixelBuffer();
-        com_ptr<::IBufferByteAccess> access;
-        buffer.as(access);
+        com_ptr<IBufferByteAccess> access;
+        check_hresult(winrt::get_abi(buffer)->QueryInterface(__uuidof(IBufferByteAccess), reinterpret_cast<void**>(access.put())));
 
-        byte* raw = nullptr;
+        std::uint8_t* raw = nullptr;
         check_hresult(access->Buffer(&raw));
         auto* pixels = reinterpret_cast<std::uint32_t*>(raw);
 

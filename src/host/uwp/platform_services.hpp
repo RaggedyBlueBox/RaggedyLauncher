@@ -33,6 +33,7 @@ namespace winrt::RaggedyLauncher::implementation
     class BridgeProcessRunner final : public raggedy::platform::IProcessRunner
     {
     public:
+        BridgeProcessRunner();
         explicit BridgeProcessRunner(std::string bridge_url);
         void set_bridge_url(std::string bridge_url);
         int run(const std::vector<std::string>& arguments, std::string& output) override;
