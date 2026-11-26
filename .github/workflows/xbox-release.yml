@@ -54,6 +54,24 @@ jobs:
           if (-not $appx) { throw 'APPX was not produced.' }
           "APPX_PATH=$($appx.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Inspect generated XAML files
+        if: always()
+        shell: pwsh
+        run: |
+          Get-ChildItem 'src/host/uwp' -Recurse -Filter '*.g.h*' | ForEach-Object { $_.FullName }
+          Get-ChildItem 'src/host/uwp' -Recurse -Filter 'MainPage*' | ForEach-Object { $_.FullName }
+          foreach ($name in @('Generated Files/MainPage.xaml.g.h','Generated Files/MainPage.g.h','Generated Files/App.xaml.g.h','Generated Files/App.g.h')) {
+            $path = Join-Path 'src/host/uwp' $name
+            if (Test-Path $path) {
+              "----- $path"
+              Get-Content $path -TotalCount 40
+            }
+          }
+          if (Test-Path 'x64/Release/RaggedyLauncher.vcxproj.cppwinrt_comp.rsp') {
+            '----- component projection response'
+            Get-Content 'x64/Release/RaggedyLauncher.vcxproj.cppwinrt_comp.rsp'
+          }
+
       - name: Sign APPX and write hash
         shell: pwsh
         run: |
