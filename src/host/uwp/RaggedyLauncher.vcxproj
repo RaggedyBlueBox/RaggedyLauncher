@@ -180,9 +180,9 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\..\..\packages\Microsoft.Windows.CppWinRT.2.0.250303.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\..\..\packages\Microsoft.Windows.CppWinRT.2.0.250303.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
   </ImportGroup>
-  <Target Name="IncludeGeneratedModule" BeforeTargets="ClCompile" Condition="Exists('Generated Files\App.g.cpp')">
+  <Target Name="IncludeCppWinRTGeneratedSources" BeforeTargets="ClCompile">
     <ItemGroup>
-      <ClCompile Include="Generated Files\App.g.cpp" />
+      <ClCompile Include="Generated Files\*.cpp" />
     </ItemGroup>
   </Target>
 </Project>
