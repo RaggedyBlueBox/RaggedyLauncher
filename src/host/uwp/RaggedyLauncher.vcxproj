@@ -185,7 +185,4 @@
       <ClCompile Include="Generated Files\module.g.cpp" />
     </ItemGroup>
   </Target>
-  <Target Name="FixGeneratedIncludes" BeforeTargets="ClCompile" Condition="Exists('Generated Files\module.g.cpp')">
-    <Exec Command="powershell -Command "(Get-Content 'Generated Files\module.g.cpp') -replace '#include "App.h"', '#include "App.xaml.h"' | Set-Content 'Generated Files\module.g.cpp'"" />
-  </Target>
 </Project>
