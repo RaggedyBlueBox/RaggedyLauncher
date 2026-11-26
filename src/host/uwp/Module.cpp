@@ -1,4 +1,5 @@
 // Module exports for C++/WinRT
+#include <windows.h>
 #include <winrt/base.h>
 
 extern "C" HRESULT WINRT_CanUnloadNow() noexcept
