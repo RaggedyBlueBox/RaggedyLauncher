@@ -134,7 +134,11 @@ namespace winrt::RaggedyLauncher::implementation
             {
                 const IBuffer buffer = result.Content().ReadAsBufferAsync().get();
                 const std::string raw = text_from(buffer);
-                response.body.assign(raw.begin(), raw.end());
+                response.body.reserve(raw.size());
+                for (const char c : raw)
+                {
+                    response.body.push_back(static_cast<std::byte>(static_cast<unsigned char>(c)));
+                }
             }
             return response;
         }
