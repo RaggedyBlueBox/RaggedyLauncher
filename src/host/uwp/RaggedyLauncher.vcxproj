@@ -182,7 +182,9 @@
   </ImportGroup>
   <Target Name="IncludeCppWinRTGeneratedSources" BeforeTargets="ClCompile">
     <ItemGroup>
-      <ClCompile Include="Generated Files\*.cpp" />
+      <ClCompile Include="Generated Files\App.g.cpp" />
+      <ClCompile Include="Generated Files\MainPage.g.cpp" />
+      <ClCompile Include="Generated Files\module.g.cpp" />
     </ItemGroup>
   </Target>
 </Project>
