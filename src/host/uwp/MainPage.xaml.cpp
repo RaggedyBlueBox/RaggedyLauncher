@@ -185,7 +185,8 @@ namespace winrt::RaggedyLauncher::implementation
 
         auto buffer = bitmap.PixelBuffer();
         com_ptr<IBufferByteAccess> access;
-        check_hresult(winrt::get_abi(buffer)->QueryInterface(__uuidof(IBufferByteAccess), reinterpret_cast<void**>(access.put())));
+        ::IUnknown* unknown = reinterpret_cast<::IUnknown*>(winrt::get_abi(buffer));
+        check_hresult(unknown->QueryInterface(__uuidof(IBufferByteAccess), reinterpret_cast<void**>(access.put())));
 
         std::uint8_t* raw = nullptr;
         check_hresult(access->Buffer(&raw));
@@ -237,9 +238,9 @@ namespace winrt::RaggedyLauncher::implementation
     {
         const auto view = raggedy::ui::make_device_code_view(session_);
 
-        TitleText().Text(to_hstring(view.title));
-        HeadingText().Text(to_hstring(view.heading));
-        InstructionsText().Text(to_hstring(view.instructions));
+        TitleText().Text(hstring{view.title});
+        HeadingText().Text(hstring{view.heading});
+        InstructionsText().Text(hstring{view.instructions});
         CodeText().Text(view.formatted_code.empty() ? L"---- ----" : view.formatted_code);
         LinkText().Text(view.link_label);
         StatusText().Text(view.status);

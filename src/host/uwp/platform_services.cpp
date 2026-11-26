@@ -41,11 +41,8 @@ namespace winrt::RaggedyLauncher::implementation
 
         std::string text_from(const Windows::Storage::Streams::IBuffer& buffer)
         {
-            com_ptr<IBufferByteAccess> access;
-            check_hresult(winrt::get_abi(buffer)->QueryInterface(__uuidof(IBufferByteAccess), reinterpret_cast<void**>(access.put())));
-            std::uint8_t* raw = nullptr;
-            check_hresult(access->Buffer(&raw));
-            return std::string{reinterpret_cast<const char*>(raw), reinterpret_cast<const char*>(raw) + buffer.Length()};
+            const auto bytes = CryptographicBuffer::CopyToByteArray(buffer);
+            return std::string{reinterpret_cast<const char*>(bytes.data()), bytes.size()};
         }
 
         Windows::Storage::Streams::IBuffer buffer_from(const std::vector<std::byte>& bytes)
@@ -243,8 +240,8 @@ namespace winrt::RaggedyLauncher::implementation
     std::string WindowsCrypto::sha256_hex(const std::vector<std::byte>& bytes)
     {
         HashAlgorithmProvider provider = HashAlgorithmProvider::OpenAlgorithm(L"SHA256");
-        const IBuffer hash = provider.CreateHash(buffer_from(bytes));
-        return to_string(CryptographicBuffer::ConvertBinaryToString(BinaryStringEncoding::Hex, hash));
+        const IBuffer hash = provider.HashData(buffer_from(bytes));
+        return to_string(CryptographicBuffer::EncodeToHexString(hash));
     }
 
     BridgeProcessRunner::BridgeProcessRunner() = default;

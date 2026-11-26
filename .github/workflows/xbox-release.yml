@@ -48,7 +48,7 @@ jobs:
         shell: pwsh
         run: |
           $artifacts = Join-Path $env:GITHUB_WORKSPACE 'artifacts'
-          & msbuild 'src/host/uwp/RaggedyLauncher.vcxproj' /m /p:Configuration=Release /p:Platform=x64 /p:AppxBundle=Never /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false "/p:AppxPackageDir=$artifacts\"
+          & msbuild 'src/host/uwp/RaggedyLauncher.vcxproj' /m /p:Configuration=Release /p:Platform=x64 /p:XamlLanguage=CppWinRT /p:CppWinRTProjectLanguage=C++/WinRT /p:AppxBundle=Never /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false "/p:AppxPackageDir=$artifacts\"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $appx = Get-ChildItem -Path $artifacts -Filter '*.appx' -Recurse | Select-Object -First 1
           if (-not $appx) { throw 'APPX was not produced.' }
