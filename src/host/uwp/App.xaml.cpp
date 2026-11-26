@@ -1,7 +1,11 @@
 #include "pch.h"
 #include "App.xaml.h"
 
+#if __has_include("Generated Files/App.g.cpp")
 #include "Generated Files/App.g.cpp"
+#elif __has_include("App.g.cpp")
+#include "App.g.cpp"
+#endif
 
 #include <winrt/Windows.ApplicationModel.h>
 

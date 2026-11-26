@@ -8,7 +8,6 @@
 #include "MainPage.g.cpp"
 #endif
 
-#include "raggedy/qr/microsoft_link.hpp"
 #include "raggedy/storage/profile_store.hpp"
 #include "raggedy/ui/device_code_view.hpp"
 #include "raggedy/ui/screen_models.hpp"
@@ -47,6 +46,89 @@ namespace winrt::RaggedyLauncher::implementation
         winrt::hstring to_hstring(const std::string& text)
         {
             return winrt::hstring{widen(text)};
+        }
+
+        // QR code generation for Microsoft link
+        constexpr std::size_t qr_size = 25;
+
+        constexpr std::array<std::string_view, qr_size> microsoft_link_rows{
+            "1111110010011101110111111",
+            "1000010010011111000100001",
+            "1011010100001100100101101",
+            "1011010111000111100101101",
+            "1000010101000000000100001",
+            "1111110100101011010111111",
+            "0000000100101010010000000",
+            "1011110000000010010111100",
+            "0101000000011101111110001",
+            "0010000100110100110011010",
+            "1111110010001101000001100",
+            "1010000111000111111100001",
+            "1111010101100000011111100",
+            "1100101100001010110010010",
+            "1001110000100010100011100",
+            "1000111001111110011010100",
+            "1010000000110101100110010",
+            "1011010000001100011110111",
+            "0000000110000111110001111",
+            "1111110000000001110101100",
+            "1000010100001010110000011",
+            "1011010100101101110011100",
+            "1011010111100110110111110",
+            "1000010010011001011011010",
+            "1111110101011000101111100"
+        };
+
+        constexpr bool microsoft_link_module(int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= static_cast<int>(qr_size) || y >= static_cast<int>(qr_size))
+            {
+                return false;
+            }
+            return microsoft_link_rows[static_cast<std::size_t>(y)][static_cast<std::size_t>(x)] == '1';
+        }
+
+        std::string make_microsoft_link_uri(std::string_view verification_uri, std::string_view user_code)
+        {
+            std::string uri(verification_uri);
+            if (!uri.empty() && uri.back() != '/')
+            {
+                uri.push_back('/');
+            }
+            uri += user_code;
+            return uri;
+        }
+
+        winrt::Windows::UI::Xaml::Media::Imaging::WriteableBitmap create_qr_bitmap(std::string_view uri, int scale, int quiet_modules)
+        {
+            const int modules = static_cast<int>(qr_size) + 2 * quiet_modules;
+            const int pixel_size = modules * scale;
+            auto bitmap = winrt::Windows::UI::Xaml::Media::Imaging::WriteableBitmap(pixel_size, pixel_size);
+
+            auto pixel_buffer = bitmap.PixelBuffer();
+            std::vector<uint32_t> pixels(pixel_size * pixel_size);
+
+            for (int y = 0; y < pixel_size; ++y)
+            {
+                for (int x = 0; x < pixel_size; ++x)
+                {
+                    const int mx = x / scale - quiet_modules;
+                    const int my = y / scale - quiet_modules;
+                    const bool dark = microsoft_link_module(mx, my);
+                    pixels[y * pixel_size + x] = dark ? 0xFF000000 : 0xFFFFFFFF;
+                }
+            }
+
+            // Copy pixels to buffer
+            auto data_writer = winrt::Windows::Storage::Streams::DataWriter();
+            for (uint32_t pixel : pixels)
+            {
+                data_writer.WriteUInt32(pixel);
+            }
+            pixel_buffer.CopyFrom(data_writer.DetachBuffer());
+
+            bitmap.Invalidate();
+            return bitmap;
         }
     }
 
@@ -196,8 +278,8 @@ namespace winrt::RaggedyLauncher::implementation
 
     winrt::Windows::UI::Xaml::Media::Imaging::WriteableBitmap MainPage::CreateQrBitmap(int scale, int quiet_modules)
     {
-        const std::string uri = raggedy::qr::make_microsoft_link_uri(session_.challenge.verification_uri, session_.challenge.user_code);
-        return raggedy::qr::create_qr_bitmap(uri, scale, quiet_modules);
+        const std::string uri = make_microsoft_link_uri(session_.challenge.verification_uri, session_.challenge.user_code);
+        return create_qr_bitmap(uri, scale, quiet_modules);
     }
 
     void MainPage::Refresh()
