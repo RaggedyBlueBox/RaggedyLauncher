@@ -34,9 +34,19 @@ namespace winrt::RaggedyLauncher::implementation
             return std::wstring{text.begin(), text.end()};
         }
 
+        winrt::hstring to_hstring(std::string_view text)
+        {
+            return winrt::hstring{widen(text)};
+        }
+
         winrt::hstring to_hstring(const std::wstring& text)
         {
             return winrt::hstring{text};
+        }
+
+        winrt::hstring to_hstring(const std::string& text)
+        {
+            return winrt::hstring{widen(text)};
         }
     }
 
