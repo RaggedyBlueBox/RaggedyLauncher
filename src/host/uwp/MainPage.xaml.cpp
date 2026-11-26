@@ -33,6 +33,11 @@ namespace winrt::RaggedyLauncher::implementation
         {
             return std::wstring{text.begin(), text.end()};
         }
+
+        winrt::hstring to_hstring(const std::wstring& text)
+        {
+            return winrt::hstring{text};
+        }
     }
 
     MainPage::MainPage()
@@ -205,7 +210,7 @@ namespace winrt::RaggedyLauncher::implementation
         {
             MenuList().Items().Append(box_value(action));
         }
-        MenuStatusText().Text(menu.status);
+        MenuStatusText().Text(to_hstring(menu.status));
 
         const bool versions = mode_ == PageMode::versions;
         ContentTitleText().Text(versions ? L"Versions" : L"Main menu");
@@ -218,7 +223,7 @@ namespace winrt::RaggedyLauncher::implementation
         }
         else
         {
-            ContentStatusText().Text(menu.status);
+            ContentStatusText().Text(to_hstring(menu.status));
         }
     }
 
@@ -271,7 +276,7 @@ namespace winrt::RaggedyLauncher::implementation
             }
         }
 
-        ContentStatusText().Text(model.status);
+        ContentStatusText().Text(to_hstring(model.status));
     }
 
     void MainPage::SelectVersionItem(hstring const& item)
