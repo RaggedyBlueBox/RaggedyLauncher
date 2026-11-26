@@ -186,6 +186,6 @@
     </ItemGroup>
   </Target>
   <Target Name="FixGeneratedModule" BeforeTargets="ClCompile" Condition="Exists('Generated Files\module.g.cpp')">
-    <Exec Command="powershell -Command "(Get-Content 'Generated Files\module.g.cpp') -replace '^#include "winrt/base.h"', '#include <unknwn.h>\n#include "winrt/base.h"' | Set-Content 'Generated Files\module.g.cpp'"" />
+    <Exec Command="fix_generated.bat" />
   </Target>
 </Project>
