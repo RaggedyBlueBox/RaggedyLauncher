@@ -119,13 +119,14 @@ namespace winrt::RaggedyLauncher::implementation
                 }
             }
 
-            // Copy pixels to buffer
+            // Copy pixels to buffer using DataWriter
             auto data_writer = winrt::Windows::Storage::Streams::DataWriter();
             for (uint32_t pixel : pixels)
             {
                 data_writer.WriteUInt32(pixel);
             }
-            pixel_buffer.CopyFrom(data_writer.DetachBuffer());
+            auto buffer = data_writer.DetachBuffer();
+            pixel_buffer = buffer;
 
             bitmap.Invalidate();
             return bitmap;
