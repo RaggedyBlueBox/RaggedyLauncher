@@ -2,8 +2,8 @@
 #include "App.xaml.h"
 #include "MainPage.xaml.h"
 
-#if __has_include("Generated Files/sources/MainPage.cpp")
-#include "Generated Files/sources/MainPage.cpp"
+#if __has_include("Generated Files/MainPage.g.cpp")
+#include "Generated Files/MainPage.g.cpp"
 #elif __has_include("MainPage.g.cpp")
 #include "MainPage.g.cpp"
 #endif
