@@ -10,6 +10,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate UWP XML files
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          for path in ("src/host/uwp/RaggedyLauncher.vcxproj", "src/host/uwp/Package.appxmanifest", "src/host/uwp/App.xaml", "src/host/uwp/MainPage.xaml"):
+              ET.parse(path)
+          PY
+
       - name: Build and run tests
         run: |
           SOURCES=$(find src -name '*.cpp' -not -path 'src/host/*' -print)
