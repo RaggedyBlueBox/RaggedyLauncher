@@ -171,9 +171,11 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <Content Include="Assets\*.png">
-      <DeploymentContent>true</DeploymentContent>
-    </Content>
+    <Content Include="Assets\StoreLogo.png"><DeploymentContent>true</DeploymentContent><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="Assets\Square44x44Logo.png"><DeploymentContent>true</DeploymentContent><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="Assets\Square150x150Logo.png"><DeploymentContent>true</DeploymentContent><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="Assets\Wide310x150Logo.png"><DeploymentContent>true</DeploymentContent><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="Assets\SplashScreen.png"><DeploymentContent>true</DeploymentContent><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
